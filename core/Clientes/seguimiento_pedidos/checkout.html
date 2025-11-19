@@ -15,43 +15,85 @@
 
     body {
       font-family: 'Comic Neue', cursive;
-      background: linear-gradient(to bottom right, #fffafc, #fdf0f7);
-      color: #4b006e;
-      padding: 2rem;
-    }
-
-    /* Encabezado glam */
-    .encabezado-glam {
-      background: linear-gradient(to right, #f3e8ff, #fde2f3);
-      padding: 1.5rem 2rem;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(213, 143, 191, 0.2);
-      margin-bottom: 2rem;
+      background-color: #fffafc;
+      color: #880e4f;
       display: flex;
-      justify-content: space-between;
+      margin: 0;
+    }
+    
+    .sidebar {
+      background-color: #fce4ec;
+      padding: 2rem;
+      width: 240px;
+      height: 100vh;
+      position: fixed;
+      display: flex;
+      flex-direction: column;
       align-items: center;
+      text-align: center;
+      border-right: 2px solid #f8bbd0;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      overflow-y: auto;
     }
-
-    .logo-glam {
+    
+    .logo {
       width: 100px;
-      height: auto;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(213, 143, 191, 0.3);
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+    
+    .sidebar h1 {
+      color: #ad1457;
+      font-size: 1.8rem;
+      margin: 0.5rem 0;
+    }
+    
+    .sidebar p {
+      color: #d81b60;
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .sidebar nav ul {
+      list-style: none;
+      padding: 0;
+      width: 100%;
+    }
+    
+    .sidebar nav a {
+      display: block;
+      padding: 0.8rem 1.5rem;
+      margin-bottom: 0.8rem;
+      text-decoration: none;
+      color: #880e4f;
+      font-weight: bold;
+      border-radius: 25px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    
+    .sidebar nav a:hover {
+      background-color: #f8bbd0;
+      color: #fff;
+    }
+    
+    .main-content {
+      margin-left: 240px;
+      padding: 2rem;
+      width: calc(100% - 240px);
+      min-height: 100vh;
     }
 
-    .titulo-glam {
-      font-size: 2.5rem;
-      font-style: italic;
-      color: #c026d3;
-      text-shadow: 1px 1px 2px #f3e8ff;
-      animation: aparecer 1s ease-out;
-    }
 
-    @keyframes aparecer {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
+    h2.titulo-checkout {
+      font-size: 2.2rem;
+      color: #c2185b;
+      border-bottom: 3px solid #f48fb1;
+      padding-bottom: 0.5rem;
+      margin-bottom: 2rem;
     }
-
+    
     .checkout-container {
       display: flex;
       flex-wrap: wrap;
@@ -61,7 +103,7 @@
 
     .formulario {
       flex: 1 1 55%;
-      background: #fff0f6;
+      background: #fff5f8;
       padding: 2rem;
       border-radius: 16px;
       box-shadow: 0 4px 10px rgba(212, 144, 192, 0.2);
@@ -69,7 +111,7 @@
 
     .resumen {
       flex: 1 1 40%;
-      background: #fdf4ff;
+      background: #fff5f8;
       padding: 2rem;
       border-radius: 16px;
       position: sticky; /* Hacemos que el resumen sea "pegajoso" */
@@ -80,14 +122,14 @@
 
     h2, h3 {
       font-size: 1.8rem;
-      color: #c026d3;
+      color: #f06292;
       margin-bottom: 1rem;
-      text-shadow: 1px 1px 2px #f3e8ff;
+      text-shadow: 1px 1px 2px #fce4ec;
     }
 
     h3 {
       font-size: 1.4rem;
-      color: #9333ea;
+      color: #d81b60;
       margin-top: 2rem;
     }
 
@@ -95,7 +137,7 @@
       display: block;
       margin-top: 1rem;
       font-weight: bold;
-      color: #7e22ce;
+      color: #ad1457;
     }
 
     form input, form select {
@@ -103,20 +145,20 @@
       padding: 0.6rem;
       margin-top: 0.4rem;
       border-radius: 8px;
-      border: 1px solid #d8b4fe;
-      background-color: #faf5ff;
-      color: #7e22ce;
+      border: 1px solid #f8bbd0;
+      background-color: #fff5f8;
+      color: #ad1457;
       font-weight: bold;
     }
 
     input[type="radio"], input[type="checkbox"] {
-      accent-color: #c084fc;
+      accent-color: #f48fb1;
       margin-right: 0.5rem;
     }
 
     .btn-finalizar {
       margin-top: 2rem;
-      background: #c084fc;
+      background: #f48fb1;
       color: white;
       padding: 0.8rem 1.6rem;
       border-radius: 10px;
@@ -128,11 +170,11 @@
     }
 
     .btn-finalizar:hover {
-      background: #a855f7;
+      background: #ec407a;
     }
 
     .producto-resumen {
-      background: #fff0f6;
+      background: #fff5f8;
       padding: 1rem;
       border-radius: 12px;
       margin-bottom: 1rem;
@@ -147,7 +189,7 @@
     .btn-volver {
       display: inline-block;
       margin-top: 1rem;
-      color: #a855f7;
+      color: #ec407a;
       text-decoration: none;
       font-weight: bold;
       font-size: 1rem;
@@ -161,18 +203,18 @@
       margin-top: 1rem;
     }
     .metodo-pago-opcion {
-      background: #faf5ff;
+      background: #fff5f8;
       padding: 1rem;
       border-radius: 12px;
-      border: 2px solid #e9d5ff;
+      border: 2px solid #fce4ec;
       cursor: pointer;
       transition: border-color 0.3s, box-shadow 0.3s;
     }
     .metodo-pago-opcion:hover {
-      border-color: #c084fc;
+      border-color: #f48fb1;
     }
     .metodo-pago-opcion.seleccionado {
-      border-color: #a855f7;
+      border-color: #ec407a;
       box-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
     }
     .metodo-pago-opcion label {
@@ -180,7 +222,7 @@
       align-items: center;
       gap: 0.8rem;
       font-weight: bold;
-      color: #7e22ce;
+      color: #ad1457;
     }
     .pago-detalles {
       display: none;
@@ -191,7 +233,7 @@
       border: 1px solid #e0cce3;
     }
     .pago-detalles h4 {
-      color: #c026d3;
+      color: #f06292;
       margin-bottom: 1rem;
     }
     .pago-detalles p {
@@ -199,7 +241,15 @@
     }
 
     @media (max-width: 768px) {
-      .checkout-container {
+      h2.titulo-checkout {
+      font-size: 2.2rem;
+      color: #c2185b;
+      border-bottom: 3px solid #f48fb1;
+      padding-bottom: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .checkout-container {
         flex-direction: column;
       }
 
@@ -210,12 +260,38 @@
   </style>
 </head>
 <body>
-  <header class="encabezado-glam">
-    <img src="{% static 'img/logoglam.png' %}" alt="Logo GlamStore" class="logo-glam">
-    <h1 class="titulo-glam">Checkout pastel-glam</h1>
-  </header>
 
-  <div class="checkout-container">
+  <!-- Barra lateral -->
+  <aside class="sidebar">
+    <img src="{% static 'img/logoglam.png' %}" alt="Logo GlamStore" class="logo">
+    {% if request.session.usuario_nombre %}
+      <a href="{% url 'perfil' %}" style="text-decoration: none; color: inherit;">
+        <h1>¡Hola, {{ request.session.usuario_nombre }}!</h1>
+      </a>
+      <p>Qué bueno verte de nuevo ✨</p>
+    {% else %}
+      <h1>Bienvenida a GlamStore</h1>
+      <p>Tu espacio de moda, color y alegría</p>
+    {% endif %}
+    
+    <nav>
+      <ul>
+        <li><a href="{% url 'tienda' %}">← Volver a Tienda</a></li>
+        {% if request.session.usuario_nombre %}
+          <li><a href="{% url 'perfil' %}">Mi Perfil</a></li>
+        {% else %}
+          <li><a href="{% url 'login' %}">Iniciar Sesión</a></li>
+        {% endif %}
+        <li><a href="{% url 'ver_carrito' %}">Carrito</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <h2 class="titulo-checkout">Finalizar Compra</h2>
+    
+    <div class="checkout-container">
     <section class="formulario">
       <form method="POST" action="{% url 'simular_pago' %}">
         {% csrf_token %}
@@ -333,7 +409,12 @@
       <p>Total: <strong id="total-valor">${{ total|add:10000 }}</strong></p>
       <a href="{% url 'tienda' %}" class="btn-volver">← Seguir comprando</a>
     </section>
-  </div>
+    </div>
+    
+    <footer class="pie" style="margin-top: 3rem; text-align: center; color: #888;">
+      <p>&copy; 2025 GlamStore — Belleza con estilo</p>
+    </footer>
+  </main>
 
   <!-- JS para mostrar secciones progresivamente -->
   <script>

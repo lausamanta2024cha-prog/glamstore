@@ -142,6 +142,11 @@ def agregar_al_carrito(request):
         try:
             producto = Producto.objects.get(idProducto=idProducto)
         except Producto.DoesNotExist:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Producto no encontrado.'
+                })
             messages.error(request, "Producto no encontrado.")
             return redirect('tienda')
 
@@ -149,14 +154,88 @@ def agregar_al_carrito(request):
         actual = int(carrito.get(str(idProducto), 0))
 
         if actual + cantidad > producto.stock:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'No hay suficiente stock disponible.'
+                })
             messages.error(request, "No hay suficiente stock disponible.")
             return redirect('productos_categoria', id_categoria=producto.idCategoria_id)
 
         carrito[str(idProducto)] = actual + cantidad
         request.session['carrito'] = carrito
+        
+        # Calcular el total de items en el carrito
+        cart_count = sum(int(qty) for qty in carrito.values())
 
+        # Si es una petición AJAX, devolver JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': f'{producto.nombreProducto} añadido al carrito.',
+                'cart_count': cart_count
+            })
+
+        # Si no es AJAX, comportamiento normal
         messages.success(request, "Producto añadido al carrito.")
         return redirect('productos_categoria', id_categoria=producto.idCategoria_id)
+
+
+# ✅ Actualiza la cantidad de un producto en el carrito (AJAX)
+@csrf_exempt
+def actualizar_cantidad_carrito(request):
+    if request.method == 'POST':
+        idProducto = str(request.POST.get('idProducto'))
+        nueva_cantidad = int(request.POST.get('cantidad', 1))
+        
+        try:
+            producto = Producto.objects.get(idProducto=idProducto)
+        except Producto.DoesNotExist:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'Producto no encontrado.'})
+            messages.error(request, "Producto no encontrado.")
+            return redirect('ver_carrito')
+        
+        # Validar que la cantidad no exceda el stock
+        if nueva_cantidad > producto.stock:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': 'No hay suficiente stock disponible.'})
+            messages.error(request, "No hay suficiente stock disponible.")
+            return redirect('ver_carrito')
+        
+        # Actualizar el carrito
+        carrito = request.session.get('carrito', {})
+        if nueva_cantidad > 0:
+            carrito[idProducto] = nueva_cantidad
+        else:
+            # Si la cantidad es 0, eliminar del carrito
+            if idProducto in carrito:
+                del carrito[idProducto]
+        
+        request.session['carrito'] = carrito
+        
+        # Calcular nuevo subtotal y total
+        subtotal = producto.precio * nueva_cantidad
+        total_carrito = sum(
+            Producto.objects.get(idProducto=pid).precio * int(qty)
+            for pid, qty in carrito.items()
+        )
+        cart_count = sum(int(qty) for qty in carrito.values())
+        
+        # Si es AJAX, devolver JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'subtotal': subtotal,
+                'total': total_carrito,
+                'cart_count': cart_count
+            })
+        
+        messages.success(request, "Cantidad actualizada.")
+        return redirect('ver_carrito')
+    
+    return redirect('ver_carrito')
+
 
 # ✅ Elimina un producto del carrito
 @csrf_exempt

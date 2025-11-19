@@ -202,6 +202,61 @@
       border: 1px solid #ddd;
     }
 
+
+    /* Selector de cantidad con botones */
+    .selector-cantidad {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .controles-cantidad {
+      display: flex;
+      align-items: center;
+      background: #fce4ec;
+      border-radius: 20px;
+      padding: 2px;
+    }
+    
+    .btn-cantidad {
+      background: #f48fb1;
+      color: white;
+      border: none;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s;
+    }
+    
+    .btn-cantidad:hover {
+      background: #ec407a;
+    }
+    
+    .controles-cantidad input[type="number"] {
+      width: 30px;
+      text-align: center;
+      border: none;
+      background: transparent;
+      font-weight: bold;
+      color: #880e4f;
+      font-family: inherit;
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+    
+    .controles-cantidad input::-webkit-outer-spin-button,
+    .controles-cantidad input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      appearance: none;
+      margin: 0;
+    }
+
     .btn-agregar {
       background-color: #d81b60;
       color: white;
@@ -249,6 +304,90 @@
 
     .volver-link:hover {
       text-decoration: underline;
+    }
+
+    
+    /* Toast Notification */
+    .toast-notification {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
+      color: white;
+      padding: 1.5rem 2rem;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(236, 64, 122, 0.4);
+      display: none;
+      z-index: 10000;
+      min-width: 320px;
+      animation: slideIn 0.4s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .toast-notification.show {
+      display: block;
+    }
+    
+    .toast-content {
+      margin-bottom: 1rem;
+    }
+    
+    .toast-content h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    
+    .toast-content p {
+      margin: 0;
+      font-size: 0.95rem;
+      opacity: 0.95;
+    }
+    
+    .toast-buttons {
+      display: flex;
+      gap: 0.8rem;
+    }
+    
+    .toast-btn {
+      flex: 1;
+      padding: 0.7rem 1rem;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    
+    .toast-btn-primary {
+      background: white;
+      color: #ec407a;
+    }
+    
+    .toast-btn-primary:hover {
+      background: #fce4ec;
+      transform: translateY(-2px);
+    }
+    
+    .toast-btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .toast-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.3);
     }
   </style>
 </head>
@@ -326,16 +465,16 @@
           <span class="product-price">${{ producto.precio }}</span>
 
           {% if producto.disponible > 0 %}
-          <form method="POST" action="{% url 'agregar_al_carrito' %}" class="form-agregar">
+          <form method="POST" action="{% url 'agregar_al_carrito' %}" class="form-agregar" data-ajax-form>
             {% csrf_token %}
             <input type="hidden" name="idProducto" value="{{ producto.idProducto }}">
-            <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+            <div class="selector-cantidad">
               <label>Cant:</label>
-              <select name="cantidad">
-                {% for i in producto.rango_cantidad %}
-                <option value="{{ i }}">{{ i }}</option>
-                {% endfor %}
-              </select>
+              <div class="controles-cantidad">
+                <button type="button" class="btn-cantidad" onclick="decrementar('{{ producto.idProducto }}')">-</button>
+                <input type="number" name="cantidad" id="cantidad-{{ producto.idProducto }}" value="1" min="1" max="{{ producto.stock }}" readonly>
+                <button type="button" class="btn-cantidad" onclick="incrementar('{{ producto.idProducto }}', {{ producto.stock }})">+</button>
+              </div>
             </div>
             <button type="submit" class="btn-agregar">Añadir 🛒</button>
           </form>
@@ -354,6 +493,88 @@
       <p>&copy; 2025 GlamStore — Belleza con estilo</p>
     </footer>
   </main>
+
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast-notification">
+    <div class="toast-content">
+      <h3>✅ ¡Producto agregado!</h3>
+      <p id="toast-message">El producto se ha añadido al carrito.</p>
+    </div>
+    <div class="toast-buttons">
+      <button class="toast-btn toast-btn-primary" onclick="window.location.href='{% url 'ver_carrito' %}'">Ir al Carrito</button>
+      <button class="toast-btn toast-btn-secondary" onclick="closeToast()">Seguir Comprando</button>
+    </div>
+  </div>
+
+  <script>
+    function incrementar(id, max) {
+      const input = document.getElementById('cantidad-' + id);
+      let valor = parseInt(input.value);
+      if (valor < max) {
+        input.value = valor + 1;
+      }
+    }
+
+    function decrementar(id) {
+      const input = document.getElementById('cantidad-' + id);
+      let valor = parseInt(input.value);
+      if (valor > 1) {
+        input.value = valor - 1;
+      }
+    }
+    
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const messageEl = document.getElementById('toast-message');
+      messageEl.textContent = message;
+      toast.classList.add('show');
+      
+      // Auto-hide after 10 seconds
+      setTimeout(() => {
+        closeToast();
+      }, 10000);
+    }
+
+    function closeToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.remove('show');
+    }
+
+    // AJAX form submission
+    document.addEventListener('DOMContentLoaded', function() {
+      const forms = document.querySelectorAll('[data-ajax-form]');
+      
+      forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          const formData = new FormData(this);
+          const url = this.action;
+          
+          fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              showToast(data.message);
+            } else {
+              alert(data.message);
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('Ocurrio un error al agregar el producto.');
+          });
+        });
+      });
+    });
+  </script>
 
 </body>
 

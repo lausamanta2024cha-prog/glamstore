@@ -16,6 +16,7 @@ urlpatterns = [
     path('subcategoria/<str:nombreSubcategoria>/', views.productos_por_subcategoria, name='productos_subcategoria'),
 path('debug-carrito/', views.ver_carrito_debug, name='ver_carrito_debug'),
 path('eliminar-del-carrito/', views.eliminar_del_carrito, name='eliminar_del_carrito'),
+path('actualizar-cantidad-carrito/', views.actualizar_cantidad_carrito, name='actualizar_cantidad_carrito'),
 path('finalizar-compra/', views.finalizar_compra, name='finalizar_compra'),
 path('simular-pago/', views.simular_pago, name='simular_pago'),
 path('vaciar-carrito/', views.vaciar_carrito, name='vaciar_carrito'),

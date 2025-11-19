@@ -1,95 +1,360 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <title>{{ categoria.nombreCategoria }} — GlamStore</title>
-  <link rel="stylesheet" href="{% static 'css/productos_categoria.css' %}">
-  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@1,700&display=swap" rel="stylesheet">
+  <link rel="icon" href="{% static 'img/logoglam.png' %}">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Comic Neue', cursive, Arial, sans-serif;
+      background-color: #fffafc;
+      display: flex;
+    }
+
+    .sidebar {
+      background-color: #fce4ec;
+      padding: 2rem;
+      width: 240px;
+      height: 100vh;
+      position: fixed;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      border-right: 2px solid #f8bbd0;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      overflow-y: auto;
+      /* Permitir scroll si hay muchas subcategorías */
+    }
+
+    .logo {
+      width: 100px;
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1rem;
+    }
+
+    .sidebar h1 {
+      color: #ad1457;
+      font-size: 1.8rem;
+      margin: 0.5rem 0;
+    }
+
+    .sidebar p {
+      color: #d81b60;
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .sidebar nav ul {
+      list-style: none;
+      padding: 0;
+      width: 100%;
+    }
+
+    .sidebar nav a {
+      display: block;
+      padding: 0.8rem 1.5rem;
+      margin-bottom: 0.8rem;
+      text-decoration: none;
+      color: #880e4f;
+      font-weight: bold;
+      border-radius: 25px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .sidebar nav a:hover {
+      background-color: #f8bbd0;
+      color: #fff;
+    }
+
+    /* Estilos para subcategorías en sidebar */
+    .sidebar h2 {
+      color: #ad1457;
+      font-size: 1.2rem;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #f8bbd0;
+      padding-bottom: 0.5rem;
+      width: 100%;
+    }
+
+    .btn-sub {
+      display: block;
+      width: 100%;
+      padding: 0.6rem 1rem;
+      margin-bottom: 0.5rem;
+      background: none;
+      border: 1px solid #f8bbd0;
+      border-radius: 20px;
+      color: #880e4f;
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+
+    .btn-sub:hover,
+    .btn-sub.activo {
+      background-color: #f48fb1;
+      color: white;
+      border-color: #f48fb1;
+    }
+
+    .main-content {
+      margin-left: 240px;
+      padding: 2rem 5rem;
+      width: calc(100% - 240px - 10rem);
+      min-height: 100vh;
+    }
+
+    header h2 {
+      font-size: 2.2rem;
+      color: #c2185b;
+      border-bottom: 3px solid #f48fb1;
+      padding-bottom: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 2rem;
+    }
+
+    .product-card {
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .product-image {
+      height: 200px;
+      background-color: #fceef5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .product-info {
+      padding: 15px;
+      flex-grow: 1;
+    }
+
+    .product-info h3 {
+      margin: 0 0 5px 0;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .product-price {
+      font-weight: bold;
+      color: #d16b8a;
+      margin-top: 10px;
+      display: block;
+      font-size: 1.1rem;
+    }
+
+    .descripcion {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+
+    /* Formulario agregar carrito */
+    .form-agregar {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-agregar label {
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    .form-agregar select {
+      padding: 5px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+
+    .btn-agregar {
+      background-color: #d81b60;
+      color: white;
+      border: none;
+      padding: 0.8rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+      margin-top: 0.5rem;
+    }
+
+    .btn-agregar:hover {
+      background-color: #ad1457;
+    }
+
+    .agotado {
+      color: #c62828;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .mensajes {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      border-radius: 8px;
+      background-color: #e3f2fd;
+      color: #0d47a1;
+    }
+
+    .sin-productos {
+      text-align: center;
+      color: #777;
+      font-size: 1.2rem;
+      margin-top: 3rem;
+    }
+
+    .volver-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      color: #880e4f;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .volver-link:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
+
 <body>
-  <!-- Encabezado pastel-glam -->
-  <header class="encabezado-glam">
-    <div class="encabezado-contenido">
-      <div class="logo-titulo">
-        <img src="{% static 'img/logoglam.png' %}" alt="Logo GlamStore" class="logo-glam">
-        <h1 class="titulo-glam">TIENDA GLAMSTORE</h1>
-      </div>
-      <div class="iconos-derecha">
-        <a href="{% url 'ver_carrito' %}" class="icono-carrito" title="Ver carrito">🛒</a>
-        <a href="{% url 'tienda' %}" class="volver-tienda">← Volver a la tienda</a>
-      </div>
+
+  <!-- Barra lateral -->
+  <aside class="sidebar">
+    <img src="{% static 'img/logoglam.png' %}" alt="Logo GlamStore" class="logo">
+    {% if request.session.usuario_nombre %}
+    <a href="{% url 'perfil' %}" style="text-decoration: none; color: inherit;">
+      <h1>¡Hola, {{ request.session.usuario_nombre }}!</h1>
+    </a>
+    <p>Qué bueno verte de nuevo ✨</p>
+    {% else %}
+    <h1>Bienvenida a GlamStore</h1>
+    <p>Tu espacio de moda, color y alegría</p>
+    {% endif %}
+
+    <nav>
+      <ul>
+        <li><a href="{% url 'tienda' %}">← Volver a Tienda</a></li>
+        {% if request.session.usuario_nombre %}
+        <li><a href="{% url 'perfil' %}">Mi Perfil</a></li>
+        {% else %}
+        <li><a href="{% url 'login' %}">Iniciar Sesión</a></li>
+        {% endif %}
+        <li><a href="{% url 'ver_carrito' %}">Carrito</a></li>
+      </ul>
+    </nav>
+
+    {% if subcategorias %}
+    <h2>Subcategorías</h2>
+    <form method="GET" action="{% url 'productos_categoria' categoria.idCategoria %}" style="width: 100%;">
+      {% for sub in subcategorias %}
+      <button type="submit" name="subcategoria" value="{{ sub.idSubcategoria }}"
+        class="btn-sub {% if subcategoria and sub.idSubcategoria == subcategoria.idSubcategoria %}activo{% endif %}">
+        {{ sub.nombreSubcategoria }}
+      </button>
+      {% endfor %}
+      {% if subcategoria %}
+      <a href="{% url 'productos_categoria' categoria.idCategoria %}" class="btn-sub"
+        style="text-decoration:none; display:block; box-sizing:border-box;">Ver todas</a>
+      {% endif %}
+    </form>
+    {% endif %}
+  </aside>
+
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <header>
+      <h2 class="titulo-seccion">{{ categoria.nombreCategoria }}</h2>
+    </header>
+
+    {% if messages %}
+    <div class="mensajes">
+      {% for message in messages %}
+      <p>{{ message }}</p>
+      {% endfor %}
     </div>
-  </header>
+    {% endif %}
 
-  <div class="contenedor-principal">
-    <!-- Barra lateral con botones de subcategoría -->
-    <aside class="barra-lateral">
-      <h2>Subcategorías</h2>
-      {% if subcategorias %}
-        <form method="GET" action="{% url 'productos_categoria' categoria.idCategoria %}">
-          <div class="botones-subcategorias">
-            {% for sub in subcategorias %}
-              <button type="submit" name="subcategoria" value="{{ sub.idSubcategoria }}"
-                      class="btn-sub {% if subcategoria and sub.idSubcategoria == subcategoria.idSubcategoria %}activo{% endif %}">
-                {{ sub.nombreSubcategoria }}
-              </button>
-            {% endfor %}
-          </div>
-        </form>
-      {% else %}
-        <p class="sin-subcategorias">No hay subcategorías disponibles.</p>
-      {% endif %}
-    </aside>
-
-    <!-- Contenido principal -->
-    <main class="contenido-productos">
-      {% if messages %}
-        <div class="mensajes pastel-glam">
-          {% for message in messages %}
-            <p class="{{ message.tags }}">{{ message }}</p>
-          {% endfor %}
+    {% if productos %}
+    <section class="product-grid">
+      {% for producto in productos %}
+      <div class="product-card">
+        <div class="product-image">
+          {% if producto.imagen %}
+          <img src="{{ producto.imagen.url }}" alt="{{ producto.nombreProducto }}">
+          {% endif %}
         </div>
-      {% endif %}
+        <div class="product-info">
+          <h3>{{ producto.nombreProducto }}</h3>
+          <p class="descripcion">{{ producto.descripcion|truncatechars:60 }}</p>
+          <span class="product-price">${{ producto.precio }}</span>
 
-      {% if productos %}
-        <div class="productos">
-          {% for producto in productos %}
-            <div class="tarjeta-producto">
-              <img src="{{ producto.imagen.url }}" alt="{{ producto.nombreProducto }}">
-              <h3>{{ producto.nombreProducto }}</h3>
-              <p class="precio">${{ producto.precio }}</p>
-              <p class="descripcion">{{ producto.descripcion }}</p>
-
-              {% if producto.disponible > 0 %}
-                <form method="POST" action="{% url 'agregar_al_carrito' %}" class="form-agregar" data-producto="{{ producto.idProducto }}">
-                  {% csrf_token %}
-                  <input type="hidden" name="idProducto" value="{{ producto.idProducto }}">
-                  <label for="cantidad-{{ producto.idProducto }}">Cantidad:</label>
-                <select name="cantidad" id="cantidad-{{ producto.idProducto }}">
-  {% for i in producto.rango_cantidad %}
-    <option value="{{ i }}">{{ i }}</option>
-  {% endfor %}
-</select>
-
-                  <button type="submit" class="btn-agregar">Añadir al carrito 🛒</button>
-                </form>
-              {% else %}
-                <p class="agotado">Stock agotado o ya en carrito</p>
-              {% endif %}
-
-              <div class="ver-carrito" id="ver-carrito-{{ producto.idProducto }}" style="display: none;">
-                <a href="{% url 'ver_carrito' %}" class="btn-ver-carrito">Ver carrito ➝</a>
-              </div>
+          {% if producto.disponible > 0 %}
+          <form method="POST" action="{% url 'agregar_al_carrito' %}" class="form-agregar">
+            {% csrf_token %}
+            <input type="hidden" name="idProducto" value="{{ producto.idProducto }}">
+            <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+              <label>Cant:</label>
+              <select name="cantidad">
+                {% for i in producto.rango_cantidad %}
+                <option value="{{ i }}">{{ i }}</option>
+                {% endfor %}
+              </select>
             </div>
-          {% endfor %}
+            <button type="submit" class="btn-agregar">Añadir 🛒</button>
+          </form>
+          {% else %}
+          <p class="agotado">Agotado</p>
+          {% endif %}
         </div>
-      {% else %}
-        <p class="sin-productos">No hay productos en esta subcategoría.</p>
-      {% endif %}
-    </main>
-  </div>
+      </div>
+      {% endfor %}
+    </section>
+    {% else %}
+    <p class="sin-productos">No hay productos disponibles en esta categoría por el momento.</p>
+    {% endif %}
 
-  <script src="{% static 'js/productos_categoria.js' %}"></script>
+    <footer class="pie" style="margin-top: 3rem; text-align: center; color: #888;">
+      <p>&copy; 2025 GlamStore — Belleza con estilo</p>
+    </footer>
+  </main>
+
 </body>
+
 </html>

@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <title>GlamStore — Tienda</title>
@@ -13,6 +14,7 @@
       background-color: #fffafc;
       display: flex;
     }
+
     .sidebar {
       background-color: #fce4ec;
       padding: 2rem;
@@ -24,27 +26,34 @@
       align-items: center;
       text-align: center;
       border-right: 2px solid #f8bbd0;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
     }
+
     .logo {
       width: 100px;
       border-radius: 50%;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
       margin-bottom: 1rem;
     }
+
     .sidebar h1 {
       color: #ad1457;
       font-size: 1.8rem;
       margin: 0.5rem 0;
     }
+
     .sidebar p {
       color: #d81b60;
       font-size: 1rem;
       margin-bottom: 2rem;
     }
+
     .sidebar nav ul {
       list-style: none;
       padding: 0;
     }
+
     .sidebar nav a {
       display: block;
       padding: 0.8rem 1.5rem;
@@ -55,15 +64,20 @@
       border-radius: 25px;
       transition: background-color 0.3s, color 0.3s;
     }
+
     .sidebar nav a:hover {
       background-color: #f8bbd0;
       color: #fff;
     }
+
     .main-content {
       margin-left: 240px;
-      padding: 2rem 3rem;
-      width: calc(100% - 240px - 6rem);
+      padding: 2rem 5rem;
+      /* Aumentado de 3rem a 5rem para separar un poco más */
+      width: calc(100% - 240px - 10rem);
+      /* Ajustado el ancho para compensar el padding */
     }
+
     header h2 {
       font-size: 2.2rem;
       color: #c2185b;
@@ -71,96 +85,111 @@
       padding-bottom: 0.5rem;
       margin-bottom: 2rem;
     }
+
     .tarjetas-categorias {
       display: flex;
       gap: 1.5rem;
       flex-wrap: wrap;
       margin-bottom: 3rem;
     }
+
     .tarjeta-categoria {
       background: #fff;
       padding: 1.5rem;
       border-radius: 15px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
       text-decoration: none;
       color: inherit;
       transition: transform 0.3s, box-shadow 0.3s;
       flex: 1;
       min-width: 200px;
     }
+
     .tarjeta-categoria:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
     }
+
     .tarjeta-categoria h3 {
       color: #d81b60;
       margin: 0 0 0.5rem 0;
     }
-    /* Nuevos estilos para las categorías visuales */
+
     .categorias-visuales {
-        margin-bottom: 3rem;
+      margin-bottom: 3rem;
     }
+
     .titulo-seccion {
-        font-size: 2.2rem;
-        color: #c2185b;
-        border-bottom: 3px solid #f48fb1;
-        padding-bottom: 0.5rem;
-        margin-bottom: 2rem;
+      font-size: 2.2rem;
+      color: #c2185b;
+      border-bottom: 3px solid #f48fb1;
+      padding-bottom: 0.5rem;
+      margin-bottom: 2rem;
     }
+
     .grid-categorias {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.5rem;
     }
+
     .card-categoria {
-        background-color: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        text-decoration: none;
-        color: inherit;
-        text-align: center;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      text-decoration: none;
+      color: inherit;
+      text-align: center;
     }
+
     .card-categoria:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
     }
+
     .card-imagen-wrapper {
-        height: 120px;
-        background-color: #fceef5;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
+      height: 120px;
+      background-color: #fceef5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
+
     .card-imagen-wrapper img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
+
     .card-imagen-wrapper .sin-imagen {
-        font-size: 3rem;
-        color: #d81b60;
+      font-size: 3rem;
+      color: #d81b60;
     }
+
     .card-titulo {
-        padding: 10px;
+      padding: 10px;
     }
+
     .tarjeta-categoria p {
       color: #777;
       font-size: 0.9rem;
     }
+
     .product-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 2rem;
     }
+
     .product-card {
       background-color: #fff;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -168,10 +197,12 @@
       text-decoration: none;
       color: inherit;
     }
+
     .product-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
     }
+
     .product-image {
       height: 200px;
       background-color: #fceef5;
@@ -179,20 +210,24 @@
       align-items: center;
       justify-content: center;
     }
+
     .product-image img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
+
     .product-info {
       padding: 15px;
       flex-grow: 1;
     }
+
     .product-info h3 {
       margin: 0 0 5px 0;
       font-size: 16px;
       color: #333;
     }
+
     .product-price {
       font-weight: bold;
       color: #d16b8a;
@@ -202,31 +237,32 @@
     }
   </style>
 </head>
+
 <body>
 
   <!-- Barra lateral -->
   <aside class="sidebar">
     <img src="{% static 'img/logoglam.png' %}" alt="Logo GlamStore" class="logo">
     {% if request.session.usuario_nombre %}
-      <a href="{% url 'perfil' %}" style="text-decoration: none; color: inherit;">
-        <h1>¡Hola, {{ request.session.usuario_nombre }}!</h1>
-      </a>
-      <p>Qué bueno verte de nuevo ✨</p>
+    <a href="{% url 'perfil' %}" style="text-decoration: none; color: inherit;">
+      <h1>¡Hola, {{ request.session.usuario_nombre }}!</h1>
+    </a>
+    <p>Qué bueno verte de nuevo ✨</p>
     {% else %}
-      <h1>Bienvenida a GlamStore</h1>
-      <p>Tu espacio de moda, color y alegría</p>
+    <h1>Bienvenida a GlamStore</h1>
+    <p>Tu espacio de moda, color y alegría</p>
     {% endif %}
     <nav>
       <ul>
         {% if request.session.usuario_nombre %}
-          <li><a href="{% url 'perfil' %}">Mi Perfil</a></li>
+        <li><a href="{% url 'perfil' %}">Mi Perfil</a></li>
         {% else %}
-          <li><a href="{% url 'login' %}">Iniciar Sesión / Registrarse</a></li>
+        <li><a href="{% url 'login' %}">Iniciar Sesión / Registrarse</a></li>
         {% endif %}
         <li><a href="{% url 'contacto' %}">Contáctanos</a></li>
         <li><a href="{% url 'ver_carrito' %}">Carrito</a></li>
         {% if request.session.usuario_nombre %}
-          <li><a href="{% url 'logout' %}">Cerrar sesión</a></li>
+        <li><a href="{% url 'logout' %}">Cerrar sesión</a></li>
         {% endif %}
       </ul>
     </nav>
@@ -240,22 +276,22 @@
 
     <!-- Sección de Categorías con Imágenes -->
     <section class="categorias-visuales">
-        <div class="grid-categorias">
-            {% for categoria in categorias %}
-            <a href="{% url 'productos_categoria' categoria.idCategoria %}" class="card-categoria">
-                <div class="card-imagen-wrapper">
-                    {% if categoria.imagen %}
-                        <img src="{{ categoria.imagen.url }}" alt="Imagen de {{ categoria.nombreCategoria }}">
-                    {% else %}
-                        <div class="sin-imagen">✨</div>
-                    {% endif %}
-                </div>
-                <div class="card-titulo">
-                    <h3>{{ categoria.nombreCategoria }}</h3>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
+      <div class="grid-categorias">
+        {% for categoria in categorias %}
+        <a href="{% url 'productos_categoria' categoria.idCategoria %}" class="card-categoria">
+          <div class="card-imagen-wrapper">
+            {% if categoria.imagen %}
+            <img src="{{ categoria.imagen.url }}" alt="Imagen de {{ categoria.nombreCategoria }}">
+            {% else %}
+            <div class="sin-imagen">✨</div>
+            {% endif %}
+          </div>
+          <div class="card-titulo">
+            <h3>{{ categoria.nombreCategoria }}</h3>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
     </section>
 
     <header>
@@ -264,17 +300,17 @@
 
     <section class="product-grid">
       {% for producto in productos_destacados %}
-        <a href="{% url 'productos_categoria' producto.idCategoria_id %}" class="product-card">
-          <div class="product-image">
-            {% if producto.imagen %}
-              <img src="{{ producto.imagen.url }}" alt="{{ producto.nombreProducto }}">
-            {% endif %}
-          </div>
-          <div class="product-info">
-            <h3>{{ producto.nombreProducto }}</h3>
-            <span class="product-price">${{ producto.precio }}</span>
-          </div>
-        </a>
+      <a href="{% url 'productos_categoria' producto.idCategoria_id %}" class="product-card">
+        <div class="product-image">
+          {% if producto.imagen %}
+          <img src="{{ producto.imagen.url }}" alt="{{ producto.nombreProducto }}">
+          {% endif %}
+        </div>
+        <div class="product-info">
+          <h3>{{ producto.nombreProducto }}</h3>
+          <span class="product-price">${{ producto.precio }}</span>
+        </div>
+      </a>
       {% endfor %}
     </section>
 
@@ -284,4 +320,5 @@
   </main>
 
 </body>
+
 </html>

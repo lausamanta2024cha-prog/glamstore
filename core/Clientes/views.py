@@ -42,40 +42,62 @@ def tienda(request):
     })
 # ✅ Vista del perfil del usuario
 def perfil(request):
-    # Verificar si hay un usuario logueado o un cliente invitado
     usuario_id = request.session.get('usuario_id')
-    cliente_id = request.session.get('cliente_id')
-    
-    # Caso 1: Sin sesión - mostrar mensaje con opciones
-    if not usuario_id and not cliente_id:
-        context = {
-            'sin_sesion': True
-        }
-        return render(request, 'perfil.html', context)
 
-    try:
-        # Caso 2: Usuario logueado - obtener el cliente desde el usuario
-        if usuario_id:
+    # Priorizar siempre al usuario logueado
+    if usuario_id:
+        try:
             usuario = get_object_or_404(Usuario, idUsuario=usuario_id)
+            # Asegurarse de que el usuario tenga un cliente asociado
+            if not usuario.idCliente:
+                messages.error(request, "Tu cuenta de usuario no está vinculada a un perfil de cliente.")
+                return redirect('tienda')
+            
             cliente = get_object_or_404(Cliente, idCliente=usuario.idCliente)
             tiene_usuario = True
-        # Caso 3: Cliente invitado - obtener el cliente directamente
+            sin_sesion = False
+
+        except (Usuario.DoesNotExist, Cliente.DoesNotExist, Http404):
+            messages.error(request, "No se pudo encontrar tu perfil. Por favor, inicia sesión de nuevo.")
+            # Limpiar sesión corrupta
+            request.session.flush()
+            return redirect('login')
+    
+    # Si no hay usuario, ver si es un cliente invitado
+    else:
+        cliente_id = request.session.get('cliente_id')
+        if cliente_id:
+            try:
+                cliente = get_object_or_404(Cliente, idCliente=cliente_id)
+                
+                # IMPORTANTE: Verificar si este cliente ya tiene un usuario en la BD
+                usuario_existente = Usuario.objects.filter(idCliente=cliente.idCliente).first()
+                if usuario_existente:
+                    # El cliente ya tiene usuario, pero no está en sesión
+                    # Esto puede pasar si hizo logout y luego hizo un pedido como invitado
+                    tiene_usuario = True
+                else:
+                    # Es un verdadero cliente invitado sin usuario
+                    tiene_usuario = False
+                
+                sin_sesion = False
+            except (Cliente.DoesNotExist, Http404):
+                messages.error(request, "No se pudo encontrar tu perfil de invitado.")
+                # Limpiar ID de cliente inválido
+                del request.session['cliente_id']
+                return redirect('tienda')
+        # Si no hay ni usuario ni invitado, es sin sesión
         else:
-            cliente = get_object_or_404(Cliente, idCliente=cliente_id)
-            tiene_usuario = False
-        
-        # Obtener los pedidos del cliente
-        pedidos = Pedido.objects.filter(idCliente=cliente.idCliente).order_by('-fechaCreacion')
-        
-    except (Usuario.DoesNotExist, Cliente.DoesNotExist, Http404):
-        messages.error(request, "No se pudo encontrar tu perfil de cliente.")
-        return redirect('tienda')
+            return render(request, 'perfil.html', {'sin_sesion': True})
+
+    # Obtener los pedidos del cliente determinado
+    pedidos = Pedido.objects.filter(idCliente=cliente.idCliente).order_by('-fechaCreacion')
 
     context = {
         'cliente': cliente,
         'pedidos': pedidos,
-        'tiene_usuario': tiene_usuario,  # Para mostrar opción de crear usuario en el template
-        'sin_sesion': False
+        'tiene_usuario': tiene_usuario,
+        'sin_sesion': sin_sesion
     }
     return render(request, 'perfil.html', context)
 
@@ -399,16 +421,20 @@ def simular_pago(request):
                 )
                 producto.save()
 
-        # 5. Guardar el cliente_id en sesión (no como usuario logueado, sino como cliente invitado)
-        request.session['cliente_id'] = cliente.idCliente
-        request.session['cliente_nombre'] = cliente.nombre
+        # 5. NO guardar sesión automáticamente - solo si ya tiene usuario_id
+        # Si el usuario ya estaba logueado, mantener su sesión
+        # Si no estaba logueado, NO crear sesión automática
         
-        print(f"DEBUG - Sesión actualizada: cliente_id={cliente.idCliente}")
+        print(f"DEBUG - Pedido creado sin iniciar sesión automática")
         
-        # 6. Limpiar el carrito y redirigir al perfil
+        # 6. Limpiar el carrito y redirigir a confirmación
         request.session['carrito'] = {}
+        
+        # Guardar el ID del pedido temporalmente para mostrar la confirmación
+        request.session['ultimo_pedido_id'] = nuevo_pedido.idPedido
+        
         messages.success(request, f"¡Pedido exitoso! Tu pedido #{nuevo_pedido.idPedido} ha sido registrado.")
-        return redirect('perfil')
+        return redirect('pedido_confirmado', idPedido=nuevo_pedido.idPedido)
 
     except Exception as e:
         print(f"ERROR - Excepción capturada: {type(e).__name__}: {str(e)}")
@@ -502,20 +528,36 @@ def registro(request):
             messages.error(request, "Las contraseñas no coinciden.")
             return render(request, 'registrar_usuario.html', {'input': request.POST})
 
+        # Verificar si ya existe un usuario con este email
         if Usuario.objects.filter(email=email).exists():
-            messages.error(request, "Este correo electrónico ya está registrado.")
+            messages.error(request, "Este correo electrónico ya tiene una cuenta registrada. Por favor, inicia sesión.")
             return render(request, 'registrar_usuario.html', {'input': request.POST})
 
         try:
             with transaction.atomic():
-                # 3. Crear el Cliente
-                nuevo_cliente = Cliente.objects.create(
-                    nombre=nombre,
-                    email=email,
-                    cedula=cedula,
-                    direccion=direccion,
-                    telefono=telefono
-                )
+                # 3. Verificar si ya existe un cliente con este email (pedido como invitado)
+                cliente_existente = Cliente.objects.filter(email=email).first()
+                
+                if cliente_existente:
+                    # El cliente ya existe (hizo pedido como invitado)
+                    # Actualizar sus datos con la información del registro
+                    cliente_existente.nombre = nombre
+                    cliente_existente.cedula = cedula
+                    cliente_existente.direccion = direccion
+                    cliente_existente.telefono = telefono
+                    cliente_existente.save()
+                    
+                    cliente = cliente_existente
+                    messages.info(request, "Encontramos tus pedidos anteriores. ¡Ahora puedes hacer seguimiento!")
+                else:
+                    # Crear nuevo cliente
+                    cliente = Cliente.objects.create(
+                        nombre=nombre,
+                        email=email,
+                        cedula=cedula,
+                        direccion=direccion,
+                        telefono=telefono
+                    )
 
                 # 4. Crear el Usuario asociado con rol de Cliente (rol=2)
                 Usuario.objects.create(
@@ -523,7 +565,7 @@ def registro(request):
                     email=email,
                     password=make_password(password),
                     id_rol=2,  # Rol de Cliente
-                    idCliente=nuevo_cliente.idCliente
+                    idCliente=cliente.idCliente
                 )
 
             messages.success(request, "¡Registro exitoso! Ahora puedes iniciar sesión.")
@@ -552,6 +594,12 @@ def login_view(request):
 
         if usuario:
             print("Usuario autenticado:", usuario)  # Confirmación de autenticación
+
+            # Limpiar cualquier sesión de cliente invitado previa
+            if 'cliente_id' in request.session:
+                del request.session['cliente_id']
+            if 'cliente_nombre' in request.session:
+                del request.session['cliente_nombre']
 
             request.session['usuario_id'] = usuario['id']
             request.session['usuario_nombre'] = usuario['nombre']
@@ -738,4 +786,65 @@ def crear_usuario_desde_cliente(request):
             return redirect('perfil')
     
     return redirect('perfil')
+
+def pedido_confirmado(request, idPedido):
+    """
+    Vista para ver la confirmación de un pedido (solo detalles).
+    - Usuarios registrados: pueden ver cualquier pedido suyo
+    - Sin sesión: solo pueden ver el pedido que acaban de hacer (ultimo_pedido_id)
+    """
+    pedido = get_object_or_404(Pedido, idPedido=idPedido)
+    
+    # Verificar permisos de acceso
+    usuario_id = request.session.get('usuario_id')
+    ultimo_pedido_id = request.session.get('ultimo_pedido_id')
+    
+    # Si tiene usuario_id, verificar que el pedido sea suyo
+    if usuario_id:
+        try:
+            usuario = Usuario.objects.get(idUsuario=usuario_id)
+            if pedido.idCliente.idCliente != usuario.idCliente:
+                messages.error(request, "No tienes permiso para ver este pedido.")
+                return redirect('tienda')
+        except Usuario.DoesNotExist:
+            messages.error(request, "Usuario no encontrado.")
+            return redirect('login')
+    
+    # Si no tiene usuario_id, solo puede ver el último pedido que hizo
+    elif ultimo_pedido_id == idPedido:
+        # Permitir ver el pedido recién creado
+        pass
+    else:
+        # No tiene permiso para ver este pedido
+        messages.warning(request, "Para ver el seguimiento de tus pedidos, necesitas iniciar sesión.")
+        return redirect('login')
+    
+    return render(request, 'pedido_confirmado.html', {'pedido': pedido})
+
+def ver_seguimiento(request, idPedido):
+    """
+    Vista para ver el seguimiento detallado de un pedido (timeline).
+    Solo para usuarios registrados.
+    """
+    # Verificar que el usuario esté logueado
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        messages.warning(request, "Debes iniciar sesión para ver el seguimiento de tus pedidos.")
+        return redirect('login')
+    
+    # Obtener el pedido
+    pedido = get_object_or_404(Pedido, idPedido=idPedido)
+    
+    # Verificar que el pedido pertenezca al usuario
+    try:
+        usuario = Usuario.objects.get(idUsuario=usuario_id)
+        if pedido.idCliente.idCliente != usuario.idCliente:
+            messages.error(request, "No tienes permiso para ver este pedido.")
+            return redirect('perfil')
+    except Usuario.DoesNotExist:
+        messages.error(request, "Usuario no encontrado.")
+        return redirect('login')
+    
+    return render(request, 'ver_seguimiento.html', {'pedido': pedido})
+
   

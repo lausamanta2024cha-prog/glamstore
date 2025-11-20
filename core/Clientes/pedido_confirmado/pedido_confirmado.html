@@ -1,0 +1,381 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pedido Confirmado #{{ pedido.idPedido }} | Glam Store</title>
+  <link rel="icon" href="{% static 'img/logoglam.png' %}">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Comic Neue', cursive, Arial, sans-serif;
+      background-color: #fffafc;
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background-color: #fce4ec;
+      padding: 2rem;
+      width: 240px;
+      height: 100vh;
+      position: fixed;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      border-right: 2px solid #f8bbd0;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    .logo {
+      width: 100px;
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1rem;
+    }
+
+    .sidebar h1 {
+      color: #ad1457;
+      font-size: 1.8rem;
+      margin: 0.5rem 0;
+    }
+
+    .sidebar p {
+      color: #d81b60;
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .sidebar nav ul {
+      list-style: none;
+      padding: 0;
+      width: 100%;
+    }
+
+    .sidebar nav a {
+      display: block;
+      padding: 0.8rem 1.5rem;
+      margin-bottom: 0.8rem;
+      text-decoration: none;
+      color: #880e4f;
+      font-weight: bold;
+      border-radius: 25px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .sidebar nav a:hover {
+      background-color: #f8bbd0;
+      color: #fff;
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: 240px;
+      padding: 2rem 5rem;
+      width: calc(100% - 240px - 10rem);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
+      padding: 2.5rem;
+      text-align: center;
+      color: white;
+      border-radius: 15px 15px 0 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header .check-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .content {
+      background: #fff;
+      padding: 2.5rem;
+      border-radius: 0 0 15px 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+    }
+
+    .alert-guest {
+      background: linear-gradient(135deg, #fff9e6 0%, #fff3d6 100%);
+      padding: 1.5rem;
+      border-radius: 15px;
+      margin-bottom: 2rem;
+      border-left: 4px solid #f0ad4e;
+      box-shadow: 0 2px 8px rgba(240, 173, 78, 0.15);
+    }
+
+    .alert-guest h3 {
+      color: #d68910;
+      font-size: 1.1rem;
+      margin: 0 0 0.8rem 0;
+      font-weight: 600;
+    }
+
+    .alert-guest p {
+      color: #856404;
+      line-height: 1.6;
+      margin: 0 0 0.8rem 0;
+    }
+
+    .alert-guest p:last-child {
+      margin-bottom: 0;
+    }
+
+    .alert-guest strong {
+      color: #d68910;
+      font-weight: 600;
+    }
+
+    .pedido-info {
+      background: #fffafc;
+      padding: 1.5rem;
+      border-radius: 15px;
+      margin-bottom: 2rem;
+      border: 2px solid #f8bbd0;
+    }
+
+    .pedido-info h2 {
+      color: #c2185b;
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #f48fb1;
+      padding-bottom: 0.8rem;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid #fce4ec;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-row strong {
+      color: #c2185b;
+      font-weight: bold;
+    }
+
+    .info-row span {
+      color: #666;
+      text-align: right;
+      flex: 1;
+      margin-left: 1rem;
+    }
+
+    .total-row {
+      background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      margin-top: 1rem;
+    }
+
+    .total-row strong {
+      color: #ad1457;
+      font-size: 1.2rem;
+    }
+
+    .total-row span {
+      color: #ad1457;
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 1rem 2rem;
+      border-radius: 25px;
+      text-decoration: none;
+      text-align: center;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      min-width: 150px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(244, 143, 177, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(244, 143, 177, 0.4);
+      background: linear-gradient(135deg, #ec407a 0%, #d81b60 100%);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #c2185b;
+      border: 2px solid #f48fb1;
+    }
+
+    .btn-secondary:hover {
+      background: #fce4ec;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+
+      .main-content {
+        margin-left: 0;
+        padding: 2rem;
+        width: 100%;
+      }
+
+      .buttons {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .info-row {
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+
+      .info-row span {
+        text-align: left;
+        margin-left: 0;
+      }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <img src="{% static 'img/logoglam.png' %}" alt="Glam Store Logo" class="logo">
+    <h1>Glam Store</h1>
+    <p>Tu tienda de belleza</p>
+    <nav>
+      <ul>
+        <li><a href="{% url 'tienda' %}">Tienda</a></li>
+        <li><a href="{% url 'ver_carrito' %}">Carrito</a></li>
+        {% if request.session.usuario_id %}
+          <li><a href="{% url 'perfil' %}">Mi Perfil</a></li>
+          <li><a href="{% url 'logout' %}">Cerrar Sesión</a></li>
+        {% else %}
+          <li><a href="{% url 'login' %}">Iniciar Sesión</a></li>
+          <li><a href="{% url 'registro' %}">Registrarse</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="container">
+      <div class="header">
+        <div class="check-icon">✓</div>
+        <h1>¡Pedido Confirmado!</h1>
+        <p>Tu pedido ha sido registrado exitosamente</p>
+      </div>
+
+      <div class="content">
+        <!-- Mensaje para usuarios sin sesión -->
+        {% if not request.session.usuario_id %}
+        <div class="alert-guest">
+          <h3>⚠️ Importante: Guarda tu número de pedido</h3>
+          <p>
+            Como no has iniciado sesión, <strong>no podrás ver el seguimiento de este pedido</strong> más adelante.
+          </p>
+          <p>
+            Te recomendamos <strong>crear una cuenta</strong> o <strong>iniciar sesión</strong> para poder hacer seguimiento de tus pedidos en cualquier momento.
+          </p>
+        </div>
+        {% endif %}
+
+        <div class="pedido-info">
+          <h2>Detalles del Pedido</h2>
+          <div class="info-row">
+            <strong>Número de Pedido:</strong>
+            <span>#{{ pedido.idPedido }}</span>
+          </div>
+          <div class="info-row">
+            <strong>Estado:</strong>
+            <span>{{ pedido.estado }}</span>
+          </div>
+          <div class="info-row">
+            <strong>Fecha:</strong>
+            <span>{{ pedido.fechaCreacion|date:"d/m/Y H:i" }}</span>
+          </div>
+          <div class="info-row">
+            <strong>Cliente:</strong>
+            <span>{{ pedido.idCliente.nombre }}</span>
+          </div>
+          <div class="info-row">
+            <strong>Correo:</strong>
+            <span>{{ pedido.idCliente.email }}</span>
+          </div>
+          <div class="info-row">
+            <strong>Teléfono:</strong>
+            <span>{{ pedido.idCliente.telefono }}</span>
+          </div>
+          <div class="info-row">
+            <strong>Dirección de Entrega:</strong>
+            <span>{{ pedido.idCliente.direccion }}</span>
+          </div>
+          
+          <div class="total-row info-row">
+            <strong>Total:</strong>
+            <span>${{ pedido.total }}</span>
+          </div>
+        </div>
+
+        <div class="buttons">
+          {% if request.session.usuario_id %}
+            <a href="{% url 'perfil' %}" class="btn btn-primary">Ver Mi Perfil</a>
+            <a href="{% url 'tienda' %}" class="btn btn-secondary">Seguir Comprando</a>
+          {% else %}
+            <a href="{% url 'registro' %}" class="btn btn-primary">Crear Cuenta</a>
+            <a href="{% url 'login' %}" class="btn btn-secondary">Iniciar Sesión</a>
+            <a href="{% url 'tienda' %}" class="btn btn-secondary">Seguir Comprando</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

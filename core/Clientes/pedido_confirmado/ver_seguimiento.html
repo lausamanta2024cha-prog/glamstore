@@ -1,0 +1,498 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguimiento de Pedido #{{ pedido.idPedido }} | Glam Store</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Comic Neue', cursive, Arial, sans-serif;
+      background-color: #fffafc;
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background-color: #fce4ec;
+      padding: 2rem;
+      width: 240px;
+      height: 100vh;
+      position: fixed;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      border-right: 2px solid #f8bbd0;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    .logo {
+      width: 100px;
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1rem;
+    }
+
+    .sidebar h1 {
+      color: #ad1457;
+      font-size: 1.8rem;
+      margin: 0.5rem 0;
+    }
+
+    .sidebar p {
+      color: #d81b60;
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .sidebar nav ul {
+      list-style: none;
+      padding: 0;
+      width: 100%;
+    }
+
+    .sidebar nav a {
+      display: block;
+      padding: 0.8rem 1.5rem;
+      margin-bottom: 0.8rem;
+      text-decoration: none;
+      color: #880e4f;
+      font-weight: bold;
+      border-radius: 25px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .sidebar nav a:hover {
+      background-color: #f8bbd0;
+      color: #fff;
+    }
+
+    .container {
+      margin-left: 240px;
+      padding: 2rem 5rem;
+      width: calc(100% - 240px - 10rem);
+      max-width: 1200px;
+      margin-right: auto;
+    }
+
+    .header {
+      background: #fff;
+      padding: 2rem 2.5rem;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      color: #c2185b;
+      font-size: 2rem;
+    }
+
+    .btn-back {
+      background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
+      color: white;
+      padding: 0.8rem 1.5rem;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(244, 143, 177, 0.3);
+    }
+
+    .btn-back:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(244, 143, 177, 0.4);
+      background: linear-gradient(135deg, #ec407a 0%, #d81b60 100%);
+    }
+
+    .pedido-info {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+      margin-bottom: 2rem;
+    }
+
+    .pedido-info h2 {
+      color: #c2185b;
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #f48fb1;
+      padding-bottom: 0.8rem;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .info-item {
+      padding: 1rem;
+      background: #fffafc;
+      border-radius: 10px;
+      border: 1px solid #f8bbd0;
+    }
+
+    .info-item strong {
+      display: block;
+      color: #c2185b;
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: bold;
+    }
+
+    .info-item span {
+      color: #666;
+      font-size: 1rem;
+    }
+
+    .timeline-container {
+      background: #fff;
+      padding: 2.5rem;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+    }
+
+    .timeline-container h2 {
+      color: #c2185b;
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #f48fb1;
+      padding-bottom: 0.8rem;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+
+    .status-badge.pago-completo {
+      background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+      color: white;
+    }
+
+    .status-badge.pago-parcial {
+      background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+      color: white;
+    }
+
+    .status-badge.en-preparacion {
+      background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+      color: white;
+    }
+
+    .status-badge.en-camino {
+      background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+      color: white;
+    }
+
+    .status-badge.entregado {
+      background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+      color: white;
+    }
+
+    .timeline {
+      position: relative;
+      padding-left: 3rem;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 1rem;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, #f48fb1 0%, #fce4ec 100%);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-bottom: 2.5rem;
+    }
+
+    .timeline-item:last-child {
+      padding-bottom: 0;
+    }
+
+    .timeline-icon {
+      position: absolute;
+      left: -2.5rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: bold;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      z-index: 1;
+    }
+
+    .timeline-item.completed .timeline-icon {
+      background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+      color: white;
+    }
+
+    .timeline-item.active .timeline-icon {
+      background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+      color: white;
+      animation: pulse 2s infinite;
+    }
+
+    .timeline-item.pending .timeline-icon {
+      background: #fffafc;
+      color: #f48fb1;
+      border: 2px solid #f8bbd0;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(244, 143, 177, 0.7);
+      }
+      50% {
+        box-shadow: 0 0 0 10px rgba(244, 143, 177, 0);
+      }
+    }
+
+    .timeline-content {
+      background: #fffafc;
+      padding: 1.5rem;
+      border-radius: 10px;
+      border-left: 3px solid #f8bbd0;
+    }
+
+    .timeline-item.completed .timeline-content {
+      border-left-color: #4caf50;
+    }
+
+    .timeline-item.active .timeline-content {
+      border-left-color: #ec407a;
+      background: linear-gradient(135deg, #fff9fc 0%, #fef5fa 100%);
+    }
+
+    .timeline-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #c2185b;
+      margin-bottom: 0.5rem;
+    }
+
+    .timeline-item.active .timeline-title {
+      color: #ec407a;
+    }
+
+    .timeline-description {
+      color: #666;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .timeline-date {
+      color: #999;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+
+      .container {
+        margin-left: 0;
+        padding: 2rem;
+        width: 100%;
+      }
+
+      .header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .timeline {
+        padding-left: 2.5rem;
+      }
+
+      .timeline-icon {
+        left: -2rem;
+        width: 2rem;
+        height: 2rem;
+        font-size: 1rem;
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <img src="{% static 'img/logoglam.png' %}" alt="Glam Store Logo" class="logo">
+    <h1>Glam Store</h1>
+    <p>Tu tienda de belleza</p>
+    <nav>
+      <ul>
+        <li><a href="{% url 'tienda' %}">Tienda</a></li>
+        <li><a href="{% url 'ver_carrito' %}">Carrito</a></li>
+        <li><a href="{% url 'perfil' %}">Mi Perfil</a></li>
+        <li><a href="{% url 'logout' %}">Cerrar Sesión</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <div class="container">
+    <div class="header">
+      <h1>Seguimiento de Pedido #{{ pedido.idPedido }}</h1>
+      <a href="{% url 'perfil' %}" class="btn-back">← Volver al Perfil</a>
+    </div>
+
+    <!-- Información del Pedido -->
+    <div class="pedido-info">
+      <h2>Información del Pedido</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <strong>Estado</strong>
+          <span>{{ pedido.estado }}</span>
+        </div>
+        <div class="info-item">
+          <strong>Fecha</strong>
+          <span>{{ pedido.fechaCreacion|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="info-item">
+          <strong>Total</strong>
+          <span>${{ pedido.total }}</span>
+        </div>
+        <div class="info-item">
+          <strong>Cliente</strong>
+          <span>{{ pedido.idCliente.nombre }}</span>
+        </div>
+        <div class="info-item">
+          <strong>Teléfono</strong>
+          <span>{{ pedido.idCliente.telefono }}</span>
+        </div>
+        <div class="info-item">
+          <strong>Dirección</strong>
+          <span>{{ pedido.idCliente.direccion }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline de Seguimiento -->
+    <div class="timeline-container">
+      <h2>Estado del Pedido</h2>
+      
+      <div class="status-badge {% if pedido.estado == 'Pago Completo' %}pago-completo{% elif pedido.estado == 'Pago Parcial' %}pago-parcial{% elif pedido.estado == 'En Preparación' %}en-preparacion{% elif pedido.estado == 'En Camino' %}en-camino{% elif pedido.estado == 'Entregado' %}entregado{% endif %}">
+        {{ pedido.estado }}
+      </div>
+
+      <div class="timeline">
+        <!-- Paso 1: Pedido Recibido -->
+        <div class="timeline-item completed">
+          <div class="timeline-icon">✓</div>
+          <div class="timeline-content">
+            <div class="timeline-title">Pedido Recibido</div>
+            <div class="timeline-description">
+              Tu pedido ha sido registrado exitosamente en nuestro sistema.
+            </div>
+            <div class="timeline-date">{{ pedido.fechaCreacion|date:"d/m/Y H:i" }}</div>
+          </div>
+        </div>
+
+        <!-- Paso 2: Pago Confirmado -->
+        <div class="timeline-item {% if pedido.estado == 'Pago Completo' or pedido.estado == 'En Preparación' or pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}completed{% elif pedido.estado == 'Pago Parcial' %}active{% else %}pending{% endif %}">
+          <div class="timeline-icon">{% if pedido.estado == 'Pago Completo' or pedido.estado == 'En Preparación' or pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}✓{% elif pedido.estado == 'Pago Parcial' %}⏳{% else %}2{% endif %}</div>
+          <div class="timeline-content">
+            <div class="timeline-title">Pago Confirmado</div>
+            <div class="timeline-description">
+              {% if pedido.estado == 'Pago Completo' or pedido.estado == 'En Preparación' or pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}
+                El pago ha sido confirmado. Tu pedido está siendo procesado.
+              {% elif pedido.estado == 'Pago Parcial' %}
+                Pago parcial recibido. El saldo restante se pagará contra entrega.
+              {% else %}
+                Esperando confirmación de pago.
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Paso 3: En Preparación -->
+        <div class="timeline-item {% if pedido.estado == 'En Preparación' %}active{% elif pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}completed{% else %}pending{% endif %}">
+          <div class="timeline-icon">{% if pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}✓{% elif pedido.estado == 'En Preparación' %}📦{% else %}3{% endif %}</div>
+          <div class="timeline-content">
+            <div class="timeline-title">En Preparación</div>
+            <div class="timeline-description">
+              {% if pedido.estado == 'En Preparación' %}
+                Estamos preparando tu pedido con mucho cuidado.
+              {% elif pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}
+                Tu pedido fue preparado y empacado correctamente.
+              {% else %}
+                Tu pedido será preparado una vez confirmado el pago.
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Paso 4: En Camino -->
+        <div class="timeline-item {% if pedido.estado == 'En Camino' %}active{% elif pedido.estado == 'Entregado' %}completed{% else %}pending{% endif %}">
+          <div class="timeline-icon">{% if pedido.estado == 'Entregado' %}✓{% elif pedido.estado == 'En Camino' %}🚚{% else %}4{% endif %}</div>
+          <div class="timeline-content">
+            <div class="timeline-title">En Camino</div>
+            <div class="timeline-description">
+              {% if pedido.estado == 'En Camino' %}
+                Tu pedido está en camino. {% if pedido.idRepartidor %}Repartidor: {{ pedido.idRepartidor.nombreRepartidor }}{% endif %}
+              {% elif pedido.estado == 'Entregado' %}
+                Tu pedido fue enviado y entregado exitosamente.
+              {% else %}
+                Tu pedido será enviado una vez esté listo.
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Paso 5: Entregado -->
+        <div class="timeline-item {% if pedido.estado == 'Entregado' %}completed{% else %}pending{% endif %}">
+          <div class="timeline-icon">{% if pedido.estado == 'Entregado' %}✓{% else %}5{% endif %}</div>
+          <div class="timeline-content">
+            <div class="timeline-title">Entregado</div>
+            <div class="timeline-description">
+              {% if pedido.estado == 'Entregado' %}
+                ¡Tu pedido ha sido entregado! Gracias por tu compra. 🎉
+              {% else %}
+                Tu pedido será entregado en la dirección registrada.
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

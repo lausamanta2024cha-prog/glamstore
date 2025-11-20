@@ -13,125 +13,124 @@
     }
 
     body {
-      font-family: 'Poppins', 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #fdfbff 0%, #fef9fc 50%, #fffafd 100%);
-      min-height: 100vh;
+      margin: 0;
+      font-family: 'Comic Neue', cursive, Arial, sans-serif;
+      background-color: #fffafc;
       display: flex;
     }
 
-    /* Sidebar - Lavanda muy suave */
+    /* Sidebar - Rosa pastel como tienda */
     .sidebar {
-      width: 260px;
-      background: linear-gradient(180deg, #e8dff5 0%, #dfd3e8 100%);
-      color: #6b5b7b;
-      padding: 2rem 0;
-      position: fixed;
+      background-color: #fce4ec;
+      padding: 2rem;
+      width: 240px;
       height: 100vh;
+      position: fixed;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      border-right: 2px solid #f8bbd0;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
       overflow-y: auto;
-      box-shadow: 4px 0 15px rgba(200, 190, 210, 0.15);
     }
 
     .logo-container {
       text-align: center;
-      margin-bottom: 3rem;
-      padding: 0 1.5rem;
+      margin-bottom: 2rem;
     }
 
     .logo-container img {
       width: 100px;
-      height: auto;
       border-radius: 50%;
-      border: 3px solid rgba(255, 255, 255, 0.5);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1rem;
     }
 
     .logo-container h2 {
-      margin-top: 1rem;
-      font-size: 1.3rem;
-      font-weight: 300;
-      color: #6b5b7b;
-      letter-spacing: 2px;
-      text-transform: uppercase;
+      color: #ad1457;
+      font-size: 1.8rem;
+      margin: 0.5rem 0;
+    }
+
+    .logo-container p {
+      color: #d81b60;
+      font-size: 1rem;
     }
 
     .nav-menu {
       list-style: none;
+      padding: 0;
+      width: 100%;
     }
 
     .nav-menu li {
-      margin: 0.2rem 0;
+      margin-bottom: 0.8rem;
     }
 
     .nav-menu a {
-      display: flex;
-      align-items: center;
-      padding: 1rem 1.5rem;
-      color: #6b5b7b;
+      display: block;
+      padding: 0.8rem 1.5rem;
       text-decoration: none;
-      transition: all 0.3s ease;
-      font-size: 0.95rem;
-      font-weight: 400;
+      color: #880e4f;
+      font-weight: bold;
+      border-radius: 25px;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     .nav-menu a:hover {
-      background: rgba(255, 255, 255, 0.3);
-      color: #5a4a6a;
+      background-color: #f8bbd0;
+      color: #fff;
     }
 
     .nav-menu a.active {
-      background: rgba(255, 255, 255, 0.4);
-      border-left: 3px solid #c5a3d9;
-      color: #5a4a6a;
+      background-color: #f48fb1;
+      color: #fff;
     }
 
     /* Main Content */
     .main-content {
-      margin-left: 260px;
-      flex: 1;
-      padding: 2.5rem;
+      margin-left: 240px;
+      padding: 2rem 5rem;
+      width: calc(100% - 240px - 10rem);
     }
 
     .header {
-      background: white;
-      padding: 2rem 2.5rem;
-      border-radius: 15px;
-      box-shadow: 0 2px 12px rgba(200, 190, 210, 0.1);
       margin-bottom: 2rem;
     }
 
     .header h1 {
-      color: #8b7a9b;
-      font-size: 1.8rem;
-      font-weight: 400;
-      letter-spacing: 0.5px;
+      font-size: 2.2rem;
+      color: #c2185b;
+      border-bottom: 3px solid #f48fb1;
+      padding-bottom: 0.5rem;
+      margin-bottom: 2rem;
     }
 
     .content-card {
-      background: white;
-      padding: 2.5rem;
+      background: #fff;
+      padding: 2rem;
       border-radius: 15px;
-      box-shadow: 0 2px 12px rgba(200, 190, 210, 0.1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
       margin-bottom: 2rem;
     }
 
     .content-card h2 {
-      color: #8b7a9b;
-      font-size: 1.4rem;
-      margin-bottom: 2rem;
-      border-bottom: 2px solid #f5f0fa;
+      color: #c2185b;
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #f48fb1;
       padding-bottom: 0.8rem;
-      font-weight: 400;
-      letter-spacing: 0.5px;
     }
 
     .content-card h3 {
-      color: #9d8aad;
+      color: #d81b60;
       font-size: 1.2rem;
-      margin-top: 2.5rem;
-      margin-bottom: 1.5rem;
-      border-bottom: 1px solid #faf7fc;
-      padding-bottom: 0.6rem;
-      font-weight: 400;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #f8bbd0;
+      padding-bottom: 0.5rem;
     }
 
     .info-row {
@@ -146,8 +145,8 @@
 
     .info-row strong {
       width: 150px;
-      color: #8b7a9b;
-      font-weight: 500;
+      color: #c2185b;
+      font-weight: bold;
     }
 
     .info-row span {
@@ -160,23 +159,23 @@
     }
 
     .pedidos-list li {
-      background: linear-gradient(135deg, #fdfbff 0%, #f9f5fc 100%);
+      background: #fff;
       padding: 1.2rem 1.5rem;
       margin-bottom: 1rem;
-      border-radius: 10px;
-      border-left: 3px solid #d4c5e0;
-      box-shadow: 0 2px 6px rgba(200, 190, 210, 0.08);
+      border-radius: 15px;
+      border-left: 4px solid #f48fb1;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
       transition: all 0.3s ease;
       color: #555;
     }
 
     .pedidos-list li:hover {
       transform: translateX(5px);
-      box-shadow: 0 4px 10px rgba(200, 190, 210, 0.15);
+      box-shadow: 0 6px 20px rgba(244, 143, 177, 0.2);
     }
 
     .pedidos-list li strong {
-      color: #8b7a9b;
+      color: #c2185b;
     }
 
     .alert-box {
@@ -275,37 +274,89 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #d4c5e0 0%, #c5b3d4 100%);
+      background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
       color: white;
       padding: 1rem 2rem;
       border: none;
-      border-radius: 8px;
-      font-weight: 500;
+      border-radius: 25px;
+      font-weight: bold;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(212, 197, 224, 0.25);
+      box-shadow: 0 4px 12px rgba(244, 143, 177, 0.3);
       width: 100%;
       font-size: 1rem;
-      font-family: 'Poppins', 'Segoe UI', sans-serif;
-      letter-spacing: 0.5px;
+      font-family: 'Comic Neue', cursive, Arial, sans-serif;
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(212, 197, 224, 0.35);
-      background: linear-gradient(135deg, #c5b3d4 0%, #b6a3c8 100%);
+      box-shadow: 0 6px 16px rgba(244, 143, 177, 0.4);
+      background: linear-gradient(135deg, #ec407a 0%, #d81b60 100%);
     }
 
     footer {
       text-align: center;
       padding: 1.5rem;
-      background: white;
+      background: #fff;
       border-radius: 15px;
-      box-shadow: 0 2px 12px rgba(200, 190, 210, 0.1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
       margin-top: 2rem;
       color: #999;
       font-size: 0.9rem;
     }
+    .btn-seguimiento {
+      background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
+      color: #fff;
+      padding: 0.5rem 1.2rem;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(244, 143, 177, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .btn-seguimiento:hover {
+      background: linear-gradient(135deg, #ec407a 0%, #d81b60 100%);
+      box-shadow: 0 6px 16px rgba(244, 143, 177, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-seguimiento:active {
+      transform: scale(0.95);
+    }
+
+/* Mensaje de alerta para invitados */
+.guest-alert {
+  background: linear-gradient(135deg, #fff9e6 0%, #fff3d6 100%);
+  padding: 1.5rem;
+  border-radius: 10px;
+  margin-top: 2rem;
+  border-left: 4px solid #f0ad4e;
+  box-shadow: 0 2px 8px rgba(240, 173, 78, 0.15);
+}
+
+.guest-alert h3 {
+  color: #d68910;
+  font-size: 1.1rem;
+  margin: 0 0 0.8rem 0;
+  font-weight: 600;
+}
+
+.guest-alert p {
+  color: #856404;
+  line-height: 1.6;
+  margin: 0 0 0.8rem 0;
+}
+
+.guest-alert p:last-child {
+  margin-bottom: 0;
+}
+
+.guest-alert strong {
+  color: #d68910;
+  font-weight: 600;
+}
+
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
@@ -314,24 +365,26 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="logo-container">
-      <img src="{% static 'img/logoglam.png' %}" alt="Glam Store Logo">
+      <img src="{% static 'img/logoglam.png' %}" alt="Glam Store Logo" class="logo">
       <h2>Glam Store</h2>
+      <p>Tu tienda de belleza</p>
     </div>
     <ul class="nav-menu">
-      <li><a href="{% url 'tienda' %}">Inicio</a></li>
       <li><a href="{% url 'tienda' %}">Tienda</a></li>
       <li><a href="{% url 'ver_carrito' %}">Carrito</a></li>
-      <li><a href="{% url 'perfil' %}" class="active">Mi Perfil</a></li>
-      {% if not sin_sesion %}
-      <li>
-        <a href="{% url 'logout' %}">
-          {% if tiene_usuario %}
-          Cerrar Sesión
-          {% else %}
-          Cerrar Sesión de Invitado
-          {% endif %}
-        </a>
-      </li>
+      
+      {% if sin_sesion %}
+        {# Usuario sin sesión - mostrar opciones de login/registro #}
+        <li><a href="{% url 'login' %}">Iniciar Sesión</a></li>
+        <li><a href="{% url 'registro' %}">Registrarse</a></li>
+      {% else %}
+        {# Usuario con sesión (registrado o invitado) #}
+        <li><a href="{% url 'perfil' %}" class="active">Mi Perfil</a></li>
+        {% if tiene_usuario %}
+          <li><a href="{% url 'logout' %}">Cerrar Sesión</a></li>
+        {% else %}
+          <li><a href="{% url 'logout' %}">Cerrar Sesión de Invitado</a></li>
+        {% endif %}
       {% endif %}
     </ul>
   </aside>
@@ -347,7 +400,7 @@
     <div class="content-card" style="text-align: center; padding: 3rem 2rem;">
       <h2 style="margin-bottom: 1.5rem;">Acceso al Perfil</h2>
       <p style="font-size: 1.1rem; color: #666; margin-bottom: 2rem;">
-        Para ver tu perfil, necesitas hacer un pedido, registrarte o iniciar sesión.
+        Para ver tu perfil, necesitas iniciar sesión o registrarte.
       </p>
       <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
         <a href="{% url 'tienda' %}"
@@ -364,6 +417,7 @@
         </a>
       </div>
     </div>
+    
     {% else %}
 
     <!-- Información Personal -->
@@ -386,14 +440,35 @@
         <span>{{ cliente.direccion }}</span>
       </div>
 
+      <!-- Mensaje para clientes invitados (sin usuario registrado) -->
+      {% if not tiene_usuario %}
+      <div class="guest-alert">
+        <h3>👋 ¡Hola, Usuario Invitado!</h3>
+        <p>
+          Te recordamos que para <strong>ver el seguimiento de tus pedidos</strong> necesitas iniciar sesión o crear una cuenta.
+        </p>
+        <p>
+          Puedes seguir comprando y ver el seguimiento después. ¡Tus pedidos estarán esperándote! 🛍️
+        </p>
+      </div>
+      {% endif %}
+
       <h3>Últimos Pedidos</h3>
       {% if pedidos %}
       <ul class="pedidos-list">
         {% for pedido in pedidos %}
-        <li>
-          <strong>Pedido #{{ pedido.idPedido }}</strong> —
-          {{ pedido.estado }} —
-          <strong>Total: ${{ pedido.total }}</strong>
+        <li style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+          <div>
+            <strong>Pedido #{{ pedido.idPedido }}</strong> —
+            {{ pedido.estado }} —
+            <strong>Total: ${{ pedido.total }}</strong>
+          </div>
+          {% if tiene_usuario %}
+          <!-- Botón de seguimiento solo para usuarios registrados -->
+          <a href="{% url 'ver_seguimiento' pedido.idPedido %}" class="btn-seguimiento">
+            Ver seguimiento
+          </a>
+          {% endif %}
         </li>
         {% endfor %}
       </ul>
@@ -402,7 +477,7 @@
       {% endif %}
     </div>
 
-    <!-- Crear Usuario (solo para invitados) -->
+    <!-- Crear Usuario (SOLO para clientes invitados que NO tienen usuario) -->
     {% if not tiene_usuario %}
     <div class="alert-box">
       <h2>Crea tu cuenta ahora</h2>
@@ -420,7 +495,6 @@
       <ul class="benefits-list">
         <li>Seguimiento en tiempo real de tus pedidos</li>
         <li>Historial completo de compras</li>
-        <li>Acceso desde cualquier dispositivo</li>
         <li>Gestión de tu información personal</li>
       </ul>
 
@@ -442,6 +516,7 @@
       </form>
     </div>
     {% endif %}
+
     {% endif %}
 
     <footer>

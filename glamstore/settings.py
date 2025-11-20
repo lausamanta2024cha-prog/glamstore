@@ -70,6 +70,7 @@ TEMPLATES = [
             os.path.join(BASE_DIR, 'core', 'Clientes', 'tiendas'),
             os.path.join(BASE_DIR, 'core', 'Clientes', 'seguimiento_pedidos'),
             os.path.join(BASE_DIR, 'core', 'Clientes', 'registrar_usuario'),
+            os.path.join(BASE_DIR, 'core', 'Clientes', 'pedido_confirmado'),
             os.path.join(BASE_DIR, 'core', 'Gestion_admin', 'Panel_admin'),
             os.path.join(BASE_DIR, 'core', 'Gestion_admin', 'Panel_distribuidores'),
             os.path.join(BASE_DIR, 'core', 'Gestion_admin', 'Panel_pedidos'),

@@ -636,8 +636,6 @@ def login_view(request):
             request.session['usuario_nombre'] = usuario['nombre']
             request.session['usuario_rol'] = usuario['rol']
 
-            messages.success(request, f"¡Bienvenida, {usuario['nombre']}!")
-
             if usuario['rol'] == 1:
                 return redirect('dashboard_admin')
             elif usuario['rol'] == 2:

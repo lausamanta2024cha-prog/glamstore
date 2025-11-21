@@ -32,4 +32,10 @@ class Producto(models.Model):
     def __str__(self):
         return self.nombreProducto
     
-  
+    @property
+    def precio_venta(self):
+        """Calcula el precio de venta (precio unitario + 30%)"""
+        from decimal import Decimal
+        if self.precio:
+            return self.precio * Decimal('1.30')
+        return 0

@@ -36,8 +36,20 @@ class MovimientoProducto(models.Model):
         return 0
 
     @property
-    def ganancia_estimada(self):
+    def precio_venta_recomendado(self):
+        """Calcula el precio de venta recomendado (precio unitario + 30%)"""
         if self.precio_unitario and self.precio_unitario > 0:
-            # Multiplicamos por Decimal para mantener la precisión
-            return self.precio_unitario * Decimal('0.30')
+            return self.precio_unitario * Decimal('1.30')
         return 0
+    
+    @property
+    def ganancia_por_unidad(self):
+        """Calcula la ganancia por unidad (precio venta - precio unitario)"""
+        if self.precio_unitario and self.precio_unitario > 0:
+            return self.precio_venta_recomendado - self.precio_unitario
+        return 0
+    
+    @property
+    def ganancia_estimada(self):
+        """Calcula la ganancia total (ganancia por unidad × cantidad)"""
+        return self.ganancia_por_unidad * Decimal(self.cantidad)

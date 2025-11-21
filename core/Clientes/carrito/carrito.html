@@ -353,7 +353,7 @@
             <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombreProducto }}" class="img-carrito">
           </td>
           <td class="col-envio">a calcular</td>
-          <td class="col-precio">${{ item.producto.precio }}</td>
+          <td class="col-precio">${{ item.producto.precio_venta|floatformat:2 }}</td>
           <td class="col-cantidad">
             <div class="controles-cantidad">
               <button type="button" class="btn-cantidad"

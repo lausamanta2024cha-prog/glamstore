@@ -576,16 +576,16 @@
             <div class="stat-label">Stock Actual</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number">${{ producto.precio }}</div>
-            <div class="stat-label">Precio Unitario</div>
+            <div class="stat-number">${{ producto.precio|floatformat:2 }}</div>
+            <div class="stat-label">Precio Costo</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="precio-venta">$0.00</div>
+            <div class="stat-label">Precio Venta (+ 30%)</div>
           </div>
           <div class="stat-card">
             <div class="stat-number">{{ movimientos|length }}</div>
             <div class="stat-label">Total Movimientos</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">${{ producto.precio|floatformat:2 }}</div>
-            <div class="stat-label">Precio Unitario</div>
           </div>
         </div>
       </div>
@@ -611,8 +611,9 @@
               <th>Tipo</th>
               <th>Cantidad</th>
               <th>Precio Unit.</th>
-              <th>Valor Movimiento</th>
-              <th>Ganancia Est.</th>
+              <th>Precio Venta</th>
+              <th>Ganancia/Unit.</th>
+              <th>Ganancia Total</th>
               <th>Stock Ant.</th>
               <th>Stock Nuevo</th>
               <th>Descripción</th>
@@ -636,9 +637,10 @@
                   <span class="movement-exit">-{{ movimiento.cantidad }}</span>
                 {% endif %}
               </td>
-              <td>${{ movimiento.precio_unitario }}</td>
-              <td><span class="movement-value">${{ movimiento.valor_movimiento|floatformat:2 }}</span></td>
-              <td><span class="profit-value">${{ movimiento.ganancia_estimada|floatformat:2 }}</span></td>
+              <td>${{ movimiento.precio_unitario|floatformat:2 }}</td>
+              <td><span class="profit-value">${{ movimiento.precio_venta_recomendado|floatformat:2 }}</span></td>
+              <td><span class="profit-value">${{ movimiento.ganancia_por_unidad|floatformat:2 }}</span></td>
+              <td><span class="profit-value"><strong>${{ movimiento.ganancia_estimada|floatformat:2 }}</strong></span></td>
               <td>{{ movimiento.stock_anterior }}</td>
               <td><strong>{{ movimiento.stock_nuevo }}</strong></td>
               <td>
@@ -732,6 +734,11 @@
       // Trigger change on load
       tipoAjusteSelect.dispatchEvent(new Event('change'));
     });
+
+    // Calcular precio de venta recomendado (+ 30%)
+    const precioCosto = {{ producto.precio|floatformat:2 }};
+    const precioVenta = (precioCosto * 1.30).toFixed(2);
+    document.getElementById('precio-venta').textContent = '$' + precioVenta;
   </script>
 </body>
 </html>

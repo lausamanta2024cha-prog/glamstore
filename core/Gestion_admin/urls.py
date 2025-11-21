@@ -8,6 +8,9 @@ urlpatterns = [
      path('', views.index, name='index'),
     path('dashboard/admin/', views.dashboard_admin_view, name='dashboard_admin'),
 
+    # API
+    path('api/subcategorias/<int:categoria_id>/', views.api_subcategorias_view, name='api_subcategorias'),
+
     # Paneles específicos
     path('admin/productos/', views.admin_productos_view, name='admin_productos'),
     path('admin/pedidos/', views.admin_pedidos_view, name='admin_pedidos'),
@@ -65,6 +68,7 @@ path("distribuidores/", views.lista_distribuidores_view, name="lista_distribuido
 
     # Panel Admin (perfil)
     path('admin/', views.lista_admin_view, name='lista_admin'), # Esta es la lista principal de administradores
+    path('admin/agregar/', views.admin_agregar_view, name='admin_agregar'),
     path('admin/detalle/<int:id>/', views.admin_detalle_view, name='admin_detalle'),
     path('admin/eliminar/<int:id>/', views.admin_eliminar_view, name='admin_eliminar'),
     path('logout/', views.logout_view, name='logout'), # Usamos tu vista personalizada y la nombramos 'logout'

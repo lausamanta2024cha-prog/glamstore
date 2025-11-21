@@ -6,7 +6,253 @@
   <title>Agregar Producto — Glam Store</title>
   <link rel="icon" href="{% static 'img/logoglam.png' %}">
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/admin_panel.css' %}">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Comic Neue', cursive, Arial, sans-serif;
+      background-color: #fffafc;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background-color: #fce4ec;
+      padding: 2rem;
+      width: 240px;
+      height: 100vh;
+      position: fixed;
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid #f8bbd0;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .sidebar-header h2 {
+      color: #ad1457;
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .sidebar-header p {
+      color: #d81b60;
+      font-size: 0.9rem;
+    }
+
+    .sidebar-user {
+      background-color: #fff;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      border: 2px solid #f8bbd0;
+    }
+
+    .sidebar-user p {
+      margin: 0.3rem 0;
+      color: #c2185b;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+
+    .sidebar-user .rol {
+      font-size: 0.85rem;
+      color: #d81b60;
+      font-weight: normal;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+    }
+
+    .sidebar a {
+      display: block;
+      margin: 0.5rem 0;
+      color: #880e4f;
+      text-decoration: none;
+      font-weight: bold;
+      padding: 0.8rem 1rem;
+      border-radius: 25px;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+      background-color: #f8bbd0;
+      color: #fff;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 2px solid #f8bbd0;
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: 240px;
+      padding: 2rem 5rem;
+      width: calc(100% - 240px - 10rem);
+      flex: 1;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+      font-size: 2.2rem;
+      color: #c2185b;
+      border-bottom: 3px solid #f48fb1;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Cards */
+    .card {
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    /* Forms */
+    .form-container {
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .form-help {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      border-radius: 5px;
+    }
+
+    .form-help p {
+      margin: 0;
+      color: #1565c0;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #c2185b;
+      font-weight: bold;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border: 2px solid #f8bbd0;
+      border-radius: 25px;
+      font-family: 'Comic Neue', cursive, Arial, sans-serif;
+      font-size: 1rem;
+      background: white;
+      color: #666;
+      transition: all 0.3s ease;
+    }
+
+    .form-group textarea {
+      border-radius: 15px;
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #f48fb1;
+      box-shadow: 0 0 0 3px rgba(244, 143, 177, 0.1);
+    }
+
+    .form-group small {
+      color: #999;
+      font-size: 0.8rem;
+      margin-top: 0.3rem;
+      display: block;
+    }
+
+    .required-field label::after {
+      content: ' *';
+      color: #f44336;
+    }
+
+    /* Form Actions */
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 2px solid #fce4ec;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.8rem 1.5rem;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+      font-family: 'Comic Neue', cursive, Arial, sans-serif;
+      font-size: 1rem;
+      display: inline-block;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(244, 143, 177, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(244, 143, 177, 0.4);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #c2185b;
+      border: 2px solid #f48fb1;
+    }
+
+    .btn-secondary:hover {
+      background: #fce4ec;
+    }
+  </style>
   <script>
     function loadSubcategorias() {
       const categoriaId = document.getElementById('idCategoria').value;
@@ -74,11 +320,6 @@
           </div>
           
           <div class="form-row">
-            <div class="form-group required-field">
-              <label>Stock</label>
-              <input type="number" name="stock" required min="0" placeholder="0">
-              <small>Cantidad inicial en inventario</small>
-            </div>
             <div class="form-group required-field">
               <label>Categoría</label>
               <select name="idCategoria" id="idCategoria" required onchange="loadSubcategorias()">

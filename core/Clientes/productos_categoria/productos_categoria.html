@@ -493,7 +493,7 @@
         <div class="product-info">
           <h3>{{ producto.nombreProducto }}</h3>
           <p class="descripcion">{{ producto.descripcion|truncatechars:60 }}</p>
-          <span class="product-price">${{ producto.precio }}</span>
+          <span class="product-price">${{ producto.precio_venta|floatformat:2 }}</span>
 
           {% if producto.disponible > 0 %}
           <form method="POST" action="{% url 'agregar_al_carrito' %}" class="form-agregar" data-ajax-form>

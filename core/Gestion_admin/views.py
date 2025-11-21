@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from datetime import datetime, timedelta
 from django.db.models import Sum
 from core.models.distribuidores import Distribuidor
@@ -155,17 +155,18 @@ def admin_agregar_view(request):
             return render(request, 'admin_agregar.html', {'error': 'Ya existe un usuario con este correo electrónico.'})
 
         try:
-            with transaction.atomic():
-                nuevo_admin = Usuario.objects.create(
-                    nombre=nombre,
-                    email=email,
-                    password=make_password(password),
-                    id_rol_id=1  # Asignar rol de Administrador
-                )
-                messages.success(request, f"Administrador '{nuevo_admin.nombre}' agregado exitosamente.")
-                return redirect('lista_admin')
+            from django.utils import timezone
+            nuevo_admin = Usuario.objects.create(
+                nombre=nombre,
+                email=email,
+                password=make_password(password),
+                id_rol=1,
+                fechaCreacion=timezone.now()
+            )
+            return redirect('lista_admin')
         except Exception as e:
-            messages.error(request, f"Error al crear el administrador: {e}")
+            print(f"Error al crear administrador: {str(e)}")
+            messages.error(request, f"Error al crear el administrador: {str(e)}")
             return render(request, 'admin_agregar.html')
 
     return render(request, 'admin_agregar.html')
@@ -316,7 +317,6 @@ def producto_agregar_view(request):
         nombre = request.POST.get('nombreProducto')
         descripcion = request.POST.get('descripcion')
         precio = request.POST.get('precio')
-        stock = request.POST.get('stock')
         id_categoria = request.POST.get('idCategoria')
         id_subcategoria = request.POST.get('idSubcategoria')
         imagen = request.FILES.get('imagen')
@@ -330,21 +330,12 @@ def producto_agregar_view(request):
             nombreProducto=nombre,
             descripcion=descripcion,
             precio=precio,
-            stock=stock,
+            stock=0,
             idCategoria=categoria,
             idSubcategoria=subcategoria,
             imagen=imagen
         )
         
-        MovimientoProducto.objects.create(
-            producto=nuevo_producto,
-            tipo_movimiento='ENTRADA_INICIAL',
-            precio_unitario=precio,
-            cantidad=stock,
-            stock_anterior=0,
-            stock_nuevo=stock,
-            descripcion='Creación del producto'
-        )
         return redirect('lista_productos')
 
     categorias = Categoria.objects.prefetch_related('subcategoria_set').all()
@@ -381,7 +372,6 @@ def producto_eliminar_view(request, id):
     if request.method == 'POST':
         producto = get_object_or_404(Producto, idProducto=id)
         producto.delete()
-        messages.success(request, f"El producto '{producto.nombreProducto}' ha sido eliminado.")
     return redirect('lista_productos')
 
 def movimientos_producto_view(request, id):
@@ -808,6 +798,22 @@ def logout_view(request):
     response['Expires'] = '0'
     return response
 
+# API para cargar subcategorías dinámicamente
+def api_subcategorias_view(request, categoria_id):
+    """Devuelve las subcategorías de una categoría en formato JSON"""
+    try:
+        subcategorias = Subcategoria.objects.filter(
+            categoria_id=categoria_id
+        ).values('idSubcategoria', 'nombreSubcategoria')
+        
+        data = [
+            {'id': sub['idSubcategoria'], 'nombre': sub['nombreSubcategoria']}
+            for sub in subcategorias
+        ]
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
 # Panel Categorías
 def lista_categorias_view(request):
     categorias = Categoria.objects.annotate(num_productos=Count('producto')).order_by('nombreCategoria')
@@ -857,8 +863,18 @@ def subcategoria_agregar_view(request):
     if request.method == 'POST':
         nombre = request.POST.get('nombreSubcategoria')
         id_categoria = request.POST.get('idCategoria')
+        
+        if not nombre or not id_categoria:
+            messages.error(request, "El nombre y la categoría son obligatorios.")
+            categorias = Categoria.objects.all()
+            return render(request, 'subcategoria_form.html', {'categorias': categorias, 'action': 'Agregar'})
+        
         categoria_obj = get_object_or_404(Categoria, idCategoria=id_categoria)
-        Subcategoria.objects.create(nombreSubcategoria=nombre, categoria=categoria_obj)
+        nueva_subcategoria = Subcategoria.objects.create(
+            nombreSubcategoria=nombre, 
+            categoria=categoria_obj
+        )
+        messages.success(request, f"Subcategoría '{nombre}' creada exitosamente.")
         return redirect('lista_subcategorias')
     categorias = Categoria.objects.all()
     return render(request, 'subcategoria_form.html', {'categorias': categorias, 'action': 'Agregar'})
@@ -866,10 +882,18 @@ def subcategoria_agregar_view(request):
 def subcategoria_editar_view(request, id):
     subcategoria = get_object_or_404(Subcategoria, idSubcategoria=id)
     if request.method == 'POST':
-        subcategoria.nombreSubcategoria = request.POST.get('nombreSubcategoria')
+        nombre = request.POST.get('nombreSubcategoria')
         id_categoria = request.POST.get('idCategoria')
+        
+        if not nombre or not id_categoria:
+            messages.error(request, "El nombre y la categoría son obligatorios.")
+            categorias = Categoria.objects.all()
+            return render(request, 'subcategoria_form.html', {'form_object': subcategoria, 'categorias': categorias, 'action': 'Editar'})
+        
+        subcategoria.nombreSubcategoria = nombre
         subcategoria.categoria = get_object_or_404(Categoria, idCategoria=id_categoria)
         subcategoria.save()
+        messages.success(request, f"Subcategoría '{nombre}' actualizada exitosamente.")
         return redirect('lista_subcategorias')
     categorias = Categoria.objects.all()
     return render(request, 'subcategoria_form.html', {'form_object': subcategoria, 'categorias': categorias, 'action': 'Editar'})
@@ -877,7 +901,9 @@ def subcategoria_editar_view(request, id):
 def subcategoria_eliminar_view(request, id):
     if request.method == 'POST':
         subcategoria = get_object_or_404(Subcategoria, idSubcategoria=id)
+        nombre = subcategoria.nombreSubcategoria
         subcategoria.delete()
+        messages.success(request, f"Subcategoría '{nombre}' eliminada exitosamente.")
     return redirect('lista_subcategorias')
 
 def notificaciones_view(request):

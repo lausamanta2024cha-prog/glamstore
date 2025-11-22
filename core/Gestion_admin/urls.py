@@ -25,19 +25,11 @@ urlpatterns = [
     path("clientes/editar/<int:id>/", views.cliente_editar_view, name="cliente_editar"),
     path("clientes/eliminar/<int:id>/", views.cliente_eliminar_view, name="cliente_eliminar"),
 
-
-
-
     # Panel Distribuidores
-path("distribuidores/", views.lista_distribuidores_view, name="lista_distribuidores"),
+    path("distribuidores/", views.lista_distribuidores_view, name="lista_distribuidores"),
     path("distribuidores/agregar/", views.distribuidor_agregar_view, name="agregar_distribuidor"),
     path("distribuidores/editar/<int:id>/", views.distribuidor_editar_view, name="editar_distribuidor"),
     path("distribuidores/eliminar/<int:id>/", views.distribuidor_eliminar_view, name="eliminar_distribuidor"),
-
-
-
-    
-
 
     # Panel Reabastecimiento
     path("reabastecimiento/", views.reabastecimiento_view, name="reabastecimiento"),

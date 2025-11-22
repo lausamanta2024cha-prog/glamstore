@@ -7,337 +7,71 @@
     <link rel="icon" href="{% static 'img/logoglam.png' %}">
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        font-family: 'Comic Neue', cursive, Arial, sans-serif;
-        background-color: #fffafc;
-        display: flex;
-        min-height: 100vh;
-      }
-
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { margin: 0; font-family: 'Comic Neue', cursive, Arial, sans-serif; background-color: #fffafc; display: flex; min-height: 100vh; }
+      
       /* Sidebar */
-      .sidebar {
-        background-color: #fce4ec;
-        padding: 2rem;
-        width: 240px;
-        height: 100vh;
-        position: fixed;
-        display: flex;
-        flex-direction: column;
-        border-right: 2px solid #f8bbd0;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
-        overflow-y: auto;
-      }
-
-      .sidebar-header {
-        text-align: center;
-        margin-bottom: 2rem;
-      }
-
-      .sidebar-header h2 {
-        color: #ad1457;
-        font-size: 1.8rem;
-        margin-bottom: 0.5rem;
-      }
-
-      .sidebar-header p {
-        color: #d81b60;
-        font-size: 0.9rem;
-      }
-
-      .sidebar-user {
-        background-color: #fff;
-        padding: 1rem;
-        border-radius: 10px;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-        text-align: center;
-        border: 2px solid #f8bbd0;
-      }
-
-      .sidebar-user p {
-        margin: 0.3rem 0;
-        color: #c2185b;
-        font-weight: bold;
-        font-size: 1rem;
-      }
-
-      .sidebar-user .rol {
-        font-size: 0.85rem;
-        color: #d81b60;
-        font-weight: normal;
-      }
-
-      .sidebar-nav {
-        flex: 1;
-      }
-
-      .sidebar a {
-        display: block;
-        margin: 0.5rem 0;
-        color: #880e4f;
-        text-decoration: none;
-        font-weight: bold;
-        padding: 0.8rem 1rem;
-        border-radius: 25px;
-        transition: all 0.3s ease;
-      }
-
-      .sidebar a:hover,
-      .sidebar a.active {
-        background-color: #f8bbd0;
-        color: #fff;
-      }
-
-      .sidebar-footer {
-        margin-top: auto;
-        padding-top: 1rem;
-        border-top: 2px solid #f8bbd0;
-      }
-
+      .sidebar { background-color: #fce4ec; padding: 2rem; width: 240px; height: 100vh; position: fixed; display: flex; flex-direction: column; border-right: 2px solid #f8bbd0; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); z-index: 1000; overflow-y: auto; }
+      .sidebar-header { text-align: center; margin-bottom: 2rem; }
+      .sidebar-header h2 { color: #ad1457; font-size: 1.8rem; margin-bottom: 0.5rem; }
+      .sidebar-header p { color: #d81b60; font-size: 0.9rem; }
+      .sidebar-user { background-color: #fff; padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05); text-align: center; border: 2px solid #f8bbd0; }
+      .sidebar-user p { margin: 0.3rem 0; color: #c2185b; font-weight: bold; font-size: 1rem; }
+      .sidebar-user .rol { font-size: 0.85rem; color: #d81b60; font-weight: normal; }
+      .sidebar-nav { flex: 1; }
+      .sidebar a { display: block; margin: 0.5rem 0; color: #880e4f; text-decoration: none; font-weight: bold; padding: 0.8rem 1rem; border-radius: 25px; transition: all 0.3s ease; }
+      .sidebar a:hover, .sidebar a.active { background-color: #f8bbd0; color: #fff; }
+      .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 2px solid #f8bbd0; }
+      
       /* Main Content */
-      .main-content {
-        margin-left: 240px;
-        padding: 2rem 5rem;
-        width: calc(100% - 240px - 10rem);
-        flex: 1;
-      }
-
-      .page-header {
-        margin-bottom: 2rem;
-      }
-
-      .page-header h1 {
-        font-size: 2.2rem;
-        color: #c2185b;
-        border-bottom: 3px solid #f48fb1;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1rem;
-      }
-
+      .main-content { margin-left: 240px; padding: 2rem 5rem; width: calc(100% - 240px - 10rem); flex: 1; }
+      .page-header { margin-bottom: 2rem; }
+      .page-header h1 { font-size: 2.2rem; color: #c2185b; border-bottom: 3px solid #f48fb1; padding-bottom: 0.5rem; margin-bottom: 1rem; }
+      
       /* Cards */
-      .card {
-        background: #fff;
-        border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
-        margin-bottom: 2rem;
-        overflow: hidden;
-        transition: all 0.3s ease;
-      }
-
-      .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 20px rgba(244, 143, 177, 0.2);
-      }
-
+      .card { background: #fff; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07); margin-bottom: 2rem; overflow: hidden; transition: all 0.3s ease; }
+      .card:hover { transform: translateY(-5px); box-shadow: 0 6px 20px rgba(244, 143, 177, 0.2); }
+      
       /* Forms */
-      .form-container {
-        padding: 2rem;
-        max-width: 800px;
-      }
-
-      .form-help {
-        background: #e3f2fd;
-        border-left: 4px solid #2196f3;
-        padding: 1rem;
-        margin-bottom: 2rem;
-        border-radius: 5px;
-      }
-
-      .form-help p {
-        margin: 0;
-        color: #1565c0;
-      }
-
-      .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-        margin-bottom: 1.5rem;
-      }
-
-      .form-group {
-        margin-bottom: 1.5rem;
-      }
-
-      .form-group label {
-        display: block;
-        margin-bottom: 0.5rem;
-        color: #c2185b;
-        font-weight: bold;
-      }
-
-      .form-group input,
-      .form-group select,
-      .form-group textarea {
-        width: 100%;
-        padding: 0.8rem 1rem;
-        border: 2px solid #f8bbd0;
-        border-radius: 25px;
-        font-family: 'Comic Neue', cursive, Arial, sans-serif;
-        font-size: 1rem;
-        background: white;
-        color: #666;
-        transition: all 0.3s ease;
-      }
-
-      .form-group textarea {
-        border-radius: 15px;
-        resize: vertical;
-        min-height: 100px;
-      }
-
-      .form-group input:focus,
-      .form-group select:focus,
-      .form-group textarea:focus {
-        outline: none;
-        border-color: #f48fb1;
-        box-shadow: 0 0 0 3px rgba(244, 143, 177, 0.1);
-      }
-
-      .form-group small {
-        color: #999;
-        font-size: 0.8rem;
-        margin-top: 0.3rem;
-        display: block;
-      }
-
-      .required-field label::after {
-        content: ' *';
-        color: #f44336;
-      }
-
-      /* Readonly Field */
-      .readonly-field {
-        background-color: #f5f5f5 !important;
-        color: #666 !important;
-        cursor: not-allowed !important;
-        border-color: #ddd !important;
-      }
-
-      .readonly-field:focus {
-        border-color: #ddd !important;
-        box-shadow: none !important;
-      }
-
-      /* Current Image Display */
-      .current-image {
-        margin-bottom: 1rem;
-      }
-
-      .current-image p {
-        color: #c2185b;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-      }
-
-      .current-image img {
-        max-width: 200px;
-        max-height: 200px;
-        border-radius: 10px;
-        border: 3px solid #f8bbd0;
-        object-fit: cover;
-      }
-
+      .form-container { padding: 2rem; max-width: 800px; }
+      .form-help { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 1rem; margin-bottom: 2rem; border-radius: 5px; }
+      .form-help p { margin: 0; color: #1565c0; }
+      .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+      .form-group { margin-bottom: 1.5rem; }
+      .form-group label { display: block; margin-bottom: 0.5rem; color: #c2185b; font-weight: bold; }
+      .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.8rem 1rem; border: 2px solid #f8bbd0; border-radius: 25px; font-family: 'Comic Neue', cursive, Arial, sans-serif; font-size: 1rem; background: white; color: #666; transition: all 0.3s ease; }
+      .form-group textarea { border-radius: 15px; resize: vertical; min-height: 100px; }
+      .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #f48fb1; box-shadow: 0 0 0 3px rgba(244, 143, 177, 0.1); }
+      .form-group small { color: #999; font-size: 0.8rem; margin-top: 0.3rem; display: block; }
+      .required-field label::after { content: ' *'; color: #f44336; }
+      
+      /* Info Section */
+      .info-section { background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; }
+      .info-section h3 { color: #ad1457; margin-bottom: 1rem; font-size: 1.2rem; }
+      .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+      .info-item { background: white; padding: 1rem; border-radius: 8px; }
+      .info-item label { display: block; color: #999; font-size: 0.85rem; margin-bottom: 0.3rem; }
+      .info-item .value { color: #c2185b; font-weight: bold; font-size: 1.1rem; }
+      
       /* Form Actions */
-      .form-actions {
-        display: flex;
-        gap: 1rem;
-        margin-top: 2rem;
-        padding-top: 2rem;
-        border-top: 2px solid #fce4ec;
-      }
-
-      /* Buttons */
-      .btn {
-        padding: 0.8rem 1.5rem;
-        border-radius: 25px;
-        text-decoration: none;
-        font-weight: bold;
-        transition: all 0.3s ease;
-        border: none;
-        cursor: pointer;
-        font-family: 'Comic Neue', cursive, Arial, sans-serif;
-        font-size: 1rem;
-        display: inline-block;
-      }
-
-      .btn-primary {
-        background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
-        color: white;
-        box-shadow: 0 4px 12px rgba(244, 143, 177, 0.3);
-      }
-
-      .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(244, 143, 177, 0.4);
-        background: linear-gradient(135deg, #ec407a 0%, #d81b60 100%);
-      }
-
-      .btn-secondary {
-        background: white;
-        color: #c2185b;
-        border: 2px solid #f48fb1;
-      }
-
-      .btn-secondary:hover {
-        background: #fce4ec;
-      }
-
-      /* Responsive Design */
-      @media (max-width: 768px) {
-        .sidebar {
-          width: 100%;
-          height: auto;
-          position: relative;
-        }
-
-        .main-content {
-          margin-left: 0;
-          padding: 2rem;
-          width: 100%;
-        }
-
-        .form-row {
-          grid-template-columns: 1fr;
-        }
-
-        .form-container {
-          padding: 1.5rem;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .form-actions {
-          flex-direction: column;
-        }
-
-        .btn {
-          text-align: center;
-        }
-      }
+      .form-actions { display: flex; gap: 1rem; margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #fce4ec; justify-content: flex-start; }
+      .btn { padding: 0.8rem 1.5rem; border-radius: 25px; text-decoration: none; font-weight: bold; transition: all 0.3s ease; border: none; cursor: pointer; font-family: 'Comic Neue', cursive, Arial, sans-serif; font-size: 1rem; display: inline-block; }
+      .btn-primary { background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%); color: white; box-shadow: 0 4px 12px rgba(244, 143, 177, 0.3); }
+      .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(244, 143, 177, 0.4); }
+      .btn-secondary { background: white; color: #c2185b; border: 2px solid #f48fb1; }
+      .btn-secondary:hover { background: #fce4ec; transform: translateY(-2px); }
+      
+      @media (max-width: 768px) { .sidebar { width: 100%; height: auto; position: relative; } .main-content { margin-left: 0; padding: 2rem; width: 100%; } .form-row { grid-template-columns: 1fr; } .info-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
   <div class="sidebar">
-    <div class="sidebar-header">
-      <h2>Admin Glam</h2>
-      <p>Panel de Control</p>
-    </div>
-    <div class="sidebar-user">
-      <p>{{ request.session.usuario_nombre }}</p>
-      <p class="rol">Administrador</p>
-    </div>
+    <div class="sidebar-header"><h2>Admin Glam</h2><p>Panel de Control</p></div>
+    <div class="sidebar-user"><p>{{ request.session.usuario_nombre }}</p><p class="rol">Administrador</p></div>
     <div class="sidebar-nav">
       <a href="{% url 'dashboard_admin' %}">Dashboard</a>
       <a href="{% url 'lista_admin' %}">Mi Perfil</a>
+      <a href="{% url 'notificaciones' %}">Notificaciones</a>
       <a href="{% url 'lista_clientes' %}">Clientes</a>
       <a href="{% url 'lista_distribuidores' %}">Distribuidores</a>
       <a href="{% url 'lista_pedidos' %}" class="active">Pedidos</a>
@@ -346,75 +80,120 @@
       <a href="{% url 'lista_categorias' %}">Categorías</a>
       <a href="{% url 'lista_subcategorias' %}">Subcategorías</a>
     </div>
-    <div class="sidebar-footer">
-      <a href="{% url 'logout' %}">Cerrar Sesión</a>
-    </div>
+    <div class="sidebar-footer"><a href="{% url 'logout' %}">Cerrar Sesión</a></div>
   </div>
   
   <div class="main-content">
-    <div class="page-header">
-      <h1>Editar Pedido #{{ pedido.idPedido }}</h1>
-    </div>
+    <div class="page-header"><h1>Editar Pedido #{{ pedido.idPedido }}</h1></div>
     
-    <div class="content-container">
-      <div class="card">
-        <div class="card-header">
-          <h2>Editar Información del Pedido</h2>
-        </div>
-        <div class="card-body">
-          <div class="form-container">
-            <form method="post">
-              {% csrf_token %}
-              
-              <div class="form-group">
-                <label>Cliente</label>
-                <input type="text" value="{{ pedido.idCliente.nombre }} - {{ pedido.idCliente.email }}" readonly class="readonly-field">
-              </div>
-              
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="total">Total del Pedido</label>
-                  <input type="number" id="total" name="total" value="{{ pedido.total }}" step="0.01" min="0" required>
-                </div>
-                <div class="form-group">
-                  <label for="fecha_creacion">Fecha y Hora del Pedido</label>
-                  <input type="datetime-local" id="fecha_creacion" name="fecha_creacion" 
-                         value="{{ pedido.fechaCreacion|date:'Y-m-d\TH:i' }}" required>
-                </div>
-              </div>
-              
-              <div class="form-group required-field">
-                <label for="estado">Estado del Pago</label>
-                <select id="estado" name="estado" required>
-                  <option value="Pago Parcial" {% if pedido.estado == 'Pago Parcial' %}selected{% endif %}>Pago Parcial</option>
-                  <option value="Pago Completo" {% if pedido.estado == 'Pago Completo' %}selected{% endif %}>Pago Completo</option>
-                </select>
-              </div>
-              
-              <div class="form-group">
-                <label for="observaciones">Observaciones</label>
-                <textarea id="observaciones" name="observaciones" placeholder="Notas adicionales sobre el pedido...">{{ pedido.observaciones }}</textarea>
-              </div>
-              
-              <div class="form-group">
-                <label for="idRepartidor">Repartidor Asignado</label>
-                <select id="idRepartidor" name="idRepartidor">
-                  <option value="">-- Sin Asignar --</option>
-                  {% for repartidor in repartidores %}
-                    <option value="{{ repartidor.idRepartidor }}" {% if pedido.idRepartidor.idRepartidor == repartidor.idRepartidor %}selected{% endif %}>
-                      {{ repartidor.nombreRepartidor }}
-                    </option>
-                  {% endfor %}
-                </select>
-              </div>
-
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                <a href="{% url 'lista_pedidos' %}" class="btn btn-secondary">Volver a Lista</a>
-              </div>
-            </form>
+    <div class="card">
+      <div class="form-container">
+        <div class="info-section">
+          <h3>Información del Cliente</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Cliente</label>
+              <div class="value">{{ pedido.idCliente.nombre }}</div>
+            </div>
+            <div class="info-item">
+              <label>Email</label>
+              <div class="value">{{ pedido.idCliente.email }}</div>
+            </div>
+            <div class="info-item">
+              <label>Teléfono</label>
+              <div class="value">{{ pedido.idCliente.telefono|default:"No registrado" }}</div>
+            </div>
+            <div class="info-item">
+              <label>Dirección</label>
+              <div class="value">{{ pedido.idCliente.direccion|default:"No registrada" }}</div>
+            </div>
           </div>
         </div>
+        
+        <div class="info-section" style="background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);">
+          <h3>Estado Actual del Pedido</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Estado de Pago</label>
+              <div class="value">{{ pedido.estado_pago }}</div>
+            </div>
+            <div class="info-item">
+              <label>Estado del Pedido</label>
+              <div class="value">{{ pedido.estado_pedido }}</div>
+            </div>
+            <div class="info-item">
+              <label>Repartidor Actual</label>
+              <div class="value">{{ pedido.idRepartidor.nombreRepartidor|default:"Sin asignar" }}</div>
+            </div>
+            <div class="info-item">
+              <label>Total</label>
+              <div class="value">${{ pedido.total }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-help">
+          <p>Modifica los datos del pedido. Los campos marcados con * son obligatorios.</p>
+        </div>
+        
+        <form method="post" action="{% url 'editar_pedido' pedido.idPedido %}">
+          {% csrf_token %}
+          
+          <div class="form-row">
+            <div class="form-group required-field">
+              <label for="total">Total del Pedido</label>
+              <input type="number" id="total" name="total" value="{{ pedido.total }}" step="0.01" min="0" required>
+              <small>Monto total en dólares</small>
+            </div>
+            <div class="form-group required-field">
+              <label for="fecha_creacion">Fecha y Hora</label>
+              <input type="datetime-local" id="fecha_creacion" name="fecha_creacion" 
+                     value="{{ pedido.fechaCreacion|date:'Y-m-d\TH:i' }}" required>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group required-field">
+              <label for="estado_pago">Estado del Pago</label>
+              <select id="estado_pago" name="estado_pago" required>
+                <option value="Pago Completo" {% if pedido.estado_pago == 'Pago Completo' %}selected{% endif %}>Pago Completo</option>
+                <option value="Pago Parcial" {% if pedido.estado_pago == 'Pago Parcial' %}selected{% endif %}>Pago Parcial</option>
+              </select>
+              <small>Estado del pago del cliente</small>
+            </div>
+            <div class="form-group required-field">
+              <label for="estado_pedido">Estado del Pedido</label>
+              <select id="estado_pedido" name="estado_pedido" required>
+                <option value="Pendiente" {% if pedido.estado_pedido == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="Confirmado" {% if pedido.estado_pedido == 'Confirmado' %}selected{% endif %}>Confirmado</option>
+                <option value="En Camino" {% if pedido.estado_pedido == 'En Camino' %}selected{% endif %}>En Camino</option>
+                <option value="Entregado" {% if pedido.estado_pedido == 'Entregado' %}selected{% endif %}>Entregado</option>
+                <option value="Completado" {% if pedido.estado_pedido == 'Completado' %}selected{% endif %}>Completado</option>
+                <option value="Problema en Entrega" {% if pedido.estado_pedido == 'Problema en Entrega' %}selected{% endif %}>Problema en Entrega</option>
+              </select>
+              <small>Estado del proceso de entrega</small>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="repartidor">Repartidor Asignado</label>
+            <select id="repartidor" name="repartidor">
+              <option value="">Sin asignar</option>
+              {% for repartidor in repartidores %}
+              <option value="{{ repartidor.idRepartidor }}" 
+                      {% if pedido.idRepartidor and pedido.idRepartidor.idRepartidor == repartidor.idRepartidor %}selected{% endif %}>
+                {{ repartidor.nombreRepartidor }} - {{ repartidor.telefono }}
+              </option>
+              {% endfor %}
+            </select>
+            <small>Selecciona el repartidor para este pedido</small>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            <a href="{% url 'lista_pedidos' %}" class="btn btn-secondary">Cancelar</a>
+          </div>
+        </form>
       </div>
     </div>
   </div>

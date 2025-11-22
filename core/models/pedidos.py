@@ -2,9 +2,24 @@ from django.db import models
 
 
 class Pedido(models.Model):
+    ESTADO_PAGO_CHOICES = [
+        ('Pago Completo', 'Pago Completo'),
+        ('Pago Parcial', 'Pago Parcial'),
+    ]
+    
+    ESTADO_PEDIDO_CHOICES = [
+        ('Confirmado', 'Confirmado'),
+        ('En Camino', 'En Camino'),
+        ('Entregado', 'Entregado'),
+        ('Completado', 'Completado'),
+        ('Problema en Entrega', 'Problema en Entrega'),
+    ]
+    
     idPedido = models.AutoField(primary_key=True)
-    fechaCreacion = models.DateTimeField(db_column='fechaCreacion') # Asumiendo que la columna se llama así
-    estado = models.CharField(max_length=20)  # Estado del pedido: En Camino, Entregado, etc.
+    fechaCreacion = models.DateTimeField(db_column='fechaCreacion')
+    estado = models.CharField(max_length=20, default='Confirmado')  # Mantener para compatibilidad
+    estado_pago = models.CharField(max_length=20, choices=ESTADO_PAGO_CHOICES, default='Pago Completo')
+    estado_pedido = models.CharField(max_length=20, choices=ESTADO_PEDIDO_CHOICES, default='Confirmado')
     total = models.DecimalField(max_digits=12, decimal_places=2)
     idCliente = models.ForeignKey('core.Cliente', on_delete=models.CASCADE, db_column='idCliente')
     idRepartidor = models.ForeignKey(
@@ -15,45 +30,24 @@ class Pedido(models.Model):
         db_column='idRepartidor'
     )
     
-    # Método para obtener el estado de pago
+    # Método para obtener el estado de pago (compatibilidad)
     def get_estado_pago(self):
         """
-        Determina el estado de pago basándose en el estado actual y la lógica del negocio.
+        Retorna el estado de pago del pedido.
         """
-        if self.estado == 'Pago Parcial':
-            return 'Pago Parcial'
-        elif self.estado in ['Entregado', 'Completado']:
-            # Cuando se entrega, el pago siempre se completa (se cobró el envío)
-            return 'Pago Completo'
-        else:
-            # Para otros estados, asumir pago completo
-            return 'Pago Completo'
+        return self.estado_pago
     
-    # Método para obtener el estado limpio del pedido
+    # Método para obtener el estado del pedido (compatibilidad)
     def get_estado_pedido(self):
         """
-        Obtiene el estado del pedido para mostrar al cliente.
+        Retorna el estado del pedido.
         """
-        if self.estado == 'Pago Parcial' and self.idRepartidor:
-            # Si tiene repartidor asignado, está en camino
-            return 'En Camino'
-        elif self.estado == 'Pago Parcial':
-            # Si no tiene repartidor, está confirmado
-            return 'Confirmado'
-        elif self.estado == 'Pago Completo':
-            # Si pagó completo pero no tiene repartidor, está confirmado
-            if self.idRepartidor:
-                return 'En Camino'
-            else:
-                return 'Confirmado'
-        else:
-            # Para otros estados, devolver tal como está
-            return self.estado
+        return self.estado_pedido
 
 
     class Meta:
         db_table = 'pedidos'
-        managed = False
+        managed = True
         app_label = 'core'
 
     def __str__(self):
@@ -78,7 +72,7 @@ class DetallePedido(models.Model):
 
     class Meta:
         db_table = 'detallepedido'
-        managed = False
+        managed = True
         app_label = 'core'
 
     def __str__(self):
@@ -100,7 +94,7 @@ class PedidoProducto(models.Model):
 
     class Meta:
         db_table = 'pedidoproducto'
-        managed = False
+        managed = True
         app_label = 'core'
         unique_together = ('idPedido', 'idProducto')
 

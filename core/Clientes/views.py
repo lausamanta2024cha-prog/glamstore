@@ -122,14 +122,14 @@ def perfil(request):
         # Si ya pasó la fecha de entrega, marcar como entregado
         if ahora >= fecha_entrega:
             # Al entregar, el pago se completa automáticamente (se cobró el envío)
-            pedido.estado = 'Entregado'
+            pedido.estado_pedido = 'Entregado'
             pedido.save()
     
     # Obtener los pedidos del cliente determinado
     pedidos = Pedido.objects.filter(idCliente=cliente.idCliente).order_by('-fechaCreacion')
     
     # Verificar si hay pedidos entregados sin confirmar
-    pedidos_entregados_sin_confirmar = pedidos.filter(estado='Entregado')
+    pedidos_entregados_sin_confirmar = pedidos.filter(estado_pedido='Entregado')
 
     context = {
         'cliente': cliente,
@@ -1129,7 +1129,7 @@ def confirmar_recepcion_pedido(request, idPedido):
         
         if confirmacion == 'si':
             # Cliente confirma que recibió el pedido
-            pedido.estado = 'Pedido Finalizado'
+            pedido.estado_pedido = 'Completado'
             pedido.save()
             messages.success(request, f"Gracias por confirmar. El pedido #{pedido.idPedido} ha sido finalizado exitosamente.")
         elif confirmacion == 'no':
@@ -1175,7 +1175,7 @@ def reportar_problema_entrega(request, idPedido):
             return render(request, 'reportar_problema.html', {'pedido': pedido})
         
         # Cambiar estado del pedido
-        pedido.estado = 'Problema en Entrega'
+        pedido.estado_pedido = 'Problema en Entrega'
         pedido.save()
         
         # Crear notificación

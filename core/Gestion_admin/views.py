@@ -588,23 +588,61 @@ def pedido_agregar_view(request):
 
 def pedido_editar_view(request, id):
     pedido = get_object_or_404(Pedido, idPedido=id)
-    repartidores_disponibles = Repartidor.objects.filter(estado_turno='Disponible')
+    repartidores_disponibles = Repartidor.objects.all()
 
     if request.method == 'POST':
-        # Comprobar si se está asignando un repartidor
-        if 'asignar_repartidor' in request.POST:
-            repartidor_id = request.POST.get('repartidor_id')
-            repartidor_a_asignar = get_object_or_404(Repartidor, idRepartidor=repartidor_id)
-            pedido.idRepartidor = repartidor_a_asignar
+        try:
+            # Obtener datos del formulario
+            estado_pago = request.POST.get('estado_pago')
+            estado_pedido = request.POST.get('estado_pedido')
+            repartidor_id = request.POST.get('repartidor')
+            total = request.POST.get('total')
+            fecha_creacion = request.POST.get('fecha_creacion')
+            
+            # Actualizar total si se proporcionó
+            if total:
+                pedido.total = float(total)
+            
+            # Actualizar fecha si se proporcionó
+            if fecha_creacion:
+                from datetime import datetime
+                pedido.fechaCreacion = datetime.fromisoformat(fecha_creacion.replace('T', ' '))
+            
+            # Actualizar estados de forma independiente
+            if estado_pago:
+                pedido.estado_pago = estado_pago
+            
+            if estado_pedido:
+                pedido.estado_pedido = estado_pedido
+            
+            # Asignar o desasignar repartidor
+            if repartidor_id:
+                repartidor = get_object_or_404(Repartidor, idRepartidor=repartidor_id)
+                pedido.idRepartidor = repartidor
+                # Cambiar estado del repartidor a "En Ruta" si se asigna
+                repartidor.estado_turno = 'En Ruta'
+                repartidor.save()
+            else:
+                # Si se desasigna el repartidor
+                if pedido.idRepartidor:
+                    repartidor_anterior = pedido.idRepartidor
+                    repartidor_anterior.estado_turno = 'Disponible'
+                    repartidor_anterior.save()
+                pedido.idRepartidor = None
+            
             pedido.save()
-            # Opcional: Cambiar estado del repartidor a "En Ruta"
-            # repartidor_a_asignar.estado_turno = 'En Ruta'
-            # repartidor_a_asignar.save()
-        else: # Si no, se está actualizando el estado del pedido
-            pedido.estado = request.POST.get('estado')
-            pedido.save()
-        return redirect('editar_pedido', id=id) # Recargar la misma página
-    return render(request, 'pedidos_editar.html', {'pedido': pedido, 'repartidores': repartidores_disponibles})
+            
+            messages.success(request, f"Pedido #{pedido.idPedido} actualizado correctamente.")
+            return redirect('lista_pedidos')
+            
+        except Exception as e:
+            messages.error(request, f"Error al actualizar el pedido: {str(e)}")
+            return redirect('editar_pedido', id=id)
+    
+    return render(request, 'pedidos_editar.html', {
+        'pedido': pedido, 
+        'repartidores': repartidores_disponibles
+    })
 
 def pedido_eliminar_view(request, id):
     pedido = get_object_or_404(Pedido, idPedido=id)
@@ -731,7 +769,7 @@ def verificar_y_actualizar_pedidos_entregados():
         
         # Si ya pasó la fecha de entrega, marcar como entregado
         if ahora >= fecha_entrega:
-            pedido.estado = 'Entregado'
+            pedido.estado_pedido = 'Entregado'
             pedido.save()
             pedidos_actualizados += 1
     
@@ -824,22 +862,11 @@ def asignar_pedido_repartidor_view(request):
         pedido = get_object_or_404(Pedido.objects.select_related('idCliente'), idPedido=pedido_id)
         repartidor = get_object_or_404(Repartidor, idRepartidor=repartidor_id)
 
-        # PRESERVAR el estado de pago original
-        estado_original = pedido.estado
-        
         # Asignar el repartidor al pedido
         pedido.idRepartidor = repartidor
         
-        # Cambiar el estado del pedido preservando la información de pago
-        if estado_original == 'Pago Parcial':
-            # Era pago parcial, NO cambiar el estado para preservar la información
-            pass  # Mantener 'Pago Parcial'
-        elif estado_original == 'Pago Completo':
-            # Era pago completo, cambiar a En Camino
-            pedido.estado = 'En Camino'
-        else:
-            # Para cualquier otro estado, cambiar a En Camino
-            pedido.estado = 'En Camino'
+        # Cambiar el estado del pedido a "En Camino"
+        pedido.estado_pedido = 'En Camino'
         
         pedido.save()
 
@@ -883,12 +910,18 @@ def generar_pdf_asignacion(request, pedido, repartidor, fecha_entrega, ciudad_en
 def desasignar_repartidor_view(request, id_pedido):
     if request.method == 'POST':
         pedido = get_object_or_404(Pedido, idPedido=id_pedido)
+        
+        # Cambiar el estado del repartidor a disponible
+        if pedido.idRepartidor:
+            repartidor = pedido.idRepartidor
+            repartidor.estado_turno = 'Disponible'
+            repartidor.save()
+        
         pedido.idRepartidor = None
-        # Cambiar el estado de vuelta a su estado anterior
-        if pedido.estado == 'En Camino':
-            pedido.estado = 'Pago Completo'  # O el estado que corresponda
+        # Cambiar el estado del pedido de vuelta a Confirmado
+        if pedido.estado_pedido == 'En Camino':
+            pedido.estado_pedido = 'Confirmado'
         pedido.save()
-        # messages.success(request, f"Se ha desasignado el repartidor del pedido #{id_pedido}.")
     return redirect('lista_repartidores')
 
 def descargar_pdf_asignacion_view(request, id_pedido):
@@ -1153,7 +1186,7 @@ def asignar_pedidos_multiples_view(request):
             try:
                 pedido = Pedido.objects.get(idPedido=pedido_id)
                 pedido.idRepartidor = repartidor
-                pedido.estado = 'En Camino'
+                pedido.estado_pedido = 'En Camino'
                 pedido.save()
                 pedidos_asignados += 1
             except Pedido.DoesNotExist:

@@ -39,6 +39,9 @@ path("distribuidores/", views.lista_distribuidores_view, name="lista_distribuido
     
 
 
+    # Panel Reabastecimiento
+    path("reabastecimiento/", views.reabastecimiento_view, name="reabastecimiento"),
+
     # Panel Productos
     path("productos/", views.lista_productos_view, name="lista_productos"),
     path("productos/agregar/", views.producto_agregar_view, name="producto_agregar"),

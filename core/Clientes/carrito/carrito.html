@@ -414,11 +414,64 @@
   </main>
 
   <script>
+    // Función para obtener el token CSRF
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    // Función para actualizar cantidad en el servidor
+    function actualizarCantidadServidor(idProducto, nuevaCantidad) {
+      const formData = new FormData();
+      formData.append('idProducto', idProducto);
+      formData.append('cantidad', nuevaCantidad);
+
+      fetch('/actualizar-cantidad-carrito/', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Actualizar la página para reflejar los cambios
+          location.reload();
+        } else {
+          alert(data.message || 'Error al actualizar el carrito');
+          // Revertir el cambio visual si hay error
+          location.reload();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error al actualizar el carrito');
+        // Revertir el cambio visual si hay error
+        location.reload();
+      });
+    }
+
     function incrementarCarrito(id, max) {
       const input = document.getElementById('cantidad-carrito-' + id);
       let valor = parseInt(input.value);
-      if (valor < max) {
-        input.value = valor + 1;
+      if (valor < parseInt(max)) {
+        const nuevaCantidad = valor + 1;
+        input.value = nuevaCantidad;
+        actualizarCantidadServidor(id, nuevaCantidad);
+      } else {
+        alert('No hay suficiente stock disponible');
       }
     }
 
@@ -426,7 +479,11 @@
       const input = document.getElementById('cantidad-carrito-' + id);
       let valor = parseInt(input.value);
       if (valor > 1) {
-        input.value = valor - 1;
+        const nuevaCantidad = valor - 1;
+        input.value = nuevaCantidad;
+        actualizarCantidadServidor(id, nuevaCantidad);
+      } else {
+        alert('La cantidad mínima es 1');
       }
     }
   </script>

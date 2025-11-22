@@ -395,30 +395,61 @@
     
     <div class="totals-section">
         <table class="totals-table">
+            {% if pedido.get_estado_pago == 'Pago Parcial' %}
+            <tr>
+                <td class="label">Productos (YA PAGADOS):</td>
+                <td class="value">${{ pedido.total|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td class="label">Envío (PENDIENTE):</td>
+                <td class="value" style="color: #ff9800; font-weight: bold;">$10,000</td>
+            </tr>
+            <tr>
+                <td class="label">Total Pedido Completo:</td>
+                <td class="value">${{ pedido.total|add:10000|floatformat:2 }}</td>
+            </tr>
+            {% else %}
             <tr>
                 <td class="label">Subtotal Productos:</td>
                 <td class="value">${{ pedido.total|floatformat:2 }}</td>
             </tr>
             <tr>
+                <td class="label">Envío:</td>
+                <td class="value">Incluido</td>
+            </tr>
+            {% endif %}
+            <tr>
                 <td class="label">Estado de Pago:</td>
                 <td class="value">
-                    <span class="payment-status {% if pedido.estado == 'Pago Completo' %}payment-complete{% else %}payment-partial{% endif %}">
-                        {{ pedido.estado }}
+                    <span class="payment-status {% if pedido.get_estado_pago == 'Pago Parcial' %}payment-partial{% else %}payment-complete{% endif %}">
+                        {{ pedido.get_estado_pago }}
                     </span>
                 </td>
             </tr>
+            {% if pedido.get_estado_pago == 'Pago Parcial' %}
+            <tr class="total-row" style="border-top: 2px solid #ff9800;">
+                <td class="label" style="color: #ff9800; font-weight: bold;">ENTREGAR PRODUCTOS:</td>
+                <td class="value" style="color: #2c3e50;">${{ pedido.total|floatformat:2 }}</td>
+            </tr>
+            <tr style="background: #fff3cd;">
+                <td class="label" style="color: #ff9800; font-weight: bold; font-size: 12pt;">COBRAR AL CLIENTE:</td>
+                <td class="value" style="color: #ff9800; font-weight: bold; font-size: 14pt;">$10,000</td>
+            </tr>
+            {% else %}
             <tr class="total-row">
                 <td class="label">TOTAL A ENTREGAR:</td>
                 <td class="value">${{ pedido.total|floatformat:2 }}</td>
             </tr>
+            {% endif %}
         </table>
     </div>
     
-    {% if pedido.estado == 'Pago Parcial' %}
+    {% if pedido.get_estado_pago == 'Pago Parcial' %}
     <div class="alert-box">
         <strong>⚠️ IMPORTANTE - PAGO CONTRA ENTREGA</strong>
         <p>Este pedido tiene <strong>PAGO PARCIAL</strong>. El cliente debe pagar el envío <strong>CONTRA ENTREGA</strong>.</p>
-        <p>Por favor, cobrar el valor del envío al momento de entregar el pedido.</p>
+        <p><strong>COBRAR AL CLIENTE: $10,000 (Valor del envío)</strong></p>
+        <p>Por favor, verificar que se ha pagado el envío más $10,000 al momento de entregar el pedido.</p>
     </div>
     {% else %}
     <div class="alert-box" style="background: #d4edda; border-color: #28a745;">
@@ -433,8 +464,9 @@
             <li>Verificar la identidad del cliente antes de entregar el pedido</li>
             <li>Confirmar la dirección de entrega con el cliente por teléfono antes de salir</li>
             <li>Revisar que todos los productos estén en buen estado y completos</li>
-            {% if pedido.estado == 'Pago Parcial' %}
-            <li><strong>Cobrar el valor del envío en efectivo al momento de la entrega</strong></li>
+            {% if pedido.get_estado_pago == 'Pago Parcial' %}
+            <li><strong>COBRAR $10,000 (valor del envío) en efectivo al momento de la entrega</strong></li>
+            <li><strong>Verificar que el cliente pague exactamente $10,000 por el envío</strong></li>
             {% endif %}
             <li>Solicitar firma o confirmación de recepción del cliente</li>
             <li>En caso de no encontrar al cliente, contactar por teléfono inmediatamente</li>

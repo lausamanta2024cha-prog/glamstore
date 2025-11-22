@@ -71,12 +71,13 @@
       <a href="{% url 'lista_admin' %}">Mi Perfil</a>
        <a href="{% url 'notificaciones' %}">Notificaciones</a>
       <a href="{% url 'lista_clientes' %}">Clientes</a>
-      <a href="{% url 'lista_distribuidores' %}">Distribuidores</a>
+      <a href="{% url 'lista_distribuidores' %}">Proveedores</a>
       <a href="{% url 'lista_pedidos' %}">Pedidos</a>
       <a href="{% url 'lista_productos' %}">Productos</a>
       <a href="{% url 'lista_repartidores' %}">Repartidores</a>
       <a href="{% url 'lista_categorias' %}">Categorías</a>
       <a href="{% url 'lista_subcategorias' %}" class="active">Subcategorías</a>
+       <a href="{% url 'reabastecimiento' %}">Reabastecimiento</a>
     </div>
     <div class="sidebar-footer">
       <a href="{% url 'logout' %}">Cerrar Sesión</a>
@@ -84,13 +85,13 @@
   </div>
 
   <div class="main-content">
-    <div class="page-header">
-      <h1>Panel de Subcategorías</h1>
-      <div class="breadcrumb">
-        <a href="{% url 'dashboard_admin' %}">Dashboard</a> > Subcategorías
-      </div>
-    </div>
-    
+    {% if messages %}
+      {% for message in messages %}
+        <div class="message {% if 'success' in message.tags %}message-success{% elif 'error' in message.tags %}message-error{% else %}message-info{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
     {% if messages %}
       {% for message in messages %}
         <div style="background: {% if message.tags %}{% if 'success' in message.tags %}#e8f5e9{% elif 'error' in message.tags %}#ffebee{% else %}#e3f2fd{% endif %}{% else %}#e3f2fd{% endif %}; border-left: 4px solid {% if message.tags %}{% if 'success' in message.tags %}#4caf50{% elif 'error' in message.tags %}#f44336{% else %}#2196f3{% endif %}{% else %}#2196f3{% endif %}; padding: 1rem; margin-bottom: 1.5rem; border-radius: 5px; color: {% if message.tags %}{% if 'success' in message.tags %}#2e7d32{% elif 'error' in message.tags %}#c62828{% else %}#1565c0{% endif %}{% else %}#1565c0{% endif %};">

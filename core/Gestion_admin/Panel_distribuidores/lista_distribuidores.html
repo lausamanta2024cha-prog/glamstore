@@ -3,7 +3,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Panel de Distribuidores — Glam Store</title>
+  <title>Panel de Proveedores — Glam Store</title>
   <link rel="icon" href="{% static 'img/logoglam.png' %}">
   <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -54,20 +54,21 @@
       <a href="{% url 'lista_admin' %}">Mi Perfil</a>
       <a href="{% url 'notificaciones' %}">Notificaciones</a>
       <a href="{% url 'lista_clientes' %}">Clientes</a>
-      <a href="{% url 'lista_distribuidores' %}" class="active">Distribuidores</a>
+      <a href="{% url 'lista_distribuidores' %}" class="active">Proveedores</a>
       <a href="{% url 'lista_pedidos' %}">Pedidos</a>
       <a href="{% url 'lista_productos' %}">Productos</a>
       <a href="{% url 'lista_repartidores' %}">Repartidores</a>
       <a href="{% url 'lista_categorias' %}">Categorías</a>
       <a href="{% url 'lista_subcategorias' %}">Subcategorías</a>
+       <a href="{% url 'reabastecimiento' %}">Reabastecimiento</a>
     </div>
     <div class="sidebar-footer"><a href="{% url 'logout' %}">Cerrar Sesión</a></div>
   </div>
   <div class="main-content">
-    <div class="page-header"><h1>Gestión de Distribuidores</h1></div>
+    <div class="page-header"><h1>Gestión de Proveedores</h1></div>
     <div class="action-bar">
       <a href="{% url 'dashboard_admin' %}" class="btn btn-secondary">← Volver</a>
-      <a href="{% url 'agregar_distribuidor' %}" class="btn btn-primary">Agregar Distribuidor</a>
+      <a href="{% url 'agregar_distribuidor' %}" class="btn btn-primary">Agregar Proveedor</a>
     </div>
     <div class="table-container">
       <table>
@@ -89,7 +90,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="4" style="text-align: center; padding: 2rem; color: #999;">No hay distribuidores registrados</td></tr>
+          <tr><td colspan="4" style="text-align: center; padding: 2rem; color: #999;">No hay proveedores registrados</td></tr>
           {% endfor %}
         </tbody>
       </table>

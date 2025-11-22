@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.http import HttpResponse, Http404, JsonResponse
 from core.models import Categoria, Subcategoria, Producto, Cliente
 import time
-from django.db import connection
+from django.db import connection, models
 from django.contrib.auth.hashers import check_password
 from django.core.mail import send_mail
 from django.utils.crypto import get_random_string 
@@ -42,6 +42,10 @@ def tienda(request):
     })
 # ✅ Vista del perfil del usuario
 def perfil(request):
+    # Manejar edición de perfil si es POST
+    if request.method == 'POST' and request.POST.get('action') == 'editar_perfil':
+        return handle_editar_perfil(request)
+    
     usuario_id = request.session.get('usuario_id')
 
     # Priorizar siempre al usuario logueado
@@ -94,9 +98,12 @@ def perfil(request):
     from django.utils import timezone
     from datetime import timedelta
     
+    # Buscar pedidos que están en camino (incluyendo los de pago parcial con repartidor)
     pedidos_en_camino = Pedido.objects.filter(
-        idCliente=cliente.idCliente,
-        estado='En Camino'
+        idCliente=cliente.idCliente
+    ).filter(
+        models.Q(estado='En Camino') | 
+        models.Q(estado='Pago Parcial', idRepartidor__isnull=False)
     )
     
     ahora = timezone.now()
@@ -114,6 +121,7 @@ def perfil(request):
         
         # Si ya pasó la fecha de entrega, marcar como entregado
         if ahora >= fecha_entrega:
+            # Al entregar, el pago se completa automáticamente (se cobró el envío)
             pedido.estado = 'Entregado'
             pedido.save()
     
@@ -286,9 +294,9 @@ def actualizar_cantidad_carrito(request):
         request.session['carrito'] = carrito
         
         # Calcular nuevo subtotal y total
-        subtotal = producto.precio * nueva_cantidad
+        subtotal = producto.precio_venta * nueva_cantidad
         total_carrito = sum(
-            Producto.objects.get(idProducto=pid).precio * int(qty)
+            Producto.objects.get(idProducto=pid).precio_venta * int(qty)
             for pid, qty in carrito.items()
         )
         cart_count = sum(int(qty) for qty in carrito.values())
@@ -411,12 +419,15 @@ def simular_pago(request):
             pago_envio = request.POST.get('pago_envio', 'ahora')
             costo_envio = 10000
             
+            # El total y estado dependen del tipo de pago
             if pago_envio == 'ahora':
-                estado_pedido = 'Pago Completo'
+                # Cliente pagó todo (productos + envío)
                 total_final = total_pedido + costo_envio
+                estado_pedido = 'Pago Completo'
             else:
-                estado_pedido = 'Pago Parcial'
+                # Cliente pagó solo productos, envío contra entrega
                 total_final = total_pedido
+                estado_pedido = 'Pago Parcial'
 
             print(f"DEBUG - Creando pedido: Total {total_final}, Estado: {estado_pedido}")
 
@@ -537,9 +548,24 @@ def checkout(request):
         except Producto.DoesNotExist:
             continue
 
+    # Verificar si el usuario está logueado y obtener sus datos
+    usuario_logueado = None
+    cliente_datos = None
+    
+    usuario_id = request.session.get('usuario_id')
+    if usuario_id:
+        try:
+            usuario_logueado = Usuario.objects.get(idUsuario=usuario_id)
+            if usuario_logueado.idCliente:
+                cliente_datos = Cliente.objects.get(idCliente=usuario_logueado.idCliente)
+        except (Usuario.DoesNotExist, Cliente.DoesNotExist):
+            pass
+
     context = {
         'carrito': carrito,
-        'total': total
+        'total': total,
+        'usuario_logueado': usuario_logueado,
+        'cliente_datos': cliente_datos
     }
     return render(request, 'checkout.html', context)
 
@@ -874,9 +900,205 @@ def ver_seguimiento(request, idPedido):
         messages.error(request, "Usuario no encontrado.")
         return redirect('login')
     
-    return render(request, 'ver_seguimiento.html', {'pedido': pedido})
+    # Calcular fecha de entrega estimada
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    direccion_cliente = pedido.idCliente.direccion or ""
+    nombre_cliente = pedido.idCliente.nombre or ""
+    email_cliente = pedido.idCliente.email or ""
+    
+    # Buscar en dirección, nombre y email del cliente
+    texto_completo = f"{direccion_cliente} {nombre_cliente} {email_cliente}".lower()
+    
+    if 'soacha' in texto_completo:
+        dias_entrega = 3
+        ciudad_entrega = 'Soacha'
+    elif 'bogota' in texto_completo or 'bogotá' in texto_completo:
+        dias_entrega = 2
+        ciudad_entrega = 'Bogotá'
+    elif 'madrid' in texto_completo:
+        dias_entrega = 3
+        ciudad_entrega = 'Madrid'
+    elif 'funza' in texto_completo:
+        dias_entrega = 3
+        ciudad_entrega = 'Funza'
+    elif 'mosquera' in texto_completo:
+        dias_entrega = 3
+        ciudad_entrega = 'Mosquera'
+    else:
+        # Si no se puede determinar, usar Bogotá como predeterminado
+        dias_entrega = 2
+        ciudad_entrega = 'Bogotá (Predeterminado)'
+    
+    fecha_entrega_estimada = pedido.fechaCreacion + timedelta(days=dias_entrega)
+    
+    context = {
+        'pedido': pedido,
+        'fecha_entrega_estimada': fecha_entrega_estimada,
+        'dias_entrega': dias_entrega,
+        'ciudad_entrega': ciudad_entrega
+    }
+    
+    return render(request, 'ver_seguimiento.html', context)
 
-  
+
+def handle_editar_perfil(request):
+    """
+    Función auxiliar para manejar la edición del perfil desde la vista principal
+    """
+    # Verificar que el usuario esté logueado
+    usuario_id = request.session.get('usuario_id')
+    cliente_id = request.session.get('cliente_id')
+    
+    if not usuario_id and not cliente_id:
+        messages.error(request, "Debes iniciar sesión para editar tu perfil.")
+        return redirect('login')
+    
+    # Obtener el cliente
+    cliente = None
+    if usuario_id:
+        try:
+            usuario = Usuario.objects.get(idUsuario=usuario_id)
+            if usuario.idCliente:
+                cliente = Cliente.objects.get(idCliente=usuario.idCliente)
+        except (Usuario.DoesNotExist, Cliente.DoesNotExist):
+            messages.error(request, "No se pudo encontrar tu perfil.")
+            return redirect('perfil')
+    elif cliente_id:
+        try:
+            cliente = Cliente.objects.get(idCliente=cliente_id)
+        except Cliente.DoesNotExist:
+            messages.error(request, "No se pudo encontrar tu perfil.")
+            return redirect('perfil')
+    
+    if not cliente:
+        messages.error(request, "No se pudo encontrar tu perfil.")
+        return redirect('perfil')
+    
+    # Obtener los datos del formulario
+    nombre = request.POST.get('nombre', '').strip()
+    email = request.POST.get('email', '').strip()
+    cedula = request.POST.get('cedula', '').strip()
+    telefono = request.POST.get('telefono', '').strip()
+    direccion = request.POST.get('direccion', '').strip()
+    
+    # Validaciones básicas
+    if not nombre or not email:
+        messages.error(request, "El nombre y el correo son obligatorios.")
+        return redirect('perfil')
+    
+    # Verificar si el email ya existe en otro cliente
+    if email != cliente.email:
+        if Cliente.objects.filter(email=email).exclude(idCliente=cliente.idCliente).exists():
+            messages.error(request, "Este correo electrónico ya está registrado por otro usuario.")
+            return redirect('perfil')
+    
+    try:
+        # Actualizar los datos del cliente
+        cliente.nombre = nombre
+        cliente.email = email
+        cliente.cedula = cedula if cedula else None
+        cliente.telefono = telefono if telefono else None
+        cliente.direccion = direccion if direccion else None
+        cliente.save()
+        
+        # Si hay un usuario asociado, actualizar también su email
+        if usuario_id:
+            try:
+                usuario = Usuario.objects.get(idUsuario=usuario_id)
+                usuario.email = email
+                usuario.save()
+            except Usuario.DoesNotExist:
+                pass
+        
+        messages.success(request, "Tus datos han sido actualizados correctamente.")
+        
+    except Exception as e:
+        messages.error(request, f"Error al actualizar los datos: {str(e)}")
+    
+    return redirect('perfil')
+
+
+def editar_perfil(request):
+    """
+    Vista para editar los datos del perfil del cliente
+    """
+    if request.method == 'POST':
+        # Verificar que el usuario esté logueado
+        usuario_id = request.session.get('usuario_id')
+        cliente_id = request.session.get('cliente_id')
+        
+        if not usuario_id and not cliente_id:
+            messages.error(request, "Debes iniciar sesión para editar tu perfil.")
+            return redirect('login')
+        
+        # Obtener el cliente
+        cliente = None
+        if usuario_id:
+            try:
+                usuario = Usuario.objects.get(idUsuario=usuario_id)
+                if usuario.idCliente:
+                    cliente = Cliente.objects.get(idCliente=usuario.idCliente)
+            except (Usuario.DoesNotExist, Cliente.DoesNotExist):
+                messages.error(request, "No se pudo encontrar tu perfil.")
+                return redirect('perfil')
+        elif cliente_id:
+            try:
+                cliente = Cliente.objects.get(idCliente=cliente_id)
+            except Cliente.DoesNotExist:
+                messages.error(request, "No se pudo encontrar tu perfil.")
+                return redirect('perfil')
+        
+        if not cliente:
+            messages.error(request, "No se pudo encontrar tu perfil.")
+            return redirect('perfil')
+        
+        # Obtener los datos del formulario
+        nombre = request.POST.get('nombre', '').strip()
+        email = request.POST.get('email', '').strip()
+        cedula = request.POST.get('cedula', '').strip()
+        telefono = request.POST.get('telefono', '').strip()
+        direccion = request.POST.get('direccion', '').strip()
+        
+        # Validaciones básicas
+        if not nombre or not email:
+            messages.error(request, "El nombre y el correo son obligatorios.")
+            return redirect('perfil')
+        
+        # Verificar si el email ya existe en otro cliente
+        if email != cliente.email:
+            if Cliente.objects.filter(email=email).exclude(idCliente=cliente.idCliente).exists():
+                messages.error(request, "Este correo electrónico ya está registrado por otro usuario.")
+                return redirect('perfil')
+        
+        try:
+            # Actualizar los datos del cliente
+            cliente.nombre = nombre
+            cliente.email = email
+            cliente.cedula = cedula if cedula else None
+            cliente.telefono = telefono if telefono else None
+            cliente.direccion = direccion if direccion else None
+            cliente.save()
+            
+            # Si hay un usuario asociado, actualizar también su email
+            if usuario_id:
+                try:
+                    usuario = Usuario.objects.get(idUsuario=usuario_id)
+                    usuario.email = email
+                    usuario.save()
+                except Usuario.DoesNotExist:
+                    pass
+            
+            messages.success(request, "✅ Tus datos han sido actualizados correctamente.")
+            
+        except Exception as e:
+            messages.error(request, f"Error al actualizar los datos: {str(e)}")
+        
+        return redirect('perfil')
+    
+    # Si no es POST, redirigir al perfil
+    return redirect('perfil')
 
 
 def confirmar_recepcion_pedido(request, idPedido):
@@ -907,9 +1129,9 @@ def confirmar_recepcion_pedido(request, idPedido):
         
         if confirmacion == 'si':
             # Cliente confirma que recibió el pedido
-            pedido.estado = 'Completado'
+            pedido.estado = 'Pedido Finalizado'
             pedido.save()
-            messages.success(request, f"Gracias por confirmar. El pedido #{pedido.idPedido} ha sido marcado como completado.")
+            messages.success(request, f"Gracias por confirmar. El pedido #{pedido.idPedido} ha sido finalizado exitosamente.")
         elif confirmacion == 'no':
             # Cliente indica que no recibió el pedido - mostrar formulario
             return render(request, 'reportar_problema.html', {'pedido': pedido})

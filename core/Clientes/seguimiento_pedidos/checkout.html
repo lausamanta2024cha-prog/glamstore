@@ -311,6 +311,52 @@
           {% csrf_token %}
 
           <h3>1. DATOS PERSONALES</h3>
+          
+          {% if usuario_logueado and cliente_datos %}
+          <!-- Usuario logueado - Mostrar datos de forma elegante -->
+          <div style="background: #e8f5e8; padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 2px solid #4caf50;">
+            <h4 style="color: #2e7d32; margin-bottom: 1rem; display: flex; align-items: center;">
+              ✅ Datos de tu cuenta
+            </h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div>
+                <strong style="color: #2e7d32;">Nombre:</strong><br>
+                <span>{{ cliente_datos.nombre }}</span>
+              </div>
+              <div>
+                <strong style="color: #2e7d32;">Email:</strong><br>
+                <span>{{ cliente_datos.email }}</span>
+              </div>
+              <div>
+                <strong style="color: #2e7d32;">Cédula:</strong><br>
+                <span>{{ cliente_datos.cedula|default:"No registrada" }}</span>
+              </div>
+              <div>
+                <strong style="color: #2e7d32;">Teléfono:</strong><br>
+                <span>{{ cliente_datos.telefono|default:"No registrado" }}</span>
+              </div>
+            </div>
+            <p style="margin-top: 1rem; font-size: 0.9rem; color: #2e7d32;">
+              <em>Estos datos se usarán para tu pedido. Si necesitas cambiarlos, ve a tu perfil.</em>
+            </p>
+          </div>
+          
+          <!-- Campos ocultos con los datos del usuario -->
+          <input type="hidden" name="correo" value="{{ cliente_datos.email }}">
+          <input type="hidden" name="nombre" value="{{ cliente_datos.nombre|slice:':20' }}">
+          <input type="hidden" name="apellidos" value="{{ cliente_datos.nombre|slice:'20:' }}">
+          <input type="hidden" name="documento" value="{{ cliente_datos.cedula|default:'' }}">
+          <input type="hidden" name="telefono" value="{{ cliente_datos.telefono|default:'' }}">
+          <input type="hidden" name="tipo_documento" value="CC">
+          
+          {% else %}
+          <!-- Usuario no logueado - Mostrar formulario completo -->
+          <div style="background: #fff3cd; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #ffc107;">
+            <p style="margin: 0; color: #856404;">
+              💡 <strong>Tip:</strong> Si tienes cuenta, <a href="{% url 'login' %}" style="color: #856404; text-decoration: underline;">inicia sesión</a> para no tener que llenar estos datos.
+            </p>
+          </div>
+          
           <label>Correo</label>
           <input type="email" name="correo" required>
 
@@ -329,8 +375,23 @@
 
           <label>Teléfono / Móvil</label>
           <input type="tel" name="telefono" required>
+          {% endif %}
 
           <h3>2. ENTREGA</h3>
+          
+          {% if usuario_logueado and cliente_datos and cliente_datos.direccion %}
+          <!-- Usuario logueado con dirección registrada -->
+          <div style="background: #e3f2fd; padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; border: 2px solid #2196f3;">
+            <h4 style="color: #1976d2; margin-bottom: 1rem; display: flex; align-items: center;">
+              📍 Dirección registrada
+            </h4>
+            <p style="margin: 0; color: #1976d2; font-weight: bold;">{{ cliente_datos.direccion }}</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem; color: #1976d2;">
+              <em>Si necesitas cambiar la dirección, actualízala en tu perfil o completa los campos abajo.</em>
+            </p>
+          </div>
+          {% endif %}
+          
           <label>Departamento</label>
           <select name="departamento" id="departamento" required>
             <option value="">Selecciona tu departamento</option>
@@ -349,13 +410,13 @@
           </select>
 
           <label>Dirección</label>
-          <input type="text" name="direccion" required placeholder="Ej: Calle 123 # 45-67">
+          <input type="text" name="direccion" required placeholder="Ej: Calle 123 # 45-67" {% if cliente_datos.direccion %}value="{{ cliente_datos.direccion }}"{% endif %}>
 
           <label>Información adicional</label>
           <input type="text" name="info_adicional" placeholder="Ej: Apartamento 301, Torre B">
 
           <label>Nombre de quien recibe</label>
-          <input type="text" name="nombre_receptor" required>
+          <input type="text" name="nombre_receptor" required {% if cliente_datos.nombre %}value="{{ cliente_datos.nombre }}"{% endif %}>
 
           <h3>3. MÉTODO DE ENTREGA</h3>
 

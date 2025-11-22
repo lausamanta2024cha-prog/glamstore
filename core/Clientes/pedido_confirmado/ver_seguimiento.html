@@ -401,6 +401,14 @@
           <strong>Dirección</strong>
           <span>{{ pedido.idCliente.direccion }}</span>
         </div>
+        <div class="info-item">
+          <strong>Fecha de Entrega Estimada</strong>
+          <span>{{ fecha_entrega_estimada|date:"d/m/Y" }} ({{ dias_entrega }} días hábiles)</span>
+        </div>
+        <div class="info-item">
+          <strong>Ciudad de Entrega</strong>
+          <span>{{ ciudad_entrega }}</span>
+        </div>
       </div>
     </div>
 
@@ -460,32 +468,39 @@
         </div>
 
         <!-- Paso 4: En Camino -->
-        <div class="timeline-item {% if pedido.estado == 'En Camino' %}active{% elif pedido.estado == 'Entregado' %}completed{% else %}pending{% endif %}">
-          <div class="timeline-icon">{% if pedido.estado == 'Entregado' %}✓{% elif pedido.estado == 'En Camino' %}🚚{% else %}4{% endif %}</div>
+        <div class="timeline-item {% if pedido.estado == 'En Camino' or pedido.get_estado_pedido == 'En Camino' %}active{% elif pedido.estado == 'Entregado' %}completed{% else %}pending{% endif %}">
+          <div class="timeline-icon">{% if pedido.estado == 'Entregado' %}✓{% elif pedido.estado == 'En Camino' or pedido.get_estado_pedido == 'En Camino' %}🚚{% else %}4{% endif %}</div>
           <div class="timeline-content">
             <div class="timeline-title">En Camino</div>
             <div class="timeline-description">
-              {% if pedido.estado == 'En Camino' %}
-                Tu pedido está en camino. {% if pedido.idRepartidor %}Repartidor: {{ pedido.idRepartidor.nombreRepartidor }}{% endif %}
+              {% if pedido.estado == 'En Camino' or pedido.get_estado_pedido == 'En Camino' %}
+                Tu pedido está en camino a {{ ciudad_entrega }}. 
+                {% if pedido.idRepartidor %}Repartidor: {{ pedido.idRepartidor.nombreRepartidor }}{% endif %}
+                <br><strong>Fecha estimada de entrega: {{ fecha_entrega_estimada|date:"d/m/Y" }}</strong>
               {% elif pedido.estado == 'Entregado' %}
                 Tu pedido fue enviado y entregado exitosamente.
               {% else %}
                 Tu pedido será enviado una vez esté listo.
+                <br><strong>Fecha estimada de entrega: {{ fecha_entrega_estimada|date:"d/m/Y" }}</strong>
               {% endif %}
             </div>
           </div>
         </div>
 
         <!-- Paso 5: Entregado -->
-        <div class="timeline-item {% if pedido.estado == 'Entregado' %}completed{% else %}pending{% endif %}">
-          <div class="timeline-icon">{% if pedido.estado == 'Entregado' %}✓{% else %}5{% endif %}</div>
+        <div class="timeline-item {% if pedido.estado == 'Entregado' or pedido.estado == 'Completado' %}completed{% else %}pending{% endif %}">
+          <div class="timeline-icon">{% if pedido.estado == 'Entregado' or pedido.estado == 'Completado' %}✓{% else %}5{% endif %}</div>
           <div class="timeline-content">
             <div class="timeline-title">Entregado</div>
             <div class="timeline-description">
-              {% if pedido.estado == 'Entregado' %}
-                ¡Tu pedido ha sido entregado! Gracias por tu compra. 🎉
+              {% if pedido.estado == 'Entregado' or pedido.estado == 'Completado' %}
+                ¡Tu pedido ha sido entregado en {{ ciudad_entrega }}! Gracias por tu compra. 🎉
+                {% if pedido.get_estado_pago == 'Pago Parcial' %}
+                <br><em>El pago del envío fue completado al momento de la entrega.</em>
+                {% endif %}
               {% else %}
-                Tu pedido será entregado en la dirección registrada.
+                Tu pedido será entregado en {{ ciudad_entrega }} el {{ fecha_entrega_estimada|date:"d/m/Y" }}.
+                <br><em>Dirección: {{ pedido.idCliente.direccion }}</em>
               {% endif %}
             </div>
           </div>

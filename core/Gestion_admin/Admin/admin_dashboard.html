@@ -666,12 +666,13 @@
       <a href="{% url 'lista_admin' %}">Mi Perfil</a>
       <a href="{% url 'notificaciones' %}">Notificaciones</a>
       <a href="{% url 'lista_clientes' %}">Clientes</a>
-      <a href="{% url 'lista_distribuidores' %}">Distribuidores</a>
+     <a href="{% url 'lista_distribuidores' %}">Proveedores</a>
       <a href="{% url 'lista_pedidos' %}">Pedidos</a>
       <a href="{% url 'lista_productos' %}">Productos</a>
       <a href="{% url 'lista_repartidores' %}">Repartidores</a>
       <a href="{% url 'lista_categorias' %}">Categorías</a>
       <a href="{% url 'lista_subcategorias' %}">Subcategorías</a>
+             <a href="{% url 'reabastecimiento' %}">Reabastecimiento</a>
     </div>
 
     <div class="sidebar-footer">
@@ -722,6 +723,43 @@
         <div class="chart-container">
           <h3 class="chart-title">Ventas por Categoría</h3>
           <canvas id="categoriasChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reabastecimiento Reciente -->
+    <div class="dashboard-section" style="margin-bottom: 2rem;">
+      <h2 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">Reabastecimiento Reciente</h2>
+      <div class="card">
+        <div class="card-body card-compact">
+          {% if reabastecimientos_recientes %}
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+              <thead>
+                <tr style="background: #fce4ec; border-bottom: 1px solid #f48fb1;">
+                  <th style="padding: 0.5rem; text-align: left; color: #c2185b; font-weight: bold; font-size: 0.85rem;">Producto</th>
+                  <th style="padding: 0.5rem; text-align: center; color: #c2185b; font-weight: bold; font-size: 0.85rem;">Cant.</th>
+                  <th style="padding: 0.5rem; text-align: center; color: #c2185b; font-weight: bold; font-size: 0.85rem;">Costo</th>
+                  <th style="padding: 0.5rem; text-align: right; color: #c2185b; font-weight: bold; font-size: 0.85rem;">Total</th>
+                  <th style="padding: 0.5rem; text-align: left; color: #c2185b; font-weight: bold; font-size: 0.85rem;">Fuente</th>
+                  <th style="padding: 0.5rem; text-align: left; color: #c2185b; font-weight: bold; font-size: 0.85rem;">Proveedor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for reab in reabastecimientos_recientes %}
+                <tr style="border-bottom: 1px solid #fce4ec;">
+                  <td style="padding: 0.5rem; color: #333;">{{ reab.producto|truncatewords:3 }}</td>
+                  <td style="padding: 0.5rem; text-align: center; color: #333;">{{ reab.cantidad }}</td>
+                  <td style="padding: 0.5rem; text-align: center; color: #333;">${{ reab.costo_unitario|floatformat:0 }}</td>
+                  <td style="padding: 0.5rem; text-align: right; color: #c2185b; font-weight: bold;">${{ reab.valor_total|floatformat:0 }}</td>
+                  <td style="padding: 0.5rem; color: #666; font-size: 0.85rem;"><span style="background: {% if reab.fuente == 'Excel' %}#e3f2fd{% else %}#f3e5f5{% endif %}; padding: 0.2rem 0.5rem; border-radius: 10px; color: {% if reab.fuente == 'Excel' %}#1565c0{% else %}#6a1b9a{% endif %};">{{ reab.fuente }}</span></td>
+                  <td style="padding: 0.5rem; color: #666; font-size: 0.85rem;">{{ reab.proveedor|truncatewords:2 }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p style="text-align: center; color: #999; padding: 1rem; font-size: 0.9rem;">No hay reabastecimientos en la última semana</p>
+          {% endif %}
         </div>
       </div>
     </div>

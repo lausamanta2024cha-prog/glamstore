@@ -18,10 +18,13 @@ from io import BytesIO
 from django.contrib import messages
 from django.db import transaction
 from django.contrib.auth.hashers import make_password
- 
+import openpyxl
+from django.utils import timezone
+from decimal import Decimal
 
 
 def index(request):
+
     return render(request, 'index.html')  # o cualquier plantilla que tengas
 # Dashboard principal
 def dashboard_admin_view(request):
@@ -105,6 +108,35 @@ def dashboard_admin_view(request):
     
     # === PRODUCTO MÁS VENDIDO INDIVIDUAL ===
     producto_mas_vendido = productos_mas_vendidos[0] if productos_mas_vendidos else None
+    
+    # === REABASTECIMIENTO RECIENTE ===
+    reabastecimientos_recientes = MovimientoProducto.objects.filter(
+        tipo_movimiento='AJUSTE_MANUAL_ENTRADA',
+        fecha__gte=una_semana_atras
+    ).select_related('producto').order_by('-fecha')[:10]
+    
+    # Procesar reabastecimientos para extraer proveedor de la descripción
+    reabastecimientos_procesados = []
+    for mov in reabastecimientos_recientes:
+        proveedor = "Sin especificar"
+        fuente = "Manual"
+        
+        if mov.descripcion:
+            if "Proveedor:" in mov.descripcion:
+                proveedor = mov.descripcion.split("Proveedor:")[-1].strip()
+                fuente = "Excel"
+            elif "Reabastecimiento desde Excel" in mov.descripcion:
+                fuente = "Excel"
+        
+        reabastecimientos_procesados.append({
+            'producto': mov.producto.nombreProducto,
+            'cantidad': mov.cantidad,
+            'costo_unitario': float(mov.costo_unitario),
+            'valor_total': float(mov.costo_unitario * Decimal(mov.cantidad)),
+            'proveedor': proveedor,
+            'fuente': fuente,
+            'fecha': mov.fecha
+        })
 
     context = {
         # Estadísticas generales
@@ -127,6 +159,9 @@ def dashboard_admin_view(request):
         
         # Ventas por categoría
         'ventas_por_categoria': ventas_categoria_limpio,
+        
+        # Reabastecimiento reciente
+        'reabastecimientos_recientes': reabastecimientos_procesados,
     }
     return render(request, 'admin_dashboard.html', context)
 # core/views.py
@@ -420,6 +455,124 @@ def ajustar_stock_view(request, id):
         messages.error(request, "Por favor, introduce una cantidad válida.")
     
     return redirect('movimientos_producto', id=id)
+
+# Panel Reabastecimiento
+def reabastecimiento_view(request):
+    """Vista para cargar reabastecimiento desde Excel"""
+    categorias = Categoria.objects.all()
+    proveedores = Distribuidor.objects.all()
+    productos_reabastecidos = request.session.pop('productos_reabastecidos', [])
+    errores = request.session.pop('errores_reabastecimiento', [])
+    
+    if request.method == 'POST':
+        archivo_excel = request.FILES.get('archivo_excel')
+        categoria_id = request.POST.get('categoria_id')
+        proveedor_id = request.POST.get('proveedor_id')
+        
+        if not archivo_excel:
+            messages.error(request, "Por favor selecciona un archivo Excel.")
+            return render(request, 'reabastecimiento.html', {'categorias': categorias, 'proveedores': proveedores})
+        
+        if not categoria_id:
+            messages.error(request, "Por favor selecciona una categoría.")
+            return render(request, 'reabastecimiento.html', {'categorias': categorias, 'proveedores': proveedores})
+        
+        if not proveedor_id:
+            messages.error(request, "Por favor selecciona un proveedor.")
+            return render(request, 'reabastecimiento.html', {'categorias': categorias, 'proveedores': proveedores})
+        
+        try:
+            categoria = get_object_or_404(Categoria, idCategoria=categoria_id)
+            proveedor = get_object_or_404(Distribuidor, idDistribuidor=proveedor_id)
+            
+            # Cargar el archivo Excel
+            wb = openpyxl.load_workbook(archivo_excel)
+            ws = wb.active
+            
+            productos_procesados = []
+            errores_lista = []
+            
+            # Iterar sobre las filas (comenzando desde la fila 2, asumiendo que la fila 1 es encabezado)
+            for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+                try:
+                    nombre_producto = row[0]
+                    cantidad = row[1]
+                    costo_unitario = row[2]
+                    
+                    # Validar que los datos no sean None
+                    if not nombre_producto or cantidad is None or costo_unitario is None:
+                        errores_lista.append(f"Fila {row_idx}: Datos incompletos")
+                        continue
+                    
+                    # Convertir a tipos correctos
+                    cantidad = int(cantidad)
+                    costo_unitario = Decimal(str(costo_unitario))
+                    
+                    # Buscar el producto por nombre en la categoría
+                    producto = Producto.objects.filter(
+                        nombreProducto__iexact=nombre_producto,
+                        idCategoria=categoria
+                    ).first()
+                    
+                    if not producto:
+                        errores_lista.append(f"Fila {row_idx}: Producto '{nombre_producto}' no encontrado en la categoría")
+                        continue
+                    
+                    # Crear movimiento de entrada
+                    stock_anterior = producto.stock
+                    stock_nuevo = stock_anterior + cantidad
+                    
+                    MovimientoProducto.objects.create(
+                        producto=producto,
+                        tipo_movimiento='AJUSTE_MANUAL_ENTRADA',
+                        cantidad=cantidad,
+                        precio_unitario=producto.precio,
+                        costo_unitario=costo_unitario,
+                        stock_anterior=stock_anterior,
+                        stock_nuevo=stock_nuevo,
+                        descripcion=f'Reabastecimiento desde Excel - {categoria.nombreCategoria} - Proveedor: {proveedor.nombreDistribuidor}'
+                    )
+                    
+                    # Actualizar stock del producto
+                    producto.stock = stock_nuevo
+                    producto.save()
+                    
+                    # Guardar información del producto reabastecido
+                    productos_procesados.append({
+                        'nombre': producto.nombreProducto,
+                        'cantidad': cantidad,
+                        'costo_unitario': float(costo_unitario),
+                        'stock_anterior': stock_anterior,
+                        'stock_nuevo': stock_nuevo,
+                        'valor_total': float(costo_unitario * Decimal(cantidad))
+                    })
+                    
+                except (ValueError, TypeError) as e:
+                    errores_lista.append(f"Fila {row_idx}: Error en los datos - {str(e)}")
+                except Exception as e:
+                    errores_lista.append(f"Fila {row_idx}: {str(e)}")
+            
+            # Guardar en sesión para mostrar en la página
+            request.session['productos_reabastecidos'] = productos_procesados
+            request.session['errores_reabastecimiento'] = errores_lista
+            
+            if errores_lista:
+                for error in errores_lista:
+                    messages.warning(request, error)
+            
+            return redirect('reabastecimiento')
+            
+        except Exception as e:
+            messages.error(request, f"Error al procesar el archivo: {str(e)}")
+            return render(request, 'reabastecimiento.html', {'categorias': categorias, 'proveedores': proveedores})
+    
+    return render(request, 'reabastecimiento.html', {
+        'categorias': categorias,
+        'proveedores': proveedores,
+        'productos_reabastecidos': productos_reabastecidos,
+        'errores': errores
+    })
+
 # Panel Pedidos
 
 
@@ -671,14 +824,22 @@ def asignar_pedido_repartidor_view(request):
         pedido = get_object_or_404(Pedido.objects.select_related('idCliente'), idPedido=pedido_id)
         repartidor = get_object_or_404(Repartidor, idRepartidor=repartidor_id)
 
+        # PRESERVAR el estado de pago original
+        estado_original = pedido.estado
+        
         # Asignar el repartidor al pedido
         pedido.idRepartidor = repartidor
         
-        # Cambiar el estado del pedido a "En Camino"
-        pedido.estado = 'En Camino'
-        
-        # Guardar la fecha de entrega en la sesión o en un modelo auxiliar
-        # Como el modelo no tiene campo fechaEntrega, usaremos el cálculo dinámico
+        # Cambiar el estado del pedido preservando la información de pago
+        if estado_original == 'Pago Parcial':
+            # Era pago parcial, NO cambiar el estado para preservar la información
+            pass  # Mantener 'Pago Parcial'
+        elif estado_original == 'Pago Completo':
+            # Era pago completo, cambiar a En Camino
+            pedido.estado = 'En Camino'
+        else:
+            # Para cualquier otro estado, cambiar a En Camino
+            pedido.estado = 'En Camino'
         
         pedido.save()
 
@@ -742,17 +903,31 @@ def descargar_pdf_asignacion_view(request, id_pedido):
     
     # Calcular fecha de entrega según la ciudad
     direccion_cliente = pedido.idCliente.direccion or ""
-    direccion_lower = direccion_cliente.lower()
+    nombre_cliente = pedido.idCliente.nombre or ""
+    email_cliente = pedido.idCliente.email or ""
     
-    if 'soacha' in direccion_lower:
+    # Buscar en dirección, nombre y email del cliente
+    texto_completo = f"{direccion_cliente} {nombre_cliente} {email_cliente}".lower()
+    
+    if 'soacha' in texto_completo:
         dias_entrega = 3
         ciudad_entrega = 'Soacha'
-    elif 'bogota' in direccion_lower or 'bogotá' in direccion_lower:
+    elif 'bogota' in texto_completo or 'bogotá' in texto_completo:
         dias_entrega = 2
         ciudad_entrega = 'Bogotá'
-    else:
+    elif 'madrid' in texto_completo:
         dias_entrega = 3
-        ciudad_entrega = 'No especificada'
+        ciudad_entrega = 'Madrid'
+    elif 'funza' in texto_completo:
+        dias_entrega = 3
+        ciudad_entrega = 'Funza'
+    elif 'mosquera' in texto_completo:
+        dias_entrega = 3
+        ciudad_entrega = 'Mosquera'
+    else:
+        # Si no se puede determinar, usar Bogotá como predeterminado
+        dias_entrega = 2
+        ciudad_entrega = 'Bogotá (Predeterminado)'
     
     from datetime import timedelta
     fecha_entrega = pedido.fechaCreacion + timedelta(days=dias_entrega)

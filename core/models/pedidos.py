@@ -9,6 +9,7 @@ class Pedido(models.Model):
     
     ESTADO_PEDIDO_CHOICES = [
         ('Confirmado', 'Confirmado'),
+        ('En Preparación', 'En Preparación'),
         ('En Camino', 'En Camino'),
         ('Entregado', 'Entregado'),
         ('Completado', 'Completado'),

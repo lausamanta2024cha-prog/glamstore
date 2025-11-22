@@ -156,6 +156,7 @@
             <div class="form-group required-field">
               <label for="estado_pago">Estado del Pago</label>
               <select id="estado_pago" name="estado_pago" required>
+                <option value="No Pagado" {% if pedido.estado_pago == 'No Pagado' %}selected{% endif %}>No Pagado</option>
                 <option value="Pago Completo" {% if pedido.estado_pago == 'Pago Completo' %}selected{% endif %}>Pago Completo</option>
                 <option value="Pago Parcial" {% if pedido.estado_pago == 'Pago Parcial' %}selected{% endif %}>Pago Parcial</option>
               </select>
@@ -166,6 +167,7 @@
               <select id="estado_pedido" name="estado_pedido" required>
                 <option value="Pendiente" {% if pedido.estado_pedido == 'Pendiente' %}selected{% endif %}>Pendiente</option>
                 <option value="Confirmado" {% if pedido.estado_pedido == 'Confirmado' %}selected{% endif %}>Confirmado</option>
+                <option value="En Preparación" {% if pedido.estado_pedido == 'En Preparación' %}selected{% endif %}>En Preparación</option>
                 <option value="En Camino" {% if pedido.estado_pedido == 'En Camino' %}selected{% endif %}>En Camino</option>
                 <option value="Entregado" {% if pedido.estado_pedido == 'Entregado' %}selected{% endif %}>Entregado</option>
                 <option value="Completado" {% if pedido.estado_pedido == 'Completado' %}selected{% endif %}>Completado</option>

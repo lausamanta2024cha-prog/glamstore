@@ -691,21 +691,30 @@
         <li style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
           <div>
             <strong>Pedido #{{ pedido.idPedido }}</strong> —
-            <span class="estado-badge estado-{{ pedido.estado|lower|cut:' ' }}">
-              {% if pedido.estado == 'En Camino' %}
-                🚚 {{ pedido.estado }}
-              {% elif pedido.estado == 'Entregado' %}
-                📦 {{ pedido.estado }}
-              {% elif pedido.estado == 'Completado' %}
-                ✅ {{ pedido.estado }}
-              {% elif pedido.estado == 'Pago Completo' %}
-                💳 {{ pedido.estado }}
-              {% elif pedido.estado == 'Pago Parcial' %}
-                ⏳ {{ pedido.estado }}
-              {% elif pedido.estado == 'Problema en Entrega' %}
-                ⚠️ {{ pedido.estado }}
+            <span class="estado-badge estado-{{ pedido.estado_pago|lower|cut:' ' }}">
+              {% if pedido.estado_pago == 'Pago Completo' %}
+                💳 Pago Completo
+              {% elif pedido.estado_pago == 'Pago Parcial' %}
+                ⏳ Pago Parcial
               {% else %}
-                {{ pedido.estado }}
+                {{ pedido.estado_pago }}
+              {% endif %}
+            </span>
+            <span class="estado-badge estado-{{ pedido.estado_pedido|lower|cut:' ' }}">
+              {% if pedido.estado_pedido == 'Confirmado' %}
+                ✓ Confirmado
+              {% elif pedido.estado_pedido == 'En Preparación' %}
+                📋 En Preparación
+              {% elif pedido.estado_pedido == 'En Camino' %}
+                🚚 En Camino
+              {% elif pedido.estado_pedido == 'Entregado' %}
+                📦 Entregado
+              {% elif pedido.estado_pedido == 'Completado' %}
+                ✅ Completado
+              {% elif pedido.estado_pedido == 'Problema en Entrega' %}
+                ⚠️ Problema en Entrega
+              {% else %}
+                {{ pedido.estado_pedido }}
               {% endif %}
             </span> —
             <strong>Total: ${{ pedido.total }}</strong>

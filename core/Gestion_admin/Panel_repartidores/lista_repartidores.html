@@ -281,14 +281,31 @@
         <div class="count">Total: {{ pedidos_asignados.count }}</div>
       </div>
       <div class="card-body">
+        <!-- DESASIGNACIÓN MÚLTIPLE -->
+        {% if pedidos_asignados %}
+        <div class="asignacion-multiple" style="background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left-color: #f44336;">
+          <h3 style="color: #c62828;">Desasignar Múltiples Pedidos</h3>
+          <form method="POST" action="/gestion/repartidores/desasignar_multiples/" id="formDesasignacionMultiple" onsubmit="return confirmarDesasignacion()">
+            {% csrf_token %}
+            <div class="asignacion-form">
+              <span class="selected-count" style="color: #c62828;">Seleccionados: <span id="countSelectedDesasignar">0</span></span>
+              <button type="submit" id="btnDesasignarMultiple" disabled style="background: linear-gradient(135deg, #f44336 0%, #e53935 100%);">Desasignar Seleccionados</button>
+            </div>
+          </form>
+        </div>
+        {% endif %}
+        
         {% for pedido in pedidos_asignados %}
           <div class="pedido-item pedido-asignado">
+            <div class="pedido-checkbox">
+              <input type="checkbox" name="pedido_ids_desasignar" value="{{ pedido.idPedido }}" form="formDesasignacionMultiple" onchange="updateSelectedCountDesasignar()">
+            </div>
             <div class="pedido-info">
               <div class="pedido-id">Pedido #{{ pedido.idPedido }}</div>
               <div class="pedido-details">👤 Cliente: {{ pedido.idCliente.nombre }}</div>
               <div class="pedido-details">🚚 Repartidor: <strong>{{ pedido.idRepartidor.nombreRepartidor }}</strong></div>
               <div class="pedido-details">📅 {{ pedido.fechaCreacion|date:"d/m/Y H:i" }} | 💰 ${{ pedido.total }}</div>
-              <div class="pedido-details">Estado: <span class="badge badge-warning">{{ pedido.estado }}</span></div>
+              <div class="pedido-details">Estado: <span class="badge badge-warning">{{ pedido.estado_pedido }}</span></div>
             </div>
             <div class="pedido-actions">
               <a href="{% url 'detalle_pedido' pedido.idPedido %}" class="btn btn-secondary btn-small">Ver Detalle</a>
@@ -315,6 +332,23 @@
       const count = checkboxes.length;
       document.getElementById('countSelected').textContent = count;
       document.getElementById('btnAsignarMultiple').disabled = count === 0;
+    }
+    
+    function updateSelectedCountDesasignar() {
+      const checkboxes = document.querySelectorAll('input[name="pedido_ids_desasignar"]:checked');
+      const count = checkboxes.length;
+      document.getElementById('countSelectedDesasignar').textContent = count;
+      document.getElementById('btnDesasignarMultiple').disabled = count === 0;
+    }
+    
+    function confirmarDesasignacion() {
+      const checkboxes = document.querySelectorAll('input[name="pedido_ids_desasignar"]:checked');
+      const count = checkboxes.length;
+      if (count === 0) {
+        alert('Por favor selecciona al menos un pedido para desasignar.');
+        return false;
+      }
+      return confirm(`¿Estás seguro de que quieres desasignar ${count} pedido(s)? Los repartidores quedarán disponibles y los pedidos volverán al estado "Confirmado".`);
     }
   </script>
 </body>

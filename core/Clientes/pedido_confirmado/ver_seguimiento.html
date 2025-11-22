@@ -378,8 +378,12 @@
       <h2>Información del Pedido</h2>
       <div class="info-grid">
         <div class="info-item">
-          <strong>Estado</strong>
-          <span>{{ pedido.estado }}</span>
+          <strong>Estado Pago</strong>
+          <span>{{ pedido.estado_pago }}</span>
+        </div>
+        <div class="info-item">
+          <strong>Estado Pedido</strong>
+          <span>{{ pedido.estado_pedido }}</span>
         </div>
         <div class="info-item">
           <strong>Fecha</strong>
@@ -416,8 +420,11 @@
     <div class="timeline-container">
       <h2>Estado del Pedido</h2>
       
-      <div class="status-badge {% if pedido.estado == 'Pago Completo' %}pago-completo{% elif pedido.estado == 'Pago Parcial' %}pago-parcial{% elif pedido.estado == 'En Preparación' %}en-preparacion{% elif pedido.estado == 'En Camino' %}en-camino{% elif pedido.estado == 'Entregado' %}entregado{% endif %}">
-        {{ pedido.estado }}
+      <div class="status-badge {% if pedido.estado_pago == 'Pago Completo' %}pago-completo{% elif pedido.estado_pago == 'Pago Parcial' %}pago-parcial{% endif %}">
+        {{ pedido.estado_pago }}
+      </div>
+      <div class="status-badge {% if pedido.estado_pedido == 'En Preparación' %}en-preparacion{% elif pedido.estado_pedido == 'En Camino' %}en-camino{% elif pedido.estado_pedido == 'Entregado' %}entregado{% endif %}">
+        {{ pedido.estado_pedido }}
       </div>
 
       <div class="timeline">
@@ -434,14 +441,14 @@
         </div>
 
         <!-- Paso 2: Pago Confirmado -->
-        <div class="timeline-item {% if pedido.estado == 'Pago Completo' or pedido.estado == 'En Preparación' or pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}completed{% elif pedido.estado == 'Pago Parcial' %}active{% else %}pending{% endif %}">
-          <div class="timeline-icon">{% if pedido.estado == 'Pago Completo' or pedido.estado == 'En Preparación' or pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}✓{% elif pedido.estado == 'Pago Parcial' %}⏳{% else %}2{% endif %}</div>
+        <div class="timeline-item {% if pedido.estado_pago == 'Pago Completo' or pedido.estado_pedido == 'En Preparación' or pedido.estado_pedido == 'En Camino' or pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}completed{% elif pedido.estado_pago == 'Pago Parcial' %}active{% else %}pending{% endif %}">
+          <div class="timeline-icon">{% if pedido.estado_pago == 'Pago Completo' or pedido.estado_pedido == 'En Preparación' or pedido.estado_pedido == 'En Camino' or pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}✓{% elif pedido.estado_pago == 'Pago Parcial' %}⏳{% else %}2{% endif %}</div>
           <div class="timeline-content">
             <div class="timeline-title">Pago Confirmado</div>
             <div class="timeline-description">
-              {% if pedido.estado == 'Pago Completo' or pedido.estado == 'En Preparación' or pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}
+              {% if pedido.estado_pago == 'Pago Completo' or pedido.estado_pedido == 'En Preparación' or pedido.estado_pedido == 'En Camino' or pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}
                 El pago ha sido confirmado. Tu pedido está siendo procesado.
-              {% elif pedido.estado == 'Pago Parcial' %}
+              {% elif pedido.estado_pago == 'Pago Parcial' %}
                 Pago parcial recibido. El saldo restante se pagará contra entrega.
               {% else %}
                 Esperando confirmación de pago.
@@ -451,14 +458,14 @@
         </div>
 
         <!-- Paso 3: En Preparación -->
-        <div class="timeline-item {% if pedido.estado == 'En Preparación' %}active{% elif pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}completed{% else %}pending{% endif %}">
-          <div class="timeline-icon">{% if pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}✓{% elif pedido.estado == 'En Preparación' %}📦{% else %}3{% endif %}</div>
+        <div class="timeline-item {% if pedido.estado_pedido == 'En Preparación' %}active{% elif pedido.estado_pedido == 'En Camino' or pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}completed{% else %}pending{% endif %}">
+          <div class="timeline-icon">{% if pedido.estado_pedido == 'En Camino' or pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}✓{% elif pedido.estado_pedido == 'En Preparación' %}📦{% else %}3{% endif %}</div>
           <div class="timeline-content">
             <div class="timeline-title">En Preparación</div>
             <div class="timeline-description">
-              {% if pedido.estado == 'En Preparación' %}
+              {% if pedido.estado_pedido == 'En Preparación' %}
                 Estamos preparando tu pedido con mucho cuidado.
-              {% elif pedido.estado == 'En Camino' or pedido.estado == 'Entregado' %}
+              {% elif pedido.estado_pedido == 'En Camino' or pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}
                 Tu pedido fue preparado y empacado correctamente.
               {% else %}
                 Tu pedido será preparado una vez confirmado el pago.
@@ -468,16 +475,16 @@
         </div>
 
         <!-- Paso 4: En Camino -->
-        <div class="timeline-item {% if pedido.estado == 'En Camino' or pedido.get_estado_pedido == 'En Camino' %}active{% elif pedido.estado == 'Entregado' %}completed{% else %}pending{% endif %}">
-          <div class="timeline-icon">{% if pedido.estado == 'Entregado' %}✓{% elif pedido.estado == 'En Camino' or pedido.get_estado_pedido == 'En Camino' %}🚚{% else %}4{% endif %}</div>
+        <div class="timeline-item {% if pedido.estado_pedido == 'En Camino' %}active{% elif pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}completed{% else %}pending{% endif %}">
+          <div class="timeline-icon">{% if pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}✓{% elif pedido.estado_pedido == 'En Camino' %}🚚{% else %}4{% endif %}</div>
           <div class="timeline-content">
             <div class="timeline-title">En Camino</div>
             <div class="timeline-description">
-              {% if pedido.estado == 'En Camino' or pedido.get_estado_pedido == 'En Camino' %}
+              {% if pedido.estado_pedido == 'En Camino' %}
                 Tu pedido está en camino a {{ ciudad_entrega }}. 
                 {% if pedido.idRepartidor %}Repartidor: {{ pedido.idRepartidor.nombreRepartidor }}{% endif %}
                 <br><strong>Fecha estimada de entrega: {{ fecha_entrega_estimada|date:"d/m/Y" }}</strong>
-              {% elif pedido.estado == 'Entregado' %}
+              {% elif pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}
                 Tu pedido fue enviado y entregado exitosamente.
               {% else %}
                 Tu pedido será enviado una vez esté listo.
@@ -488,14 +495,14 @@
         </div>
 
         <!-- Paso 5: Entregado -->
-        <div class="timeline-item {% if pedido.estado == 'Entregado' or pedido.estado == 'Completado' %}completed{% else %}pending{% endif %}">
-          <div class="timeline-icon">{% if pedido.estado == 'Entregado' or pedido.estado == 'Completado' %}✓{% else %}5{% endif %}</div>
+        <div class="timeline-item {% if pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}completed{% else %}pending{% endif %}">
+          <div class="timeline-icon">{% if pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}✓{% else %}5{% endif %}</div>
           <div class="timeline-content">
             <div class="timeline-title">Entregado</div>
             <div class="timeline-description">
-              {% if pedido.estado == 'Entregado' or pedido.estado == 'Completado' %}
+              {% if pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}
                 ¡Tu pedido ha sido entregado en {{ ciudad_entrega }}! Gracias por tu compra. 🎉
-                {% if pedido.get_estado_pago == 'Pago Parcial' %}
+                {% if pedido.estado_pago == 'Pago Parcial' %}
                 <br><em>El pago del envío fue completado al momento de la entrega.</em>
                 {% endif %}
               {% else %}

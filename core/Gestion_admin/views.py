@@ -264,30 +264,43 @@ def cliente_editar_view(request, id):
 def cliente_eliminar_view(request, id):
     cliente = get_object_or_404(Cliente, idCliente=id)
     
-    try:
-        with transaction.atomic():
-            # Primero, actualizar los usuarios relacionados para evitar el error de integridad referencial
-            # Establecer idCliente a NULL para todos los usuarios que referencian este cliente
-            usuarios_actualizados = Usuario.objects.filter(idCliente=id).update(idCliente=None)
-            
-            # Verificar si hay pedidos asociados al cliente
-            pedidos_count = Pedido.objects.filter(idCliente=id).count()
-            
-            if pedidos_count > 0:
-                messages.warning(request, f"El cliente {cliente.nombre} tiene {pedidos_count} pedido(s) asociado(s). Se eliminarán junto con el cliente.")
-            
-            # Ahora podemos eliminar el cliente de forma segura
-            # Los pedidos se eliminarán automáticamente por la restricción de la base de datos
-            cliente.delete()
-            
-            mensaje = f"Cliente {cliente.nombre} eliminado correctamente."
-            if usuarios_actualizados > 0:
-                mensaje += f" Se desvincularon {usuarios_actualizados} usuario(s) asociado(s)."
-            
-            messages.success(request, mensaje)
-            
-    except Exception as e:
-        messages.error(request, f"Error al eliminar el cliente: {str(e)}")
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # Obtener todos los pedidos del cliente para eliminar registros relacionados
+                pedidos = Pedido.objects.filter(idCliente=id)
+                pedidos_count = pedidos.count()
+                
+                # Eliminar notificaciones de problemas relacionadas a los pedidos del cliente
+                from core.models import NotificacionProblema
+                notificaciones_eliminadas = 0
+                for pedido in pedidos:
+                    notificaciones = NotificacionProblema.objects.filter(idPedido=pedido)
+                    notificaciones_eliminadas += notificaciones.count()
+                    notificaciones.delete()
+                
+                # Eliminar detalles de pedidos (se eliminarán automáticamente por CASCADE)
+                # Eliminar pedidos (se eliminarán automáticamente por CASCADE)
+                
+                # Actualizar los usuarios relacionados para evitar el error de integridad referencial
+                usuarios_actualizados = Usuario.objects.filter(idCliente=id).update(idCliente=None)
+                
+                # Mostrar resumen de lo que se va a eliminar
+                resumen = f"Se eliminaron: {pedidos_count} pedido(s)"
+                if notificaciones_eliminadas > 0:
+                    resumen += f", {notificaciones_eliminadas} notificación(es) de problema(s)"
+                if usuarios_actualizados > 0:
+                    resumen += f", {usuarios_actualizados} usuario(s) desvinculado(s)"
+                
+                # Ahora podemos eliminar el cliente de forma segura
+                # Los pedidos y sus detalles se eliminarán automáticamente por la restricción CASCADE
+                cliente.delete()
+                
+                mensaje = f"Cliente {cliente.nombre} y todos sus registros asociados han sido eliminados correctamente. {resumen}."
+                messages.success(request, mensaje)
+                
+        except Exception as e:
+            messages.error(request, f"Error al eliminar el cliente: {str(e)}")
     
     return redirect("lista_clientes")
 
@@ -613,6 +626,21 @@ def pedido_editar_view(request, id):
                 pedido.estado_pago = estado_pago
             
             if estado_pedido:
+                # Validar el flujo de estados: Confirmado → En Preparación → En Camino → Entregado → Completado
+                flujo_valido = {
+                    'Confirmado': ['Confirmado', 'En Preparación', 'Problema en Entrega'],
+                    'En Preparación': ['En Preparación', 'En Camino', 'Problema en Entrega'],
+                    'En Camino': ['En Camino', 'Entregado', 'Problema en Entrega'],
+                    'Entregado': ['Entregado', 'Completado', 'Problema en Entrega'],
+                    'Completado': ['Completado'],
+                    'Problema en Entrega': ['Problema en Entrega', 'Confirmado', 'En Preparación'],
+                }
+                
+                estado_actual = pedido.estado_pedido
+                if estado_actual not in flujo_valido or estado_pedido not in flujo_valido[estado_actual]:
+                    messages.error(request, f"No se puede cambiar de '{estado_actual}' a '{estado_pedido}'. Flujo inválido.")
+                    return redirect('editar_pedido', id=id)
+                
                 pedido.estado_pedido = estado_pedido
             
             # Asignar o desasignar repartidor
@@ -922,6 +950,53 @@ def desasignar_repartidor_view(request, id_pedido):
         if pedido.estado_pedido == 'En Camino':
             pedido.estado_pedido = 'Confirmado'
         pedido.save()
+        
+        messages.success(request, f"Repartidor desasignado del pedido #{id_pedido}.")
+    return redirect('lista_repartidores')
+
+def desasignar_pedidos_multiples_view(request):
+    if request.method == 'POST':
+        pedido_ids = request.POST.getlist('pedido_ids_desasignar')
+        
+        if not pedido_ids:
+            messages.error(request, "No se seleccionaron pedidos para desasignar.")
+            return redirect('lista_repartidores')
+        
+        pedidos_desasignados = 0
+        repartidores_liberados = set()
+        
+        for pedido_id in pedido_ids:
+            try:
+                pedido = Pedido.objects.get(idPedido=pedido_id)
+                
+                # Cambiar el estado del repartidor a disponible
+                if pedido.idRepartidor:
+                    repartidor = pedido.idRepartidor
+                    repartidores_liberados.add(repartidor.nombreRepartidor)
+                    repartidor.estado_turno = 'Disponible'
+                    repartidor.save()
+                
+                # Desasignar repartidor
+                pedido.idRepartidor = None
+                
+                # Cambiar el estado del pedido de vuelta a Confirmado
+                if pedido.estado_pedido == 'En Camino':
+                    pedido.estado_pedido = 'Confirmado'
+                
+                pedido.save()
+                pedidos_desasignados += 1
+                
+            except Pedido.DoesNotExist:
+                continue
+        
+        if pedidos_desasignados > 0:
+            repartidores_str = ", ".join(repartidores_liberados)
+            messages.success(request, f"Se desasignaron {pedidos_desasignados} pedido(s). Repartidores liberados: {repartidores_str}")
+        else:
+            messages.error(request, "No se pudo desasignar ningún pedido.")
+        
+        return redirect('lista_repartidores')
+    
     return redirect('lista_repartidores')
 
 def descargar_pdf_asignacion_view(request, id_pedido):

@@ -57,6 +57,7 @@ urlpatterns = [
     path('repartidores/eliminar/<int:id>/', views.repartidor_eliminar_view, name='repartidor_eliminar'),
     path('repartidores/asignar_pedido/', views.asignar_pedido_repartidor_view, name='asignar_pedido_repartidor'),
     path('repartidores/asignar_multiples/', views.asignar_pedidos_multiples_view, name='asignar_pedidos_multiples'),
+    path('repartidores/desasignar_multiples/', views.desasignar_pedidos_multiples_view, name='desasignar_pedidos_multiples'),
     path('repartidores/desasignar_pedido/<int:id_pedido>/', views.desasignar_repartidor_view, name='desasignar_repartidor'),
     path('repartidores/descargar_pdf_asignacion/<int:id_pedido>/', views.descargar_pdf_asignacion_view, name='descargar_pdf_asignacion'),
     path('pedidos/descargar_pdf/<int:id_pedido>/', views.descargar_pedido_pdf_view, name='descargar_pedido_pdf'),

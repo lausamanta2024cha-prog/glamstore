@@ -10,6 +10,8 @@ class Usuario(models.Model):
     nombre = models.CharField(max_length=50, null=True)
     telefono = models.CharField(max_length=20, null=True)
     direccion = models.CharField(max_length=50, null=True)
+    reset_token = models.CharField(max_length=255, null=True)
+    reset_token_expires = models.DateTimeField(null=True)
 
     class Meta:
         db_table = 'usuarios'

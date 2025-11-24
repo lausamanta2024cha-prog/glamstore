@@ -19,6 +19,8 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
+from django.utils import timezone
+from datetime import timedelta
 
 # ✅ Función auxiliar: obtiene el carrito actual desde sesión
 def obtener_carrito_actual(request):
@@ -150,7 +152,7 @@ def carrito(request):
     for id_producto, cantidad in carrito_raw.items():
         try:
             producto = Producto.objects.get(idProducto=id_producto)
-            subtotal = producto.precio * cantidad
+            subtotal = producto.precio_venta * cantidad
             total += subtotal
             producto.rango_cantidad = range(1, max(producto.stock - cantidad + 1, 1))  # Para el selector
             carrito.append({
@@ -411,25 +413,35 @@ def simular_pago(request):
                 if producto.stock < cantidad:
                     raise Exception(f"No hay suficiente stock para {producto.nombreProducto}")
                 
-                subtotal = producto.precio * cantidad
+                subtotal = producto.precio_venta * cantidad
                 total_pedido += subtotal
                 detalles_para_crear.append((producto, cantidad, subtotal))
 
             # Decidir el estado y el total final basado en el pago del envío
+            from decimal import Decimal
             pago_envio = request.POST.get('pago_envio', 'ahora')
             costo_envio = 10000
+            tasa_iva = Decimal('0.19')  # 19% de IVA
+            
+            # Calcular IVA sobre el subtotal de productos (sin incluir envío)
+            iva = int(total_pedido * tasa_iva)
             
             # El total y estado dependen del tipo de pago
             if pago_envio == 'ahora':
-                # Cliente pagó todo (productos + envío)
-                total_final = total_pedido + costo_envio
+                # Cliente pagó todo (productos + IVA + envío)
+                total_final = int(total_pedido) + iva + costo_envio
                 estado_pago = 'Pago Completo'
             else:
-                # Cliente pagó solo productos, envío contra entrega
-                total_final = total_pedido
+                # Cliente pagó solo productos + IVA, envío contra entrega
+                total_final = int(total_pedido) + iva
                 estado_pago = 'Pago Parcial'
 
-            print(f"DEBUG - Creando pedido: Total {total_final}, Estado Pago: {estado_pago}")
+            print(f"DEBUG - Creando pedido:")
+            print(f"  Subtotal productos: {total_pedido}")
+            print(f"  IVA (19%): {iva}")
+            print(f"  Envío: {costo_envio if pago_envio == 'ahora' else 0}")
+            print(f"  Total final: {total_final}")
+            print(f"  Estado Pago: {estado_pago}")
 
             # 3. Crear el Pedido principal en la base de datos
             nuevo_pedido = Pedido.objects.create(
@@ -448,14 +460,14 @@ def simular_pago(request):
                     idPedido=nuevo_pedido,
                     idProducto=producto,
                     cantidad=cantidad,
-                    precio_unitario=producto.precio,
+                    precio_unitario=producto.precio_venta,
                     subtotal=subtotal
                 )
                 producto.stock -= cantidad
                 MovimientoProducto.objects.create(
                     producto=producto,
                     tipo_movimiento='SALIDA_VENTA',
-                    precio_unitario=producto.precio,
+                    precio_unitario=producto.precio_venta,
                     cantidad=cantidad,
                     stock_anterior=producto.stock + cantidad,
                     stock_nuevo=producto.stock,
@@ -506,7 +518,7 @@ def ver_carrito_debug(request):
     for id_producto, cantidad in carrito_raw.items():
         try:
             producto = Producto.objects.get(idProducto=id_producto)
-            subtotal = producto.precio * cantidad
+            subtotal = producto.precio_venta * cantidad
             total += subtotal
             carrito.append({
                 'producto': producto,
@@ -539,7 +551,7 @@ def checkout(request):
     for id_producto, cantidad in carrito_raw.items():
         try:
             producto = Producto.objects.get(idProducto=id_producto)
-            subtotal = producto.precio * cantidad
+            subtotal = producto.precio_venta * cantidad
             total += subtotal
             carrito.append({
                 'producto': producto,
@@ -684,49 +696,56 @@ def login_view(request):
 def recuperar_password(request):
     if request.method == 'POST':
         email = request.POST.get('email')
-
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT idUsuario FROM usuarios WHERE email = %s", [email])
-            usuario = cursor.fetchone()
-
-        if usuario:
+        try:
+            usuario = Usuario.objects.get(email=email)
             token = get_random_string(length=32)
-            # Guarda el token en una tabla temporal o en la sesión
-            request.session['token_recuperacion'] = token
-            request.session['usuario_recuperacion'] = usuario[0]
+            
+            # Guardar el token y la fecha de expiración en la base de datos
+            usuario.reset_token = token
+            usuario.reset_token_expires = timezone.now() + timedelta(hours=1)
+            usuario.save(update_fields=['reset_token', 'reset_token_expires'])
 
-            link = request.build_absolute_uri(f"/cambiar-password/{token}/")
+            link = request.build_absolute_uri(reverse('cambiar_password', args=[token]))
+            
             send_mail(
                 subject="Recuperación de contraseña — Glam Store",
                 message=f"Haz clic en el siguiente enlace para cambiar tu contraseña:\n{link}",
                 from_email="no-reply@glamstore.com",
                 recipient_list=[email],
             )
+            
             messages.success(request, "Te hemos enviado un enlace de recuperación a tu correo.")
-            return redirect('login')
-        else:
+        except Usuario.DoesNotExist:
             messages.error(request, "Este correo no está registrado.")
+            
     return render(request, 'recuperar_password.html')
 
-
 def cambiar_password(request, token):
+    try:
+        usuario = Usuario.objects.get(reset_token=token, reset_token_expires__gt=timezone.now())
+    except Usuario.DoesNotExist:
+        messages.error(request, "Token inválido o expirado.")
+        return redirect('login')
+
     if request.method == 'POST':
         nueva = request.POST.get('nueva')
         confirmacion = request.POST.get('confirmacion')
 
-        if nueva == confirmacion:
-            if token == request.session.get('token_recuperacion'):
-                idUsuario = request.session.get('usuario_recuperacion')
-                with connection.cursor() as cursor:
-                    cursor.execute("""
-                        UPDATE usuarios SET password = %s WHERE idUsuario = %s
-                    """, [make_password(nueva), idUsuario])
-                messages.success(request, "Tu contraseña ha sido actualizada.")
-                return redirect('login')
-            else:
-                messages.error(request, "Token inválido o expirado.")
+        if nueva and nueva == confirmacion:
+            if len(nueva) < 6:
+                messages.error(request, "La contraseña debe tener al menos 6 caracteres.")
+                return render(request, 'cambiar_password.html')
+
+            usuario.password = make_password(nueva)
+            usuario.reset_token = None
+            usuario.reset_token_expires = None
+            usuario.save(update_fields=['password', 'reset_token', 'reset_token_expires'])
+            
+            messages.success(request, "Tu contraseña ha sido actualizada.")
+            return redirect('login')
         else:
-            messages.error(request, "Las contraseñas no coinciden.")
+            messages.error(request, "Las contraseñas no coinciden o están vacías.")
+
     return render(request, 'cambiar_password.html')
 
 
@@ -945,15 +964,16 @@ def ver_seguimiento(request, idPedido):
     
     # Calcular costo del envío
     costo_envio = 10000
-    total_productos = pedido.total
+    tasa_iva = 0.19
     
-    # Si es pago parcial, el total mostrado es solo productos, el envío se paga contra entrega
+    # Calcular la base líquida (suma de productos sin IVA ni envío)
+    # Sumamos los subtotales de los detalles del pedido
+    total_productos = sum(detalle.subtotal for detalle in detalles_pedido)
+    
+    # Determinar si el envío fue pagado
     if pedido.estado_pago == 'Pago Parcial':
-        total_productos = pedido.total
         envio_pagado = False
     else:
-        # Si es pago completo, el total incluye envío
-        total_productos = pedido.total - costo_envio
         envio_pagado = True
     
     context = {

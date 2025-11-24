@@ -729,10 +729,10 @@ def cliente_detalle_view(request, id):
     total_pedidos = pedidos.count()
     total_gastado = pedidos.aggregate(total=Sum('total'))['total'] or 0
     
-    # Pedidos por estado
-    pedidos_completados = pedidos.filter(estado='Pago Completo').count()
-    pedidos_pendientes = pedidos.filter(estado='Pago Parcial').count()
-    pedidos_sin_pago = pedidos.filter(estado='Sin Pago').count()
+    # Pedidos por estado de pago
+    pedidos_completados = pedidos.filter(estado_pago='Pago Completo').count()
+    pedidos_pendientes = pedidos.filter(estado_pago='Pago Parcial').count()
+    pedidos_sin_pago = pedidos.exclude(estado_pago__in=['Pago Completo', 'Pago Parcial']).count()
     
     # Pedidos recientes (últimos 5)
     pedidos_recientes = pedidos[:5]
@@ -787,7 +787,7 @@ def verificar_y_actualizar_pedidos_entregados():
     from django.utils import timezone
     
     # Obtener pedidos en estado "En Camino"
-    pedidos_en_camino = Pedido.objects.filter(estado='En Camino').select_related('idCliente')
+    pedidos_en_camino = Pedido.objects.filter(estado_pedido='En Camino').select_related('idCliente')
     
     ahora = timezone.now()
     pedidos_actualizados = 0
@@ -817,10 +817,10 @@ def lista_repartidores_view(request):
     filtro_repartidor = request.GET.get('repartidor')
     filtro_estado = request.GET.get('estado')
     
-    # Pedidos pendientes
+    # Pedidos pendientes (sin repartidor asignado y con pago confirmado)
     pedidos_pendientes = Pedido.objects.filter(
         idRepartidor__isnull=True,
-        estado__in=['Pago Completo', 'Pago Parcial']
+        estado_pago__in=['Pago Completo', 'Pago Parcial']
     ).select_related('idCliente').order_by('fechaCreacion')
     
     # Pedidos asignados

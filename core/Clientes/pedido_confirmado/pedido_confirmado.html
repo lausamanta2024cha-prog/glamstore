@@ -333,8 +333,34 @@
             <span>#{{ pedido.idPedido }}</span>
           </div>
           <div class="info-row">
-            <strong>Estado:</strong>
-            <span>{{ pedido.estado }}</span>
+            <strong>Estado de Pago:</strong>
+            <span>
+              {% if pedido.estado_pago == 'Pago Completo' %}
+                ✓ Pago Completo
+              {% elif pedido.estado_pago == 'Pago Parcial' %}
+                ⏳ Pago Parcial (Envío contra entrega)
+              {% else %}
+                {{ pedido.estado_pago }}
+              {% endif %}
+            </span>
+          </div>
+          <div class="info-row">
+            <strong>Estado del Pedido:</strong>
+            <span>
+              {% if pedido.estado_pedido == 'Confirmado' %}
+                ✓ Confirmado
+              {% elif pedido.estado_pedido == 'En Preparación' %}
+                📋 En Preparación
+              {% elif pedido.estado_pedido == 'En Camino' %}
+                🚚 En Camino
+              {% elif pedido.estado_pedido == 'Entregado' %}
+                📦 Entregado
+              {% elif pedido.estado_pedido == 'Completado' %}
+                ✅ Completado
+              {% else %}
+                {{ pedido.estado_pedido }}
+              {% endif %}
+            </span>
           </div>
           <div class="info-row">
             <strong>Fecha:</strong>

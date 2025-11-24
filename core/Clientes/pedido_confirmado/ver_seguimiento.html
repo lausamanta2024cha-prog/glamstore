@@ -315,6 +315,37 @@
       margin-top: 0.5rem;
     }
 
+    table {
+      width: 100%;
+    }
+
+    table th, table td {
+      padding: 0.8rem;
+      text-align: left;
+    }
+
+    table thead {
+      background-color: #f8bbd0;
+      border-bottom: 2px solid #f48fb1;
+    }
+
+    table th {
+      color: #c2185b;
+      font-weight: bold;
+    }
+
+    table tbody tr {
+      border-bottom: 1px solid #f8bbd0;
+    }
+
+    table tbody tr:hover {
+      background-color: #fffafc;
+    }
+
+    table td {
+      color: #666;
+    }
+
     @media (max-width: 768px) {
       .sidebar {
         display: none;
@@ -345,6 +376,18 @@
 
       .info-grid {
         grid-template-columns: 1fr;
+      }
+
+      table {
+        font-size: 0.9rem;
+      }
+
+      table th, table td {
+        padding: 0.6rem;
+      }
+
+      table th {
+        font-size: 0.85rem;
       }
     }
   </style>
@@ -390,10 +433,6 @@
           <span>{{ pedido.fechaCreacion|date:"d/m/Y H:i" }}</span>
         </div>
         <div class="info-item">
-          <strong>Total</strong>
-          <span>${{ pedido.total }}</span>
-        </div>
-        <div class="info-item">
           <strong>Cliente</strong>
           <span>{{ pedido.idCliente.nombre }}</span>
         </div>
@@ -412,6 +451,67 @@
         <div class="info-item">
           <strong>Ciudad de Entrega</strong>
           <span>{{ ciudad_entrega }}</span>
+        </div>
+        {% if pedido.idRepartidor %}
+        <div class="info-item">
+          <strong>Repartidor Asignado</strong>
+          <span>{{ pedido.idRepartidor.nombreRepartidor }}</span>
+        </div>
+        <div class="info-item">
+          <strong>Teléfono Repartidor</strong>
+          <span>{{ pedido.idRepartidor.telefono }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Productos del Pedido -->
+    <div class="pedido-info">
+      <h2>Productos Comprados</h2>
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background-color: #f8bbd0; border-bottom: 2px solid #f48fb1;">
+              <th style="padding: 1rem; text-align: left; color: #c2185b; font-weight: bold;">Producto</th>
+              <th style="padding: 1rem; text-align: center; color: #c2185b; font-weight: bold;">Cantidad</th>
+              <th style="padding: 1rem; text-align: right; color: #c2185b; font-weight: bold;">Precio Unitario</th>
+              <th style="padding: 1rem; text-align: right; color: #c2185b; font-weight: bold;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for detalle in detalles_pedido %}
+            <tr style="border-bottom: 1px solid #f8bbd0;">
+              <td style="padding: 1rem; color: #666;">{{ detalle.idProducto.nombreProducto }}</td>
+              <td style="padding: 1rem; text-align: center; color: #666;">{{ detalle.cantidad }}</td>
+              <td style="padding: 1rem; text-align: right; color: #666;">${{ detalle.precio_unitario }}</td>
+              <td style="padding: 1rem; text-align: right; color: #c2185b; font-weight: bold;">${{ detalle.subtotal }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Resumen de Costos -->
+      <div style="margin-top: 2rem; padding: 1.5rem; background: #fffafc; border-radius: 10px; border-left: 3px solid #f48fb1;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+          <div>
+            <strong style="color: #c2185b; display: block; margin-bottom: 0.5rem;">Total Productos</strong>
+            <span style="color: #666; font-size: 1.1rem;">${{ total_productos }}</span>
+          </div>
+          <div>
+            <strong style="color: #c2185b; display: block; margin-bottom: 0.5rem;">Envío</strong>
+            <span style="color: #666; font-size: 1.1rem;">
+              {% if envio_pagado %}
+                <span style="color: #4caf50;">✓ Pagado</span> - ${{ costo_envio }}
+              {% else %}
+                <span style="color: #ff9800;">⏳ Contra Entrega</span> - ${{ costo_envio }}
+              {% endif %}
+            </span>
+          </div>
+          <div style="border-top: 2px solid #f48fb1; padding-top: 1rem; grid-column: 1 / -1;">
+            <strong style="color: #c2185b; display: block; margin-bottom: 0.5rem;">Total del Pedido</strong>
+            <span style="color: #c2185b; font-size: 1.3rem; font-weight: bold;">${{ pedido.total }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -482,10 +582,28 @@
             <div class="timeline-description">
               {% if pedido.estado_pedido == 'En Camino' %}
                 Tu pedido está en camino a {{ ciudad_entrega }}. 
-                {% if pedido.idRepartidor %}Repartidor: {{ pedido.idRepartidor.nombreRepartidor }}{% endif %}
                 <br><strong>Fecha estimada de entrega: {{ fecha_entrega_estimada|date:"d/m/Y" }}</strong>
+                {% if pedido.idRepartidor %}
+                  <div style="margin-top: 1rem; padding: 1rem; background: #fff9fc; border-radius: 8px; border-left: 3px solid #f48fb1;">
+                    <strong style="color: #c2185b; display: block; margin-bottom: 0.5rem;">👤 Datos del Repartidor</strong>
+                    <div style="color: #666; font-size: 0.95rem;">
+                      <div style="margin-bottom: 0.5rem;"><strong>Nombre:</strong> {{ pedido.idRepartidor.nombreRepartidor }}</div>
+                      <div style="margin-bottom: 0.5rem;"><strong>Teléfono:</strong> {{ pedido.idRepartidor.telefono }}</div>
+                      <div><strong>Estado:</strong> {{ pedido.idRepartidor.estado_turno }}</div>
+                    </div>
+                  </div>
+                {% endif %}
               {% elif pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}
                 Tu pedido fue enviado y entregado exitosamente.
+                {% if pedido.idRepartidor %}
+                  <div style="margin-top: 1rem; padding: 1rem; background: #f0f8f0; border-radius: 8px; border-left: 3px solid #4caf50;">
+                    <strong style="color: #2e7d32; display: block; margin-bottom: 0.5rem;">👤 Repartidor que entregó</strong>
+                    <div style="color: #666; font-size: 0.95rem;">
+                      <div style="margin-bottom: 0.5rem;"><strong>Nombre:</strong> {{ pedido.idRepartidor.nombreRepartidor }}</div>
+                      <div><strong>Teléfono:</strong> {{ pedido.idRepartidor.telefono }}</div>
+                    </div>
+                  </div>
+                {% endif %}
               {% else %}
                 Tu pedido será enviado una vez esté listo.
                 <br><strong>Fecha estimada de entrega: {{ fecha_entrega_estimada|date:"d/m/Y" }}</strong>

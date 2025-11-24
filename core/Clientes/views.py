@@ -423,18 +423,19 @@ def simular_pago(request):
             if pago_envio == 'ahora':
                 # Cliente pagó todo (productos + envío)
                 total_final = total_pedido + costo_envio
-                estado_pedido = 'Pago Completo'
+                estado_pago = 'Pago Completo'
             else:
                 # Cliente pagó solo productos, envío contra entrega
                 total_final = total_pedido
-                estado_pedido = 'Pago Parcial'
+                estado_pago = 'Pago Parcial'
 
-            print(f"DEBUG - Creando pedido: Total {total_final}, Estado: {estado_pedido}")
+            print(f"DEBUG - Creando pedido: Total {total_final}, Estado Pago: {estado_pago}")
 
             # 3. Crear el Pedido principal en la base de datos
             nuevo_pedido = Pedido.objects.create(
                 idCliente=cliente,
-                estado=estado_pedido,
+                estado_pago=estado_pago,
+                estado_pedido='Confirmado',
                 total=total_final,
                 fechaCreacion=datetime.now()
             )
@@ -585,7 +586,13 @@ def registro(request):
             messages.error(request, "Las contraseñas no coinciden.")
             return render(request, 'registrar_usuario.html', {'input': request.POST})
 
+        # Validar longitud mínima de contraseña
+        if len(password) < 6:
+            messages.error(request, "La contraseña debe tener al menos 6 caracteres.")
+            return render(request, 'registrar_usuario.html', {'input': request.POST})
+
         # Verificar si ya existe un usuario con este email
+        # Nota: Si solo existe un Cliente (sin Usuario), se permite el registro
         if Usuario.objects.filter(email=email).exists():
             messages.error(request, "Este correo electrónico ya tiene una cuenta registrada. Por favor, inicia sesión.")
             return render(request, 'registrar_usuario.html', {'input': request.POST})
@@ -933,11 +940,31 @@ def ver_seguimiento(request, idPedido):
     
     fecha_entrega_estimada = pedido.fechaCreacion + timedelta(days=dias_entrega)
     
+    # Obtener los detalles del pedido (productos)
+    detalles_pedido = DetallePedido.objects.filter(idPedido=pedido).select_related('idProducto')
+    
+    # Calcular costo del envío
+    costo_envio = 10000
+    total_productos = pedido.total
+    
+    # Si es pago parcial, el total mostrado es solo productos, el envío se paga contra entrega
+    if pedido.estado_pago == 'Pago Parcial':
+        total_productos = pedido.total
+        envio_pagado = False
+    else:
+        # Si es pago completo, el total incluye envío
+        total_productos = pedido.total - costo_envio
+        envio_pagado = True
+    
     context = {
         'pedido': pedido,
         'fecha_entrega_estimada': fecha_entrega_estimada,
         'dias_entrega': dias_entrega,
-        'ciudad_entrega': ciudad_entrega
+        'ciudad_entrega': ciudad_entrega,
+        'detalles_pedido': detalles_pedido,
+        'costo_envio': costo_envio,
+        'total_productos': total_productos,
+        'envio_pagado': envio_pagado
     }
     
     return render(request, 'ver_seguimiento.html', context)

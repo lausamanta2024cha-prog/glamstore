@@ -60,6 +60,8 @@ urlpatterns = [
     path('repartidores/desasignar_multiples/', views.desasignar_pedidos_multiples_view, name='desasignar_pedidos_multiples'),
     path('repartidores/desasignar_pedido/<int:id_pedido>/', views.desasignar_repartidor_view, name='desasignar_repartidor'),
     path('repartidores/descargar_pdf_asignacion/<int:id_pedido>/', views.descargar_pdf_asignacion_view, name='descargar_pdf_asignacion'),
+    path('repartidores/enviar_factura/<int:id_pedido>/', views.enviar_factura_cliente_view, name='enviar_factura_cliente'),
+    path('repartidores/enviar_facturas_multiples/', views.enviar_facturas_multiples_view, name='enviar_facturas_multiples'),
     path('pedidos/descargar_pdf/<int:id_pedido>/', views.descargar_pedido_pdf_view, name='descargar_pedido_pdf'),
 
     # Panel Admin (perfil)

@@ -315,56 +315,130 @@
         <div class="count">Total: {{ pedidos_asignados.count }}</div>
       </div>
       <div class="card-body">
-        <!-- DESASIGNACIÓN MÚLTIPLE -->
-        {% if pedidos_asignados %}
-        <div class="asignacion-multiple" style="background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left-color: #f44336;">
-          <h3 style="color: #c62828;">Desasignar Múltiples Pedidos</h3>
-          <form method="POST" action="/gestion/repartidores/desasignar_multiples/" id="formDesasignacionMultiple" onsubmit="return confirmarDesasignacion()">
-            {% csrf_token %}
-            <div class="asignacion-form">
-              <label style="display: flex; align-items: center; gap: 8px; color: #c62828; font-weight: bold; cursor: pointer;">
-                <input type="checkbox" id="selectAllDesasignar" onchange="toggleSelectAllDesasignar()">
-                Seleccionar todos
-              </label>
-              <span class="selected-count" style="color: #c62828;">Seleccionados: <span id="countSelectedDesasignar">0</span></span>
-              <button type="submit" id="btnDesasignarMultiple" disabled style="background: linear-gradient(135deg, #f44336 0%, #e53935 100%);">Desasignar Seleccionados</button>
-            </div>
-          </form>
+        <!-- LAYOUT SÁNDWICH: IZQUIERDA | CENTRO | DERECHA -->
+        <div style="display: grid; grid-template-columns: 200px 1fr 200px; gap: 15px; align-items: start;">
+          
+          <!-- COLUMNA IZQUIERDA: ENVIAR FACTURAS CLIENTES -->
+          <div style="border: 1px solid #d4edda; border-radius: 10px; padding: 16px; background: linear-gradient(135deg, #f8fdf9 0%, #f1f8f6 100%); height: fit-content; position: sticky; top: 0; box-shadow: 0 2px 6px rgba(76, 175, 80, 0.1);">
+            <h3 style="color: #2e7d32; margin: 0 0 12px 0; font-size: 14px; text-align: center; font-weight: 600; letter-spacing: 0.5px;">Enviar Facturas</h3>
+            <form method="POST" action="{% url 'enviar_facturas_multiples' %}" id="formEnvioFacturasMultiple" onsubmit="return confirmarEnvioFacturas()">
+              {% csrf_token %}
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 6px; color: #2e7d32; font-weight: 500; cursor: pointer; font-size: 13px; margin: 0;">
+                  <input type="checkbox" id="selectAllFacturas" onchange="toggleSelectAllFacturas()" style="width: 14px; height: 14px; cursor: pointer; margin: 0; accent-color: #4caf50;">
+                  Seleccionar todos
+                </label>
+                <div style="text-align: center; color: #2e7d32; font-weight: 600; font-size: 12px; background-color: white; padding: 8px; border-radius: 6px; border: 1px solid #d4edda;">
+                  <span id="countSelectedFacturas">0</span>/<span id="totalFacturas">0</span>
+                </div>
+                <button type="submit" id="btnEnviarFacturasMultiple" disabled style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s; box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);">Enviar</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- COLUMNA CENTRO: GRID DE TARJETAS DE PEDIDOS -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; max-height: 700px; overflow-y: auto; padding: 10px; background-color: #fafafa; border-radius: 8px; border: 1px solid #ddd;">
+            {% if pedidos_asignados %}
+              {% for pedido in pedidos_asignados %}
+                <div style="background: white; border: 1px solid #e8e8e8; border-radius: 12px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: all 0.3s ease; position: relative; hover: box-shadow 0 4px 12px rgba(0,0,0,0.1);">
+                  <!-- Checkbox pequeño en la esquina superior izquierda -->
+                  <div style="position: absolute; top: 10px; left: 10px;">
+                    <input type="checkbox" name="pedido_ids_facturas" value="{{ pedido.idPedido }}" form="formEnvioFacturasMultiple" onchange="updateSelectedCountFacturas()" style="width: 16px; height: 16px; cursor: pointer; margin: 0; accent-color: #4caf50;">
+                  </div>
+                  
+                  <!-- Checkbox pequeño en la esquina superior derecha -->
+                  <div style="position: absolute; top: 10px; right: 10px;">
+                    <input type="checkbox" name="pedido_ids_desasignar" value="{{ pedido.idPedido }}" form="formDesasignacionMultiple" onchange="updateSelectedCountDesasignar()" style="width: 16px; height: 16px; cursor: pointer; margin: 0; accent-color: #f44336;">
+                  </div>
+                  
+                  <!-- Contenido de la tarjeta -->
+                  <div style="padding-top: 28px;">
+                    <!-- Número de pedido -->
+                    <div style="font-weight: 700; color: #d946a6; font-size: 18px; margin-bottom: 14px; letter-spacing: -0.3px;">Pedido #{{ pedido.idPedido }}</div>
+                    
+                    <!-- Información del cliente -->
+                    <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f2f2f2;">
+                      <div style="font-size: 11px; color: #999; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Cliente</div>
+                      <div style="font-size: 14px; color: #333; font-weight: 500; margin-top: 4px;">{{ pedido.idCliente.nombre }}</div>
+                    </div>
+                    
+                    <!-- Información del repartidor -->
+                    <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f2f2f2;">
+                      <div style="font-size: 11px; color: #999; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Repartidor</div>
+                      <div style="font-size: 14px; color: #333; font-weight: 500; margin-top: 4px;">{{ pedido.idRepartidor.nombreRepartidor }}</div>
+                    </div>
+                    
+                    <!-- Fecha y Total -->
+                    <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f2f2f2;">
+                      <div style="display: flex; justify-content: space-between;">
+                        <div>
+                          <div style="font-size: 11px; color: #999; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Fecha</div>
+                          <div style="font-size: 13px; color: #555; font-weight: 500; margin-top: 4px;">{{ pedido.fechaCreacion|date:"d/m/Y H:i" }}</div>
+                        </div>
+                        <div style="text-align: right;">
+                          <div style="font-size: 11px; color: #999; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Total</div>
+                          <div style="font-size: 16px; color: #4caf50; font-weight: 700; margin-top: 4px;">${{ pedido.total }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- Estado y Facturas Enviadas -->
+                    <div style="margin-bottom: 14px; display: flex; gap: 8px; align-items: center;">
+                      <span style="background-color: #fff3cd; color: #856404; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600;">{{ pedido.estado_pedido }}</span>
+                      {% if pedido.facturas_enviadas > 0 %}
+                        <span style="background-color: #d4edda; color: #155724; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600;">Facturas: {{ pedido.facturas_enviadas }}</span>
+                      {% endif %}
+                    </div>
+                    
+                    <!-- Botón Ver Detalle -->
+                    <a href="{% url 'detalle_pedido' pedido.idPedido %}" style="display: block; background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white; border: none; padding: 11px; border-radius: 7px; cursor: pointer; font-size: 13px; text-decoration: none; text-align: center; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(108, 117, 125, 0.2);">Ver Detalle</a>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <div style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; color: #999;">
+                <p style="margin: 0; font-size: 14px;">✅ No hay pedidos asignados</p>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- COLUMNA DERECHA: DESASIGNAR MÚLTIPLES PEDIDOS -->
+          <div style="border: 1px solid #f5c6cb; border-radius: 10px; padding: 16px; background: linear-gradient(135deg, #fef9f9 0%, #fef5f5 100%); height: fit-content; position: sticky; top: 0; box-shadow: 0 2px 6px rgba(244, 67, 54, 0.1);">
+            <h3 style="color: #c62828; margin: 0 0 12px 0; font-size: 14px; text-align: center; font-weight: 600; letter-spacing: 0.5px;">Desasignar Pedidos</h3>
+            <form method="POST" action="{% url 'desasignar_pedidos_multiples' %}" id="formDesasignacionMultiple" onsubmit="return confirmarDesasignacion()">
+              {% csrf_token %}
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 6px; color: #c62828; font-weight: 500; cursor: pointer; font-size: 13px; margin: 0;">
+                  <input type="checkbox" id="selectAllDesasignar" onchange="toggleSelectAllDesasignar()" style="width: 14px; height: 14px; cursor: pointer; margin: 0; accent-color: #f44336;">
+                  Seleccionar todos
+                </label>
+                <div style="text-align: center; color: #c62828; font-weight: 600; font-size: 12px; background-color: white; padding: 8px; border-radius: 6px; border: 1px solid #f5c6cb;">
+                  <span id="countSelectedDesasignar">0</span>/<span id="totalDesasignar">0</span>
+                </div>
+                <button type="submit" id="btnDesasignarMultiple" disabled style="background: linear-gradient(135deg, #f44336 0%, #e53935 100%); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s; box-shadow: 0 2px 4px rgba(244, 67, 54, 0.2);">Desasignar</button>
+              </div>
+            </form>
+          </div>
+
         </div>
-        {% endif %}
-        
-        {% for pedido in pedidos_asignados %}
-          <div class="pedido-item pedido-asignado">
-            <div class="pedido-checkbox">
-              <input type="checkbox" name="pedido_ids_desasignar" value="{{ pedido.idPedido }}" form="formDesasignacionMultiple" onchange="updateSelectedCountDesasignar()">
-            </div>
-            <div class="pedido-info">
-              <div class="pedido-id">Pedido #{{ pedido.idPedido }}</div>
-              <div class="pedido-details">Cliente: {{ pedido.idCliente.nombre }}</div>
-              <div class="pedido-details">Repartidor: <strong>{{ pedido.idRepartidor.nombreRepartidor }}</strong></div>
-              <div class="pedido-details">{{ pedido.fechaCreacion|date:"d/m/Y H:i" }} | Total: ${{ pedido.total }}</div>
-              <div class="pedido-details">Estado: <span class="badge badge-warning">{{ pedido.estado_pedido }}</span></div>
-            </div>
-            <div class="pedido-actions">
-              <a href="{% url 'detalle_pedido' pedido.idPedido %}" class="btn btn-secondary btn-small">Ver Detalle</a>
-              <a href="{% url 'descargar_pdf_asignacion' pedido.idPedido %}" class="btn-pdf" target="_blank">PDF</a>
-              <form method="POST" action="{% url 'desasignar_repartidor' pedido.idPedido %}" style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" class="desasignar-btn" onclick="return confirm('¿Desasignar repartidor de este pedido?');">Desasignar</button>
-              </form>
-            </div>
-          </div>
-        {% empty %}
-          <div class="empty-state">
-            <p>No hay pedidos asignados</p>
-            <small>Los pedidos asignados aparecerán aquí</small>
-          </div>
-        {% endfor %}
       </div>
     </div>
   </div>
 
   <script>
+    function toggleAccordion(section) {
+      const accordion = document.getElementById(`accordion${section.charAt(0).toUpperCase() + section.slice(1)}`);
+      const button = event.target;
+      
+      if (accordion.style.display === 'none') {
+        accordion.style.display = 'block';
+        button.textContent = '▲ ' + button.textContent.substring(2);
+      } else {
+        accordion.style.display = 'none';
+        button.textContent = '▼ ' + button.textContent.substring(2);
+      }
+    }
+    
     function updateSelectedCount() {
       const checkboxes = document.querySelectorAll('input[name="pedido_ids"]:checked');
       const count = checkboxes.length;
@@ -386,6 +460,35 @@
       document.getElementById('btnEnviarRepartidores').disabled = count === 0;
     }
     
+    function updateSelectedCountFacturas() {
+      const checkboxes = document.querySelectorAll('input[name="pedido_ids_facturas"]:checked');
+      const totalCheckboxes = document.querySelectorAll('input[name="pedido_ids_facturas"]');
+      const count = checkboxes.length;
+      document.getElementById('countSelectedFacturas').textContent = count;
+      document.getElementById('totalFacturas').textContent = totalCheckboxes.length;
+      document.getElementById('btnEnviarFacturasMultiple').disabled = count === 0;
+    }
+    
+    function updateSelectedCountDesasignar() {
+      const checkboxes = document.querySelectorAll('input[name="pedido_ids_desasignar"]:checked');
+      const totalCheckboxes = document.querySelectorAll('input[name="pedido_ids_desasignar"]');
+      const count = checkboxes.length;
+      document.getElementById('countSelectedDesasignar').textContent = count;
+      document.getElementById('totalDesasignar').textContent = totalCheckboxes.length;
+      document.getElementById('btnDesasignarMultiple').disabled = count === 0;
+    }
+    
+    function toggleSelectAllFacturas() {
+      const selectAllCheckbox = document.getElementById('selectAllFacturas');
+      const checkboxes = document.querySelectorAll('input[name="pedido_ids_facturas"]');
+      
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+      });
+      
+      updateSelectedCountFacturas();
+    }
+    
     function toggleSelectAllDesasignar() {
       const selectAllCheckbox = document.getElementById('selectAllDesasignar');
       const checkboxes = document.querySelectorAll('input[name="pedido_ids_desasignar"]');
@@ -395,6 +498,22 @@
       });
       
       updateSelectedCountDesasignar();
+    }
+    
+    // Inicializar contadores al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      updateSelectedCountFacturas();
+      updateSelectedCountDesasignar();
+    });
+    
+    function confirmarEnvioFacturas() {
+      const checkboxes = document.querySelectorAll('input[name="pedido_ids_facturas"]:checked');
+      const count = checkboxes.length;
+      if (count === 0) {
+        alert('Por favor selecciona al menos un pedido para enviar facturas.');
+        return false;
+      }
+      return confirm(`¿Estás seguro de que quieres enviar facturas a ${count} cliente(s)?`);
     }
     
     function confirmarDesasignacion() {

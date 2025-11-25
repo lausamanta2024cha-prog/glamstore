@@ -909,6 +909,8 @@ def repartidor_eliminar_view(request, id):
     return redirect('lista_repartidores')
 
 def asignar_pedido_repartidor_view(request):
+    from .services_repartidores import enviar_factura_cliente
+    
     if request.method == 'POST':
         pedido_id = request.POST.get('pedido_id')
         repartidor_id = request.POST.get('repartidor_id')
@@ -927,6 +929,12 @@ def asignar_pedido_repartidor_view(request):
         # Cambiar el estado del repartidor a "En Ruta"
         repartidor.estado_turno = 'En Ruta'
         repartidor.save()
+        
+        # Enviar factura al cliente
+        if enviar_factura_cliente(pedido):
+            messages.success(request, f"Pedido #{pedido.idPedido} asignado. Factura enviada al cliente.")
+        else:
+            messages.warning(request, f"Pedido #{pedido.idPedido} asignado. No se pudo enviar la factura.")
 
         # Redirigir a la lista de repartidores sin descargar PDF
         # El PDF se puede descargar usando el botón "Descargar PDF"
@@ -1269,6 +1277,8 @@ def responder_notificacion_view(request, id_notificacion):
 
 def asignar_pedidos_multiples_view(request):
     """Asigna múltiples pedidos a un repartidor de una vez"""
+    from .services_repartidores import enviar_factura_cliente
+    
     if request.method == 'POST':
         pedido_ids = request.POST.getlist('pedido_ids')
         repartidor_id = request.POST.get('repartidor_id')
@@ -1280,6 +1290,7 @@ def asignar_pedidos_multiples_view(request):
         
         # Asignar todos los pedidos seleccionados
         pedidos_asignados = 0
+        facturas_enviadas = 0
         for pedido_id in pedido_ids:
             try:
                 pedido = Pedido.objects.get(idPedido=pedido_id)
@@ -1287,6 +1298,11 @@ def asignar_pedidos_multiples_view(request):
                 pedido.estado_pedido = 'En Camino'
                 pedido.save()
                 pedidos_asignados += 1
+                
+                # Enviar factura al cliente
+                if enviar_factura_cliente(pedido):
+                    facturas_enviadas += 1
+                    
             except Pedido.DoesNotExist:
                 continue
         
@@ -1294,6 +1310,7 @@ def asignar_pedidos_multiples_view(request):
         if pedidos_asignados > 0:
             repartidor.estado_turno = 'En Ruta'
             repartidor.save()
+            messages.success(request, f"Se asignaron {pedidos_asignados} pedidos. Facturas enviadas: {facturas_enviadas}")
         
         return redirect('lista_repartidores')
     
@@ -1305,27 +1322,23 @@ def asignar_pedidos_multiples_view(request):
 def asignar_pedidos_automaticamente_view(request):
     """
     Vista para asignar automáticamente los pedidos a los repartidores disponibles
-    y enviar PDFs por correo
+    Distribuye equitativamente entre todos los repartidores disponibles
     """
     if request.method == 'POST':
-        fecha_str = request.POST.get('fecha')
-        
         try:
-            if fecha_str:
-                fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            # Asignar pedidos automáticamente (sin filtro de fecha)
+            resultado = asignar_pedidos_automaticamente()
+            
+            # Mostrar mensaje con el resultado
+            if resultado['pedidos_asignados'] > 0:
+                messages.success(request, resultado['mensaje'])
+            elif resultado.get('repartidores_sin_capacidad'):
+                messages.warning(request, resultado['mensaje'])
             else:
-                fecha = timezone.now().date()
-            
-            # Asignar pedidos automáticamente
-            resultado = asignar_pedidos_automaticamente(fecha)
-            
-            # Si hay repartidores sin capacidad, no mostrar alerta
-            # (Los mensajes se ocultaron por solicitud del usuario)
-            pass
+                messages.info(request, resultado['mensaje'])
             
         except Exception as e:
-            # Error silencioso - no mostrar al usuario
-            pass
+            messages.error(request, f"Error al asignar pedidos: {str(e)}")
     
     return redirect('lista_repartidores')
 
@@ -1519,5 +1532,78 @@ def enviar_correos_repartidores_seleccionados_view(request):
         except Exception as e:
             # Error silencioso - no mostrar al usuario
             pass
+    
+    return redirect('lista_repartidores')
+
+
+def enviar_factura_cliente_view(request, id_pedido):
+    """
+    Vista para enviar la factura al cliente de un pedido específico
+    """
+    from .services_repartidores import enviar_factura_cliente
+    
+    if request.method == 'POST':
+        try:
+            pedido = get_object_or_404(Pedido.objects.select_related('idCliente', 'idRepartidor'), idPedido=id_pedido)
+            
+            if enviar_factura_cliente(pedido):
+                messages.success(request, f"Factura enviada exitosamente a {pedido.idCliente.email}")
+            else:
+                if not pedido.idCliente.email:
+                    messages.error(request, f"El cliente {pedido.idCliente.nombre} no tiene email registrado")
+                else:
+                    messages.error(request, "No se pudo enviar la factura. Intenta de nuevo.")
+                    
+        except Exception as e:
+            messages.error(request, f"Error al enviar factura: {str(e)}")
+    
+    return redirect('lista_repartidores')
+
+
+def enviar_facturas_multiples_view(request):
+    """
+    Vista para enviar facturas a múltiples clientes de una vez
+    """
+    from .services_repartidores import enviar_factura_cliente
+    
+    if request.method == 'POST':
+        pedido_ids = request.POST.getlist('pedido_ids_facturas')
+        
+        if not pedido_ids:
+            messages.warning(request, "Por favor selecciona al menos un pedido.")
+            return redirect('lista_repartidores')
+        
+        try:
+            facturas_enviadas = 0
+            errores = 0
+            
+            for pedido_id in pedido_ids:
+                try:
+                    pedido = Pedido.objects.select_related('idCliente', 'idRepartidor').get(idPedido=pedido_id)
+                    
+                    if enviar_factura_cliente(pedido):
+                        # Incrementar contador de facturas enviadas
+                        pedido.facturas_enviadas += 1
+                        pedido.save()
+                        facturas_enviadas += 1
+                    else:
+                        errores += 1
+                        
+                except Pedido.DoesNotExist:
+                    errores += 1
+                    continue
+                except Exception as e:
+                    print(f"[DEBUG] Error al enviar factura del pedido {pedido_id}: {str(e)}")
+                    errores += 1
+                    continue
+            
+            # Mostrar resumen
+            if facturas_enviadas > 0:
+                messages.success(request, f"Se enviaron {facturas_enviadas} factura(s) exitosamente.")
+            if errores > 0:
+                messages.warning(request, f"Hubo {errores} error(es) al enviar facturas.")
+                
+        except Exception as e:
+            messages.error(request, f"Error al enviar facturas: {str(e)}")
     
     return redirect('lista_repartidores')

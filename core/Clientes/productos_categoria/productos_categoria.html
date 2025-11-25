@@ -473,14 +473,6 @@
       <h2 class="titulo-seccion">{{ categoria.nombreCategoria }}</h2>
     </header>
 
-    {% if messages %}
-    <div class="mensajes">
-      {% for message in messages %}
-      <p>{{ message }}</p>
-      {% endfor %}
-    </div>
-    {% endif %}
-
     {% if productos %}
     <section class="product-grid">
       {% for producto in productos %}

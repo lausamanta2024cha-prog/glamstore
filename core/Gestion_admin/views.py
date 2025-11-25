@@ -1,3 +1,4 @@
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from datetime import datetime, timedelta
@@ -21,6 +22,13 @@ from django.contrib.auth.hashers import make_password
 import openpyxl
 from django.utils import timezone
 from decimal import Decimal
+from .services_repartidores import (
+    asignar_pedidos_automaticamente,
+    enviar_pdf_repartidor,
+    verificar_capacidad_repartidores,
+    obtener_pedidos_sin_asignar,
+    obtener_repartidores_disponibles
+)
 
 
 def index(request):
@@ -30,6 +38,9 @@ def index(request):
 def dashboard_admin_view(request):
     from django.db.models import Q, F, Max
     from django.utils import timezone
+    
+    # Asegurar que la columna email existe
+    Repartidor.ensure_email_column_exists()
     
     # Definir umbrales de tiempo
     ahora = timezone.now()
@@ -162,6 +173,11 @@ def dashboard_admin_view(request):
         
         # Reabastecimiento reciente
         'reabastecimientos_recientes': reabastecimientos_procesados,
+        
+        # Información de repartidores
+        'hay_capacidad_repartidores': verificar_capacidad_repartidores(),
+        'pedidos_sin_asignar': obtener_pedidos_sin_asignar().count(),
+        'repartidores_disponibles': obtener_repartidores_disponibles().count(),
     }
     return render(request, 'admin_dashboard.html', context)
 # core/views.py
@@ -804,6 +820,9 @@ def verificar_y_actualizar_pedidos_entregados():
     return pedidos_actualizados
 
 def lista_repartidores_view(request):
+    # Asegurar que la columna email existe
+    Repartidor.ensure_email_column_exists()
+    
     # Verificar y actualizar pedidos automáticamente
     verificar_y_actualizar_pedidos_entregados()
     
@@ -844,21 +863,26 @@ def lista_repartidores_view(request):
     })
 
 def repartidor_agregar_view(request):
+    # Asegurar que la columna telefono tiene el tamaño correcto
+    Repartidor.ensure_telefono_column_size()
+    
     if request.method == 'POST':
         nombre = request.POST.get('nombreRepartidor')
         telefono = request.POST.get('telefono')
+        email = request.POST.get('email')
         estado = request.POST.get('estado_turno')
         
         # Validación básica
-        if not nombre or not telefono or not estado:
-            # Puedes añadir un mensaje de error aquí
+        if not nombre or not telefono or not email or not estado:
             return render(request, 'repartidores_agregar.html', {'error_message': 'Todos los campos son obligatorios.'})
 
         Repartidor.objects.create(
             nombreRepartidor=nombre,
             telefono=telefono,
+            email=email,
             estado_turno=estado
         )
+        messages.success(request, f"Repartidor '{nombre}' agregado exitosamente.")
         return redirect('lista_repartidores')
     return render(request, 'repartidores_agregar.html')
 
@@ -867,12 +891,14 @@ def repartidor_editar_view(request, id):
     if request.method == 'POST':
         repartidor.nombreRepartidor = request.POST.get('nombreRepartidor')
         repartidor.telefono = request.POST.get('telefono')
+        repartidor.email = request.POST.get('email')
         repartidor.estado_turno = request.POST.get('estado_turno')
         
         # Validación básica
-        if not repartidor.nombreRepartidor or not repartidor.telefono or not repartidor.estado_turno:
+        if not repartidor.nombreRepartidor or not repartidor.telefono or not repartidor.email or not repartidor.estado_turno:
             return render(request, 'repartidores_editar.html', {'repartidor': repartidor, 'error_message': 'Todos los campos son obligatorios.'})
         repartidor.save()
+        messages.success(request, f"Repartidor '{repartidor.nombreRepartidor}' actualizado exitosamente.")
         return redirect('lista_repartidores')
     return render(request, 'repartidores_editar.html', {'repartidor': repartidor})
 
@@ -959,7 +985,7 @@ def desasignar_pedidos_multiples_view(request):
         pedido_ids = request.POST.getlist('pedido_ids_desasignar')
         
         if not pedido_ids:
-            messages.error(request, "No se seleccionaron pedidos para desasignar.")
+            # Mensaje ocultado por solicitud del usuario
             return redirect('lista_repartidores')
         
         pedidos_desasignados = 0
@@ -989,11 +1015,8 @@ def desasignar_pedidos_multiples_view(request):
             except Pedido.DoesNotExist:
                 continue
         
-        if pedidos_desasignados > 0:
-            repartidores_str = ", ".join(repartidores_liberados)
-            messages.success(request, f"Se desasignaron {pedidos_desasignados} pedido(s). Repartidores liberados: {repartidores_str}")
-        else:
-            messages.error(request, "No se pudo desasignar ningún pedido.")
+        # Mensajes ocultados por solicitud del usuario
+        pass
         
         return redirect('lista_repartidores')
     
@@ -1273,5 +1296,228 @@ def asignar_pedidos_multiples_view(request):
             repartidor.save()
         
         return redirect('lista_repartidores')
+    
+    return redirect('lista_repartidores')
+
+
+# === NUEVAS FUNCIONES PARA ASIGNACIÓN AUTOMÁTICA Y ENVÍO DE PDFs ===
+
+def asignar_pedidos_automaticamente_view(request):
+    """
+    Vista para asignar automáticamente los pedidos a los repartidores disponibles
+    y enviar PDFs por correo
+    """
+    if request.method == 'POST':
+        fecha_str = request.POST.get('fecha')
+        
+        try:
+            if fecha_str:
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            else:
+                fecha = timezone.now().date()
+            
+            # Asignar pedidos automáticamente
+            resultado = asignar_pedidos_automaticamente(fecha)
+            
+            # Si hay repartidores sin capacidad, no mostrar alerta
+            # (Los mensajes se ocultaron por solicitud del usuario)
+            pass
+            
+        except Exception as e:
+            # Error silencioso - no mostrar al usuario
+            pass
+    
+    return redirect('lista_repartidores')
+
+
+def enviar_pdfs_repartidores_view(request):
+    """
+    Vista para enviar correos detallados a todos los repartidores con pedidos asignados
+    """
+    if request.method == 'POST':
+        fecha_str = request.POST.get('fecha')
+        
+        try:
+            if fecha_str:
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            else:
+                fecha = timezone.now().date()
+            
+            # Obtener todos los repartidores con pedidos asignados para ese día
+            repartidores_con_pedidos = Repartidor.objects.filter(
+                pedido__estado_pedido__in=['En Camino', 'Confirmado'],
+                pedido__fechaCreacion__date=fecha
+            ).distinct()
+            
+            correos_enviados = 0
+            errores = 0
+            sin_email = 0
+            
+            for repartidor in repartidores_con_pedidos:
+                # Verificar que tenga email
+                if not repartidor.email:
+                    sin_email += 1
+                    continue
+                
+                # Intentar enviar correo detallado
+                from .services_repartidores import enviar_correo_repartidor_detallado
+                if enviar_correo_repartidor_detallado(repartidor, fecha):
+                    correos_enviados += 1
+                else:
+                    errores += 1
+            
+            # Mensajes ocultados por solicitud del usuario
+            pass
+            
+        except Exception as e:
+            # Error silencioso - no mostrar al usuario
+            pass
+    
+    return redirect('lista_repartidores')
+
+
+def verificar_capacidad_repartidores_view(request):
+    """
+    Vista para verificar si hay suficientes repartidores para los pedidos del día
+    """
+    fecha_str = request.GET.get('fecha')
+    
+    try:
+        if fecha_str:
+            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+        else:
+            fecha = timezone.now().date()
+        
+        hay_capacidad = verificar_capacidad_repartidores(fecha)
+        
+        if hay_capacidad:
+            return JsonResponse({
+                'success': True,
+                'mensaje': 'Hay suficientes repartidores para los pedidos del día.'
+            })
+        else:
+            pedidos_sin_asignar = obtener_pedidos_sin_asignar(fecha).count()
+            return JsonResponse({
+                'success': False,
+                'mensaje': f'No hay suficientes repartidores. Hay {pedidos_sin_asignar} pedidos sin asignar.'
+            })
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'mensaje': f'Error: {str(e)}'
+        }, status=400)
+
+
+def descargar_pdf_repartidor_view(request, repartidor_id):
+    """
+    Vista para descargar el PDF de pedidos de un repartidor específico
+    """
+    from .services_repartidores import generar_pdf_pedidos_repartidor
+    
+    repartidor = get_object_or_404(Repartidor, idRepartidor=repartidor_id)
+    fecha_str = request.GET.get('fecha')
+    
+    try:
+        if fecha_str:
+            fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+        else:
+            fecha = timezone.now().date()
+        
+        pdf_content = generar_pdf_pedidos_repartidor(repartidor, fecha)
+        
+        if pdf_content:
+            response = HttpResponse(pdf_content, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="pedidos_{repartidor.idRepartidor}_{fecha.strftime("%Y%m%d")}.pdf"'
+            return response
+        else:
+            messages.error(request, "No se pudo generar el PDF.")
+            return redirect('lista_repartidores')
+    
+    except Exception as e:
+        messages.error(request, f"Error al generar PDF: {str(e)}")
+        return redirect('lista_repartidores')
+
+
+def enviar_correos_repartidores_seleccionados_view(request):
+    """
+    Vista para enviar correos detallados a repartidores seleccionados
+    """
+    print(f"[DEBUG] Método de request: {request.method}")
+    print(f"[DEBUG] Datos POST completos: {dict(request.POST)}")
+    
+    if request.method == 'POST':
+        repartidor_ids = request.POST.getlist('repartidor_ids')
+        print(f"[DEBUG] Repartidor IDs recibidos: {repartidor_ids}")
+        print(f"[DEBUG] Tipo de repartidor_ids: {type(repartidor_ids)}")
+        print(f"[DEBUG] Longitud de repartidor_ids: {len(repartidor_ids)}")
+        
+        if not repartidor_ids:
+            print("[DEBUG] No se recibieron IDs de repartidores")
+            # Mensaje ocultado por solicitud del usuario
+            return redirect('lista_repartidores')
+        
+        try:
+            fecha = timezone.now().date()
+            correos_enviados = 0
+            errores = 0
+            sin_email = 0
+            sin_pedidos = 0
+            
+            for repartidor_id in repartidor_ids:
+                try:
+                    repartidor = Repartidor.objects.get(idRepartidor=repartidor_id)
+                    print(f"[DEBUG] Procesando repartidor: {repartidor.nombreRepartidor} (ID: {repartidor_id})")
+                    
+                    # Verificar que tenga email
+                    if not repartidor.email:
+                        print(f"[DEBUG] Repartidor sin email")
+                        sin_email += 1
+                        continue
+                    
+                    print(f"[DEBUG] Email: {repartidor.email}")
+                    
+                    # Verificar que tenga pedidos (SIN FILTRO DE FECHA - TODOS LOS PENDIENTES)
+                    total_pedidos = Pedido.objects.filter(
+                        idRepartidor=repartidor,
+                        estado_pedido__in=['En Camino', 'Confirmado']
+                    ).count()
+                    
+                    print(f"[DEBUG] Total de pedidos pendientes: {total_pedidos}")
+                    
+                    if total_pedidos == 0:
+                        print(f"[DEBUG] Sin pedidos")
+                        sin_pedidos += 1
+                        continue
+                    
+                    # Intentar enviar correo detallado
+                    print(f"[DEBUG] Enviando correo...")
+                    from .services_repartidores import enviar_correo_repartidor_detallado
+                    if enviar_correo_repartidor_detallado(repartidor, fecha):
+                        print(f"[DEBUG] Correo enviado exitosamente")
+                        correos_enviados += 1
+                    else:
+                        print(f"[DEBUG] Error al enviar correo")
+                        errores += 1
+                        
+                except Repartidor.DoesNotExist:
+                    print(f"[DEBUG] Repartidor no encontrado: {repartidor_id}")
+                    errores += 1
+                    continue
+                except Exception as e:
+                    print(f"[DEBUG] Excepción: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+                    errores += 1
+                    continue
+            
+            # Mensajes ocultados por solicitud del usuario
+            pass
+            
+            print(f"[DEBUG] Resumen: {correos_enviados} enviados, {sin_email} sin email, {sin_pedidos} sin pedidos, {errores} errores")
+            
+        except Exception as e:
+            # Error silencioso - no mostrar al usuario
+            pass
     
     return redirect('lista_repartidores')

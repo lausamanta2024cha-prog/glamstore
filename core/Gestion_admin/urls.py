@@ -84,5 +84,12 @@ urlpatterns = [
     path('notificaciones/marcar_leida/<int:id_notificacion>/', views.marcar_notificacion_leida, name='marcar_notificacion_leida'),
     path('notificaciones/responder/<int:id_notificacion>/', views.responder_notificacion_view, name='responder_notificacion'),
 
+    # Nuevas funciones de asignación automática y envío de PDFs
+    path('repartidores/asignar_automaticamente/', views.asignar_pedidos_automaticamente_view, name='asignar_pedidos_automaticamente'),
+    path('repartidores/enviar_pdfs/', views.enviar_pdfs_repartidores_view, name='enviar_pdfs_repartidores'),
+    path('repartidores/enviar_correos_seleccionados/', views.enviar_correos_repartidores_seleccionados_view, name='enviar_correos_repartidores_seleccionados'),
+    path('repartidores/verificar_capacidad/', views.verificar_capacidad_repartidores_view, name='verificar_capacidad_repartidores'),
+    path('repartidores/descargar_pdf/<int:repartidor_id>/', views.descargar_pdf_repartidor_view, name='descargar_pdf_repartidor'),
+
 ]
   

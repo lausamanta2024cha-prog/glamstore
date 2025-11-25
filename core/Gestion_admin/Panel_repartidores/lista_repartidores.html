@@ -152,13 +152,18 @@
     </div>
 
     <div class="action-bar">
-      <a href="{% url 'dashboard_admin' %}" class="btn btn-secondary">← Volver</a>
-      <a href="{% url 'repartidor_agregar' %}" class="btn btn-primary">+ Agregar Repartidor</a>
+      <a href="{% url 'dashboard_admin' %}" class="btn btn-secondary">Volver</a>
+      <a href="{% url 'repartidor_agregar' %}" class="btn btn-primary">Agregar Repartidor</a>
+      <form method="POST" action="{% url 'asignar_pedidos_automaticamente' %}" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary" onclick="return confirm('¿Asignar automáticamente los pedidos pendientes a los repartidores disponibles?');">Asignar Automáticamente</button>
+      </form>
+
     </div>
 
     <!-- FILTROS -->
     <div class="filtros">
-      <h3>🔍 Filtrar Pedidos</h3>
+      <h3>Filtrar Pedidos</h3>
       <form method="GET" class="filtros-grid">
         <div class="filtro-item">
           <label for="filtro_repartidor">Por Repartidor:</label>
@@ -195,33 +200,62 @@
           <div class="count">Total: {{ repartidores.count }}</div>
         </div>
         <div class="card-body">
-          {% for repartidor in repartidores %}
-            <div class="repartidor-item">
-              <div class="repartidor-info">
-                <div class="repartidor-name">{{ repartidor.nombreRepartidor }}</div>
-                <div class="repartidor-details">
-                  📱 {{ repartidor.telefono }} | 
-                  <span class="badge {% if repartidor.estado_turno == 'Disponible' %}badge-success{% elif repartidor.estado_turno == 'En Ruta' %}badge-warning{% else %}badge-danger{% endif %}">
-                    {{ repartidor.estado_turno }}
-                  </span>
-                  | 📦 {{ repartidor.pedidos_count }} pedidos
+          <!-- ENVÍO DE CORREOS A REPARTIDORES SELECCIONADOS -->
+          <form method="POST" action="{% url 'enviar_correos_repartidores_seleccionados' %}" id="formEnvioRepartidores">
+            {% csrf_token %}
+            
+            {% if repartidores %}
+            <div class="asignacion-multiple" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left-color: #2196f3; margin-bottom: 20px;">
+              <h3 style="color: #1565c0; margin-top: 0;">Enviar Correos a Repartidores</h3>
+              <div class="asignacion-form">
+                <span class="selected-count" style="color: #1565c0;">Seleccionados: <span id="countRepartidoresSeleccionados">0</span></span>
+                <button type="submit" id="btnEnviarRepartidores" disabled style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);" onclick="return confirmarEnvioCorreos();">Enviar Correos Seleccionados</button>
+              </div>
+            </div>
+            {% endif %}
+
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+              {% for repartidor in repartidores %}
+                <div class="repartidor-item">
+                  <div class="repartidor-checkbox" style="position: relative; left: 0;">
+                    <input type="checkbox" name="repartidor_ids" value="{{ repartidor.idRepartidor }}" onchange="updateRepartidoresSeleccionados()">
+                  </div>
+                  <div class="repartidor-info" style="margin-left: 40px;">
+                    <div class="repartidor-name">{{ repartidor.nombreRepartidor }}</div>
+                    <div class="repartidor-details">
+                      Tel: {{ repartidor.telefono }} | 
+                      Correo: {% if repartidor.email %}
+                        <span style="color: #4caf50; font-weight: bold;">✓ {{ repartidor.email }}</span>
+                      {% else %}
+                        <span style="color: #f44336; font-weight: bold;">✗ No registrado</span>
+                      {% endif %} |
+                      <span class="badge {% if repartidor.estado_turno == 'Disponible' %}badge-success{% elif repartidor.estado_turno == 'En Ruta' %}badge-warning{% else %}badge-danger{% endif %}">
+                        {{ repartidor.estado_turno }}
+                      </span>
+                      | Pedidos: {% if repartidor.pedidos_count > 0 %}
+                        <span style="color: #4caf50; font-weight: bold;">{{ repartidor.pedidos_count }}</span>
+                      {% else %}
+                        <span style="color: #999;">{{ repartidor.pedidos_count }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="repartidor-actions">
+                    <a href="?repartidor={{ repartidor.idRepartidor }}" class="btn btn-secondary btn-small">Ver Pedidos</a>
+                    <a href="{% url 'repartidor_editar' repartidor.idRepartidor %}" class="editar-btn">Editar</a>
+                    <form method="POST" action="{% url 'repartidor_eliminar' repartidor.idRepartidor %}" style="display: inline;">
+                      {% csrf_token %}
+                      <button type="submit" class="eliminar-btn" onclick="return confirm('¿Eliminar este repartidor?');">Eliminar</button>
+                    </form>
+                  </div>
                 </div>
-              </div>
-              <div class="repartidor-actions">
-                <a href="?repartidor={{ repartidor.idRepartidor }}" class="btn btn-secondary btn-small">Ver Pedidos</a>
-                <a href="{% url 'repartidor_editar' repartidor.idRepartidor %}" class="editar-btn">Editar</a>
-                <form method="POST" action="{% url 'repartidor_eliminar' repartidor.idRepartidor %}" style="display: inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="eliminar-btn" onclick="return confirm('¿Eliminar este repartidor?');">Eliminar</button>
-                </form>
-              </div>
+              {% empty %}
+                <div class="empty-state">
+                  <p>No hay repartidores registrados</p>
+                  <small>Agrega un repartidor para comenzar</small>
+                </div>
+              {% endfor %}
             </div>
-          {% empty %}
-            <div class="empty-state">
-              <p>No hay repartidores registrados</p>
-              <small>Agrega un repartidor para comenzar</small>
-            </div>
-          {% endfor %}
+          </form>
         </div>
       </div>
 
@@ -259,8 +293,8 @@
               </div>
               <div class="pedido-info">
                 <div class="pedido-id">Pedido #{{ pedido.idPedido }}</div>
-                <div class="pedido-details">👤 {{ pedido.idCliente.nombre }}</div>
-                <div class="pedido-details">📅 {{ pedido.fechaCreacion|date:"d/m/Y H:i" }} | 💰 ${{ pedido.total }}</div>
+                <div class="pedido-details">Cliente: {{ pedido.idCliente.nombre }}</div>
+                <div class="pedido-details">{{ pedido.fechaCreacion|date:"d/m/Y H:i" }} | Total: ${{ pedido.total }}</div>
                 <div class="pedido-details">Estado: <span class="badge badge-warning">{{ pedido.estado }}</span></div>
               </div>
             </div>
@@ -288,6 +322,10 @@
           <form method="POST" action="/gestion/repartidores/desasignar_multiples/" id="formDesasignacionMultiple" onsubmit="return confirmarDesasignacion()">
             {% csrf_token %}
             <div class="asignacion-form">
+              <label style="display: flex; align-items: center; gap: 8px; color: #c62828; font-weight: bold; cursor: pointer;">
+                <input type="checkbox" id="selectAllDesasignar" onchange="toggleSelectAllDesasignar()">
+                Seleccionar todos
+              </label>
               <span class="selected-count" style="color: #c62828;">Seleccionados: <span id="countSelectedDesasignar">0</span></span>
               <button type="submit" id="btnDesasignarMultiple" disabled style="background: linear-gradient(135deg, #f44336 0%, #e53935 100%);">Desasignar Seleccionados</button>
             </div>
@@ -302,14 +340,14 @@
             </div>
             <div class="pedido-info">
               <div class="pedido-id">Pedido #{{ pedido.idPedido }}</div>
-              <div class="pedido-details">👤 Cliente: {{ pedido.idCliente.nombre }}</div>
-              <div class="pedido-details">🚚 Repartidor: <strong>{{ pedido.idRepartidor.nombreRepartidor }}</strong></div>
-              <div class="pedido-details">📅 {{ pedido.fechaCreacion|date:"d/m/Y H:i" }} | 💰 ${{ pedido.total }}</div>
+              <div class="pedido-details">Cliente: {{ pedido.idCliente.nombre }}</div>
+              <div class="pedido-details">Repartidor: <strong>{{ pedido.idRepartidor.nombreRepartidor }}</strong></div>
+              <div class="pedido-details">{{ pedido.fechaCreacion|date:"d/m/Y H:i" }} | Total: ${{ pedido.total }}</div>
               <div class="pedido-details">Estado: <span class="badge badge-warning">{{ pedido.estado_pedido }}</span></div>
             </div>
             <div class="pedido-actions">
               <a href="{% url 'detalle_pedido' pedido.idPedido %}" class="btn btn-secondary btn-small">Ver Detalle</a>
-              <a href="{% url 'descargar_pdf_asignacion' pedido.idPedido %}" class="btn-pdf" target="_blank">📄 PDF</a>
+              <a href="{% url 'descargar_pdf_asignacion' pedido.idPedido %}" class="btn-pdf" target="_blank">PDF</a>
               <form method="POST" action="{% url 'desasignar_repartidor' pedido.idPedido %}" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" class="desasignar-btn" onclick="return confirm('¿Desasignar repartidor de este pedido?');">Desasignar</button>
@@ -341,6 +379,24 @@
       document.getElementById('btnDesasignarMultiple').disabled = count === 0;
     }
     
+    function updateRepartidoresSeleccionados() {
+      const checkboxes = document.querySelectorAll('input[name="repartidor_ids"]:checked');
+      const count = checkboxes.length;
+      document.getElementById('countRepartidoresSeleccionados').textContent = count;
+      document.getElementById('btnEnviarRepartidores').disabled = count === 0;
+    }
+    
+    function toggleSelectAllDesasignar() {
+      const selectAllCheckbox = document.getElementById('selectAllDesasignar');
+      const checkboxes = document.querySelectorAll('input[name="pedido_ids_desasignar"]');
+      
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+      });
+      
+      updateSelectedCountDesasignar();
+    }
+    
     function confirmarDesasignacion() {
       const checkboxes = document.querySelectorAll('input[name="pedido_ids_desasignar"]:checked');
       const count = checkboxes.length;
@@ -349,6 +405,34 @@
         return false;
       }
       return confirm(`¿Estás seguro de que quieres desasignar ${count} pedido(s)? Los repartidores quedarán disponibles y los pedidos volverán al estado "Confirmado".`);
+    }
+    
+    function confirmarEnvioCorreos() {
+      const checkboxes = document.querySelectorAll('input[name="repartidor_ids"]:checked');
+      const count = checkboxes.length;
+      
+      console.log('=== DEBUG ENVÍO CORREOS ===');
+      console.log('Total checkboxes repartidor_ids:', document.querySelectorAll('input[name="repartidor_ids"]').length);
+      console.log('Checkboxes seleccionados:', count);
+      console.log('IDs seleccionados:', Array.from(checkboxes).map(cb => cb.value));
+      
+      if (count === 0) {
+        alert('Por favor selecciona al menos un repartidor para enviar correos.\n\nAsegúrate de marcar la casilla junto al nombre del repartidor.');
+        return false;
+      }
+      
+      // Mostrar información de los repartidores seleccionados
+      const nombresRepartidores = Array.from(checkboxes).map(cb => {
+        const repartidorItem = cb.closest('.repartidor-item');
+        const nombre = repartidorItem.querySelector('.repartidor-name').textContent;
+        return nombre;
+      });
+      
+      console.log('Nombres de repartidores seleccionados:', nombresRepartidores);
+      
+      const mensaje = `¿Estás seguro de que quieres enviar correos de ruta a los siguientes ${count} repartidor(es)?\n\n${nombresRepartidores.join('\n')}\n\nEsto enviará un correo con la ruta de entregas y un PDF adjunto a cada repartidor seleccionado.`;
+      
+      return confirm(mensaje);
     }
   </script>
 </body>

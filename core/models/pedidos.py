@@ -30,6 +30,7 @@ class Pedido(models.Model):
         blank=True,
         db_column='idRepartidor'
     )
+    fecha_vencimiento = models.DateField(null=True, blank=True, db_column='fechaVencimiento')
     
     # Método para obtener el estado de pago (compatibilidad)
     def get_estado_pago(self):

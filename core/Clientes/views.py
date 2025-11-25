@@ -595,18 +595,18 @@ def registro(request):
 
         # 2. Validaciones
         if password != confirmar_password:
-            messages.error(request, "Las contraseñas no coinciden.")
+            messages.error(request, "Las contraseñas no coinciden.", extra_tags='login')
             return render(request, 'registrar_usuario.html', {'input': request.POST})
 
         # Validar longitud mínima de contraseña
         if len(password) < 6:
-            messages.error(request, "La contraseña debe tener al menos 6 caracteres.")
+            messages.error(request, "La contraseña debe tener al menos 6 caracteres.", extra_tags='login')
             return render(request, 'registrar_usuario.html', {'input': request.POST})
 
         # Verificar si ya existe un usuario con este email
         # Nota: Si solo existe un Cliente (sin Usuario), se permite el registro
         if Usuario.objects.filter(email=email).exists():
-            messages.error(request, "Este correo electrónico ya tiene una cuenta registrada. Por favor, inicia sesión.")
+            messages.error(request, "Este correo electrónico ya tiene una cuenta registrada. Por favor, inicia sesión.", extra_tags='login')
             return render(request, 'registrar_usuario.html', {'input': request.POST})
 
         try:
@@ -648,7 +648,7 @@ def registro(request):
             return redirect('login')
 
         except Exception as e:
-            messages.error(request, f"Ocurrió un error durante el registro: {e}")
+            messages.error(request, f"Ocurrió un error durante el registro: {e}", extra_tags='login')
 
     return render(request, 'registrar_usuario.html')
 
@@ -687,7 +687,7 @@ def login_view(request):
                 return redirect('tienda')
         else:
             print("Autenticación fallida")  # Si no pasa la verificación
-            messages.error(request, "Correo o contraseña incorrectos.")
+            messages.error(request, "Correo o contraseña incorrectos.", extra_tags='login')
 
     return render(request, 'login.html', {'form': form})
 
@@ -707,11 +707,83 @@ def recuperar_password(request):
 
             link = request.build_absolute_uri(reverse('cambiar_password', args=[token]))
             
+            # Crear el correo HTML profesional
+            html_message = f"""
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; }}
+                    .container {{ max-width: 600px; margin: 20px auto; background-color: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-radius: 12px; overflow: hidden; }}
+                    .header {{ background: linear-gradient(135deg, #d946a6 0%, #c026d3 100%); color: white; padding: 50px 20px; text-align: center; }}
+                    .header h1 {{ margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }}
+                    .header p {{ margin: 10px 0 0 0; font-size: 15px; opacity: 0.95; font-weight: 300; }}
+                    .content {{ padding: 45px 35px; }}
+                    .content h2 {{ color: #d946a6; font-size: 22px; margin-top: 0; margin-bottom: 18px; font-weight: 600; }}
+                    .content p {{ color: #555; font-size: 15px; line-height: 1.7; margin: 16px 0; }}
+                    .alert {{ background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border-left: 5px solid #d946a6; padding: 18px; margin: 25px 0; border-radius: 6px; }}
+                    .alert p {{ color: #880e4f; margin: 0; font-size: 14px; font-weight: 500; }}
+                    .button-container {{ text-align: center; margin: 35px 0; }}
+                    .button {{ display: inline-block; background: linear-gradient(135deg, #d946a6 0%, #c026d3 100%); color: white; padding: 16px 48px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(217, 70, 166, 0.3); }}
+                    .button:hover {{ transform: translateY(-3px); box-shadow: 0 6px 16px rgba(217, 70, 166, 0.4); }}
+                    .link-text {{ color: #666; font-size: 12px; word-break: break-all; margin-top: 15px; padding: 12px; background-color: #f5f5f5; border-radius: 6px; border: 1px solid #e0e0e0; }}
+                    .footer {{ background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f0 100%); padding: 25px; text-align: center; border-top: 1px solid #e0e0e0; }}
+                    .footer p {{ color: #888; font-size: 12px; margin: 6px 0; }}
+                    .security-info {{ background: linear-gradient(135deg, #f3e5f5 0%, #ede7f6 100%); border-left: 5px solid #c026d3; padding: 18px; margin: 25px 0; border-radius: 6px; }}
+                    .security-info p {{ color: #6a1b9a; margin: 0; font-size: 14px; font-weight: 500; }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Recuperación de Contraseña</h1>
+                        <p>Glam Store — Tu tienda de belleza</p>
+                    </div>
+                    
+                    <div class="content">
+                        <h2>Hola,</h2>
+                        <p>Recibimos una solicitud para recuperar tu contraseña en Glam Store. Si no fuiste tú, puedes ignorar este correo de forma segura.</p>
+                        
+                        <p>Para cambiar tu contraseña, haz clic en el botón de abajo:</p>
+                        
+                        <div class="button-container">
+                            <a href="{link}" class="button">Cambiar Contraseña</a>
+                        </div>
+                        
+                        <p style="text-align: center; color: #999; font-size: 13px;">O copia y pega este enlace en tu navegador:</p>
+                        <div class="link-text">{link}</div>
+                        
+                        <div class="alert">
+                            <p><strong>Este enlace expira en 1 hora</strong> por razones de seguridad. Si no cambias tu contraseña en ese tiempo, deberás solicitar un nuevo enlace.</p>
+                        </div>
+                        
+                        <div class="security-info">
+                            <p><strong>Información de seguridad:</strong> Nunca compartiremos tu contraseña por correo. Si no solicitaste este cambio, cambia tu contraseña inmediatamente desde tu cuenta.</p>
+                        </div>
+                        
+                        <p style="margin-top: 30px; color: #666; font-size: 14px;">
+                            Si tienes problemas para acceder a tu cuenta o necesitas ayuda, contáctanos en <strong>soporte@glamstore.com</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="footer">
+                        <p><strong>Glam Store</strong> — Tu espacio de moda, color y elegancia</p>
+                        <p>© 2025 Glam Store. Todos los derechos reservados.</p>
+                        <p>Este es un correo automático, por favor no respondas a este mensaje.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            
             send_mail(
-                subject="Recuperación de contraseña — Glam Store",
+                subject="Recuperación de Contraseña — Glam Store",
                 message=f"Haz clic en el siguiente enlace para cambiar tu contraseña:\n{link}",
                 from_email="no-reply@glamstore.com",
                 recipient_list=[email],
+                html_message=html_message,
             )
             
             messages.success(request, "Te hemos enviado un enlace de recuperación a tu correo.")
@@ -733,7 +805,7 @@ def cambiar_password(request, token):
 
         if nueva and nueva == confirmacion:
             if len(nueva) < 6:
-                messages.error(request, "La contraseña debe tener al menos 6 caracteres.")
+                messages.error(request, "La contraseña debe tener al menos 6 caracteres.", extra_tags='login')
                 return render(request, 'cambiar_password.html')
 
             usuario.password = make_password(nueva)
@@ -741,10 +813,10 @@ def cambiar_password(request, token):
             usuario.reset_token_expires = None
             usuario.save(update_fields=['password', 'reset_token', 'reset_token_expires'])
             
-            messages.success(request, "Tu contraseña ha sido actualizada.")
+            messages.success(request, "Tu contraseña ha sido actualizada.", extra_tags='login')
             return redirect('login')
         else:
-            messages.error(request, "Las contraseñas no coinciden o están vacías.")
+            messages.error(request, "Las contraseñas no coinciden o están vacías.", extra_tags='login')
 
     return render(request, 'cambiar_password.html')
 

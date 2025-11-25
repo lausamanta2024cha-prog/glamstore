@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pedidos para Entregar - {{ repartidor.nombreRepartidor }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 1.4;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #d946a6 0%, #c026d3 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .info-repartidor {
+            background-color: #f3e5f5;
+            border-left: 4px solid #d946a6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .info-repartidor h2 {
+            color: #d946a6;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .info-repartidor p {
+            margin: 5px 0;
+            font-size: 13px;
+        }
+        
+        .horario-info {
+            background-color: #fce4ec;
+            border: 1px solid #f8bbd0;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .horario-info strong {
+            color: #d946a6;
+            font-size: 14px;
+        }
+        
+        .pedidos-container {
+            margin-top: 20px;
+        }
+        
+        .pedido-item {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            page-break-inside: avoid;
+        }
+        
+        .pedido-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f3e5f5;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .pedido-numero {
+            background: linear-gradient(135deg, #d946a6 0%, #c026d3 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .pedido-id {
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .horario-entrega {
+            background-color: #f3e5f5;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #d946a6;
+            font-size: 13px;
+        }
+        
+        .cliente-info {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        
+        .cliente-info p {
+            margin: 3px 0;
+        }
+        
+        .cliente-nombre {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .cliente-direccion {
+            color: #666;
+        }
+        
+        .cliente-telefono {
+            color: #999;
+        }
+        
+        .productos-list {
+            background-color: #fafafa;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .productos-list h4 {
+            color: #d946a6;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .producto-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .producto-item:last-child {
+            border-bottom: none;
+        }
+        
+        .producto-nombre {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .producto-cantidad {
+            color: #666;
+            font-size: 11px;
+        }
+        
+        .total-pedido {
+            text-align: right;
+            font-weight: bold;
+            color: #d946a6;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+        
+        .resumen {
+            background-color: #f3e5f5;
+            border: 2px solid #d946a6;
+            padding: 15px;
+            margin-top: 30px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .resumen h3 {
+            color: #d946a6;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .resumen p {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 11px;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .notas {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 12px;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .notas h4 {
+            color: #e65100;
+            margin-bottom: 8px;
+        }
+        
+        .notas ul {
+            margin-left: 20px;
+        }
+        
+        .notas li {
+            margin: 5px 0;
+            color: #e65100;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Pedidos para Entregar</h1>
+        <p>{{ fecha|date:"d \\d\\e F \\d\\e Y" }}</p>
+    </div>
+    
+    <div class="info-repartidor">
+        <h2>Información del Repartidor</h2>
+        <p><strong>Nombre:</strong> {{ repartidor.nombreRepartidor }}</p>
+        <p><strong>Teléfono:</strong> {{ repartidor.telefono }}</p>
+        <p><strong>Total de pedidos:</strong> {{ total_pedidos }}</p>
+    </div>
+    
+    <div class="horario-info">
+        <strong>Horario de trabajo: {{ horario_inicio }} - {{ horario_fin }}</strong>
+        <p style="font-size: 12px; margin-top: 5px;">Tiempo por entrega: 2 horas</p>
+    </div>
+    
+    <div class="pedidos-container">
+        {% for item in pedidos %}
+        <div class="pedido-item">
+            <div class="pedido-header">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div class="pedido-numero">{{ item.numero_secuencia }}</div>
+                    <div>
+                        <div class="pedido-id">Pedido #{{ item.pedido.idPedido }}</div>
+                        <div style="font-size: 12px; color: #999;">{{ item.pedido.fechaCreacion|date:"H:i" }}</div>
+                    </div>
+                </div>
+                <div class="horario-entrega">{{ item.hora_inicio }} - {{ item.hora_fin }}</div>
+            </div>
+            
+            <div class="cliente-info">
+                <p class="cliente-nombre">{{ item.pedido.idCliente.nombre }}</p>
+                <p class="cliente-telefono">Teléfono: {{ item.pedido.idCliente.telefono }}</p>
+                <p class="cliente-direccion">Dirección: {{ item.pedido.idCliente.direccion }}</p>
+            </div>
+            
+            <div class="productos-list">
+                <h4>Productos a entregar:</h4>
+                {% for detalle in item.pedido.detallepedido_set.all %}
+                <div class="producto-item">
+                    <div class="producto-nombre">{{ detalle.idProducto.nombreProducto }}</div>
+                    <div class="producto-cantidad">Cantidad: {{ detalle.cantidad }} x ${{ detalle.precio_unitario|floatformat:0 }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="total-pedido">
+                Total: ${{ item.pedido.total|floatformat:0 }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="resumen">
+        <h3>Resumen del Día</h3>
+        <p><strong>Total de pedidos:</strong> {{ total_pedidos }}</p>
+        <p><strong>Horario:</strong> {{ horario_inicio }} - {{ horario_fin }}</p>
+        <p><strong>Tiempo total estimado:</strong> {{ total_pedidos }} pedidos × 2 horas = {{ total_pedidos|add:"0"|mul:"2" }} horas</p>
+    </div>
+    
+    <div class="notas">
+        <h4>Notas Importantes:</h4>
+        <ul>
+            <li>Sigue el orden de secuencia indicado en cada pedido</li>
+            <li>Cada entrega debe completarse en el horario asignado</li>
+            <li>Confirma la entrega con el cliente</li>
+            <li>En caso de problema, contacta inmediatamente al equipo</li>
+            <li>Respeta los horarios de trabajo (6 AM - 3 PM)</li>
+        </ul>
+    </div>
+    
+    <div class="footer">
+        <p>Glam Store - Sistema de Entregas</p>
+        <p>Documento generado automáticamente - {{ "now"|date:"d/m/Y H:i" }}</p>
+    </div>
+</body>
+</html>

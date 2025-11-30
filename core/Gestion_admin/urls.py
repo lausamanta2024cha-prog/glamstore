@@ -85,6 +85,8 @@ urlpatterns = [
     path('notificaciones/', views.notificaciones_view, name='notificaciones'),
     path('notificaciones/marcar_leida/<int:id_notificacion>/', views.marcar_notificacion_leida, name='marcar_notificacion_leida'),
     path('notificaciones/responder/<int:id_notificacion>/', views.responder_notificacion_view, name='responder_notificacion'),
+    path('notificaciones/reporte/marcar_leido/<int:id_reporte>/', views.marcar_reporte_leido, name='marcar_reporte_leido'),
+    path('notificaciones/reporte/ver/<int:id_reporte>/', views.ver_reporte_view, name='ver_reporte'),
 
     # Nuevas funciones de asignación automática y envío de PDFs
     path('repartidores/asignar_automaticamente/', views.asignar_pedidos_automaticamente_view, name='asignar_pedidos_automaticamente'),
@@ -95,5 +97,8 @@ urlpatterns = [
 
     # Reporte por correo
     path('dashboard/enviar_reporte/', views.enviar_reporte_dashboard_view, name='enviar_reporte_dashboard'),
+    
+    # Gestión de vencimientos
+    path('vencimientos/marcar_perdidos/', views.marcar_lotes_vencidos_view, name='marcar_lotes_vencidos'),
 ]
   

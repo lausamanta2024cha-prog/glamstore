@@ -20,7 +20,39 @@ from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, date
+
+# ✅ Función auxiliar: filtra productos que no están vencidos
+def filtrar_productos_no_vencidos(productos_queryset):
+    """
+    Filtra productos que tienen lotes disponibles no vencidos
+    """
+    from core.models.lotes import LoteProducto
+    from django.db.models import Q, Sum
+    
+    productos_validos = []
+    hoy = date.today()
+    
+    for producto in productos_queryset:
+        # Verificar si el producto tiene lotes no vencidos con stock disponible
+        lotes_validos = LoteProducto.objects.filter(
+            producto=producto,
+            cantidad_disponible__gt=0
+        ).filter(
+            Q(fecha_vencimiento__isnull=True) | Q(fecha_vencimiento__gt=hoy)
+        )
+        
+        if lotes_validos.exists():
+            # Calcular stock disponible real basado en lotes válidos
+            stock_valido = lotes_validos.aggregate(
+                total=Sum('cantidad_disponible')
+            )['total'] or 0
+            
+            if stock_valido > 0:
+                producto.stock_real = stock_valido
+                productos_validos.append(producto)
+    
+    return productos_validos
 
 # ✅ Función auxiliar: obtiene el carrito actual desde sesión
 def obtener_carrito_actual(request):
@@ -36,7 +68,8 @@ def obtener_carrito_actual(request):
 # ✅ Vista principal de la tienda
 def tienda(request):
     categorias = Categoria.objects.all()
-    productos_destacados = Producto.objects.all().order_by('-idProducto')[:12] # Muestra los 12 productos más nuevos
+    productos_query = Producto.objects.all().order_by('-idProducto')[:12]
+    productos_destacados = filtrar_productos_no_vencidos(productos_query)
     
     return render(request, 'tienda.html', {
         'categorias': categorias,
@@ -178,20 +211,24 @@ def carrito(request):
 def productos_por_categoria(request, id_categoria):
     categoria = Categoria.objects.get(idCategoria=id_categoria)
     subcategorias = Subcategoria.objects.filter(categoria_id=id_categoria)
-    productos = Producto.objects.filter(idCategoria_id=id_categoria)
+    productos_query = Producto.objects.filter(idCategoria_id=id_categoria)
 
     id_sub = request.GET.get('subcategoria')
     subcategoria = None
     if id_sub:
         subcategoria = Subcategoria.objects.filter(idSubcategoria=id_sub).first()
-        productos = productos.filter(idSubcategoria_id=id_sub)
+        productos_query = productos_query.filter(idSubcategoria_id=id_sub)
 
+    # Filtrar productos no vencidos
+    productos = filtrar_productos_no_vencidos(productos_query)
     carrito_actual = obtener_carrito_actual(request)
 
     for producto in productos:
         en_carrito = int(carrito_actual.get(producto.idProducto, 0))
         producto.en_carrito = en_carrito
-        producto.disponible = max(producto.stock - en_carrito, 0)
+        # Usar el stock real calculado de lotes válidos
+        stock_disponible = getattr(producto, 'stock_real', producto.stock)
+        producto.disponible = max(stock_disponible - en_carrito, 0)
         producto.rango_cantidad = range(1, producto.disponible + 1)
 
     context = {
@@ -487,7 +524,7 @@ def simular_pago(request):
                         stock_anterior=producto.stock + cantidad,
                         stock_nuevo=producto.stock,
                         id_pedido=nuevo_pedido,
-                        descripcion=f'Venta en pedido #{nuevo_pedido.idPedido} - Sin lotes disponibles'
+                        descripcion=f'Venta en pedido #{nuevo_pedido.idPedido}'
                     )
                     producto.save()
 
@@ -503,14 +540,12 @@ def simular_pago(request):
         # Guardar el ID del pedido temporalmente para mostrar la confirmación
         request.session['ultimo_pedido_id'] = nuevo_pedido.idPedido
         
-        messages.success(request, f"¡Pedido exitoso! Tu pedido #{nuevo_pedido.idPedido} ha sido registrado.")
         return redirect('pedido_confirmado', idPedido=nuevo_pedido.idPedido)
 
     except Exception as e:
         print(f"ERROR - Excepción capturada: {type(e).__name__}: {str(e)}")
         import traceback
         traceback.print_exc()
-        messages.error(request, f"Ocurrió un error al procesar tu pedido: {e}")
         return redirect('ver_carrito')
 
 # ✅ Finaliza la compra sin simulación (opcional)
@@ -610,18 +645,15 @@ def registro(request):
 
         # 2. Validaciones
         if password != confirmar_password:
-            messages.error(request, "Las contraseñas no coinciden.", extra_tags='login')
             return render(request, 'registrar_usuario.html', {'input': request.POST})
 
         # Validar longitud mínima de contraseña
         if len(password) < 6:
-            messages.error(request, "La contraseña debe tener al menos 6 caracteres.", extra_tags='login')
             return render(request, 'registrar_usuario.html', {'input': request.POST})
 
         # Verificar si ya existe un usuario con este email
         # Nota: Si solo existe un Cliente (sin Usuario), se permite el registro
         if Usuario.objects.filter(email=email).exists():
-            messages.error(request, "Este correo electrónico ya tiene una cuenta registrada. Por favor, inicia sesión.", extra_tags='login')
             return render(request, 'registrar_usuario.html', {'input': request.POST})
 
         try:
@@ -639,7 +671,6 @@ def registro(request):
                     cliente_existente.save()
                     
                     cliente = cliente_existente
-                    messages.info(request, "Encontramos tus pedidos anteriores. ¡Ahora puedes hacer seguimiento!")
                 else:
                     # Crear nuevo cliente
                     cliente = Cliente.objects.create(
@@ -659,11 +690,10 @@ def registro(request):
                     idCliente=cliente.idCliente
                 )
 
-            messages.success(request, "¡Registro exitoso! Ahora puedes iniciar sesión.")
             return redirect('login')
 
         except Exception as e:
-            messages.error(request, f"Ocurrió un error durante el registro: {e}", extra_tags='login')
+            pass
 
     return render(request, 'registrar_usuario.html')
 
@@ -870,21 +900,13 @@ def contacto(request):
         email = request.POST.get('email')
         mensaje = request.POST.get('mensaje')
 
-        # Enviar correo
-        subject = f"Nuevo mensaje de contacto de {nombre}"
-        from_email = settings.DEFAULT_FROM_EMAIL
-        to_email = [settings.EMAIL_HOST_USER]
-
-        html_content = render_to_string('email_contacto.html', {
-            'nombre': nombre,
-            'email': email,
-            'mensaje': mensaje
-        })
-        text_content = strip_tags(html_content)
-
-        email_message = EmailMultiAlternatives(subject, text_content, from_email, to_email)
-        email_message.attach_alternative(html_content, "text/html")
-        email_message.send()
+        # Guardar el mensaje en la base de datos
+        from core.models import MensajeContacto
+        MensajeContacto.objects.create(
+            nombre=nombre,
+            email=email,
+            mensaje=mensaje
+        )
 
         messages.success(request, "Tu mensaje ha sido enviado. ¡Gracias por contactarnos!")
         return redirect('contacto')
@@ -1129,6 +1151,14 @@ def handle_editar_perfil(request):
             return redirect('perfil')
     
     try:
+        # Debug: Imprimir datos antes de guardar
+        print(f"DEBUG - Actualizando cliente ID: {cliente.idCliente}")
+        print(f"  Nombre: {cliente.nombre} -> {nombre}")
+        print(f"  Email: {cliente.email} -> {email}")
+        print(f"  Cédula: {cliente.cedula} -> {cedula}")
+        print(f"  Teléfono: {cliente.telefono} -> {telefono}")
+        print(f"  Dirección: {cliente.direccion} -> {direccion}")
+        
         # Actualizar los datos del cliente
         cliente.nombre = nombre
         cliente.email = email
@@ -1137,18 +1167,26 @@ def handle_editar_perfil(request):
         cliente.direccion = direccion if direccion else None
         cliente.save()
         
-        # Si hay un usuario asociado, actualizar también su email
+        print(f"DEBUG - Cliente guardado exitosamente")
+        
+        # Si hay un usuario asociado, actualizar también su email y nombre
         if usuario_id:
             try:
                 usuario = Usuario.objects.get(idUsuario=usuario_id)
+                usuario.nombre = nombre
                 usuario.email = email
                 usuario.save()
+                print(f"DEBUG - Usuario actualizado exitosamente")
             except Usuario.DoesNotExist:
+                print(f"DEBUG - Usuario no encontrado")
                 pass
         
         messages.success(request, "Tus datos han sido actualizados correctamente.")
         
     except Exception as e:
+        print(f"ERROR al actualizar perfil: {str(e)}")
+        import traceback
+        traceback.print_exc()
         messages.error(request, f"Error al actualizar los datos: {str(e)}")
     
     return redirect('perfil')

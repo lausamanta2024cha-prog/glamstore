@@ -12,6 +12,7 @@ class MovimientoProducto(models.Model):
         ('AJUSTE_MANUAL_ENTRADA', 'Ajuste Manual (Entrada)'),
         ('AJUSTE_MANUAL_SALIDA', 'Ajuste Manual (Salida)'),
         ('SALIDA_VENTA', 'Salida por Venta'),
+        ('PERDIDA_VENCIMIENTO', 'Pérdida por Vencimiento'),
     ])
     cantidad = models.IntegerField()
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)

@@ -18,12 +18,17 @@
       <p>{{ request.session.usuario_nombre }}</p>
       <p class="rol">Administrador</p>
     </div>
-    <div class="sidebar-nav">
+        <div class="sidebar-nav">
       <a href="{% url 'dashboard_admin' %}">Dashboard</a>
       <a href="{% url 'lista_admin' %}">Mi Perfil</a>
-      <a href="{% url 'notificaciones' %}">Notificaciones</a>
+      <a href="{% url 'notificaciones' %}">
+        Notificaciones
+        {% if total_notificaciones_no_leidas > 0 %}
+        <span class="notification-badge">{{ total_notificaciones_no_leidas }}</span>
+        {% endif %}
+      </a>
       <a href="{% url 'lista_clientes' %}" class="active">Clientes</a>
-      <a href="{% url 'lista_distribuidores' %}">Distribuidores</a>
+     <a href="{% url 'lista_distribuidores' %}">Proveedores</a>
       <a href="{% url 'lista_pedidos' %}">Pedidos</a>
       <a href="{% url 'lista_productos' %}">Productos</a>
       <a href="{% url 'lista_repartidores' %}">Repartidores</a>

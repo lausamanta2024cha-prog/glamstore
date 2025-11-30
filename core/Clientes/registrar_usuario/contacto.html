@@ -1,0 +1,356 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contacto | Glam Store</title>
+    <link rel="icon" href="{% static 'img/logoglam.png' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Neue', cursive, Arial, sans-serif;
+            background-color: #fffafc;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background-color: #fce4ec;
+            padding: 2rem;
+            width: 240px;
+            height: 100vh;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #f8bbd0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-header h2 {
+            color: #ad1457;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header p {
+            color: #d81b60;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+        }
+
+        .sidebar a {
+            display: block;
+            margin: 0.5rem 0;
+            color: #880e4f;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 0.8rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #f8bbd0;
+            color: #fff;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 2px solid #f8bbd0;
+        }
+
+        .main-content {
+            margin-left: 240px;
+            padding: 2rem 3rem;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .contact-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 3rem;
+            max-width: 900px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .contact-container {
+                grid-template-columns: 1fr;
+                padding: 2rem;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            body {
+                flex-direction: column;
+            }
+        }
+
+        .contact-info h1 {
+            color: #c2185b;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 3px solid #f48fb1;
+            padding-bottom: 0.5rem;
+        }
+
+        .contact-info p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: #fce4ec;
+            border-radius: 10px;
+            transition: transform 0.3s;
+        }
+
+        .info-item:hover {
+            transform: translateX(5px);
+        }
+
+        .info-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #ec407a 0%, #c2185b 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .info-text h3 {
+            color: #c2185b;
+            font-size: 0.9rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .info-text p {
+            color: #666;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        .contact-form h2 {
+            color: #c2185b;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            color: #c2185b;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #f8bbd0;
+            border-radius: 25px;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-group textarea {
+            border-radius: 15px;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #ec407a;
+            box-shadow: 0 0 0 3px rgba(236, 64, 122, 0.1);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(236, 64, 122, 0.4);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+
+        .alert-error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Glam Store</h2>
+            <p>Tu tienda de belleza</p>
+        </div>
+        <div class="sidebar-nav">
+            <a href="{% url 'tienda' %}">Tienda</a>
+            <a href="{% url 'ver_carrito' %}">Carrito</a>
+            {% if request.session.usuario_nombre %}
+            <a href="{% url 'perfil' %}">Mi Perfil</a>
+            <a href="{% url 'mis_pedidos' %}">Mis Pedidos</a>
+            {% else %}
+            <a href="{% url 'login' %}">Iniciar Sesion</a>
+            <a href="{% url 'registrar_usuario' %}">Registrarse</a>
+            {% endif %}
+            <a href="{% url 'contacto' %}" class="active">Contacto</a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="{% url 'terminos_condiciones' %}">Terminos</a>
+            <a href="{% url 'politica_privacidad' %}">Privacidad</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="contact-container">
+            <div class="contact-info">
+                <h1>Contactanos</h1>
+                <p>Estamos aqui para ayudarte. Si tienes alguna pregunta sobre nuestros productos, tu pedido o cualquier otra consulta, no dudes en escribirnos.</p>
+                
+                <div class="info-item">
+                    <div class="info-icon">@</div>
+                    <div class="info-text">
+                        <h3>Correo Electronico</h3>
+                        <p>glamstore0303777@gmail.com</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">📱</div>
+                    <div class="info-text">
+                        <h3>Telefono</h3>
+                        <p>+57 303 777 8899</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">🕐</div>
+                    <div class="info-text">
+                        <h3>Horario de Atencion</h3>
+                        <p>Lunes a Viernes: 8am - 6pm<br>Sabados: 9am - 2pm</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">📍</div>
+                    <div class="info-text">
+                        <h3>Ubicacion</h3>
+                        <p>Calle 45 #23-67, Bogotá D.C.<br>Colombia</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-icon">💬</div>
+                    <div class="info-text">
+                        <h3>WhatsApp</h3>
+                        <p>+57 303 777 8899</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="contact-form">
+                <h2>Envianos un Mensaje</h2>
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="nombre">Nombre</label>
+                        <input type="text" id="nombre" name="nombre" required placeholder="Tu nombre completo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Correo Electronico</label>
+                        <input type="email" id="email" name="email" required placeholder="tu@email.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mensaje">Mensaje</label>
+                        <textarea id="mensaje" name="mensaje" required placeholder="Escribe tu mensaje aqui..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn-submit">Enviar Mensaje</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

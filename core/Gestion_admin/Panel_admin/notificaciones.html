@@ -23,7 +23,22 @@
     .sidebar a:hover, .sidebar a.active { background-color: #f8bbd0; color: #fff; }
     .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 2px solid #f8bbd0; }
     
-    .notification-badge { position: absolute; top: 0.5rem; right: 0.5rem; background: #f44336; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: bold; }
+    .notification-badge {
+      position: relative;
+      display: inline-block;
+      background: #f44336;
+      color: white;
+      border-radius: 50%;
+      min-width: 20px;
+      height: 20px;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-align: center;
+      line-height: 16px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
     
     /* MAIN CONTENT */
     .main-content { margin-left: 240px; padding: 2rem 2rem; width: calc(100% - 240px); flex: 1; }
@@ -89,22 +104,22 @@
       <p>{{ request.session.usuario_nombre }}</p>
       <p class="rol">Administrador</p>
     </div>
-    <div class="sidebar-nav">
+        <div class="sidebar-nav">
       <a href="{% url 'dashboard_admin' %}">Dashboard</a>
       <a href="{% url 'lista_admin' %}">Mi Perfil</a>
+      <a href="{% url 'notificaciones' %}" class="active">
+        Notificaciones
+        {% if total_notificaciones_no_leidas > 0 %}
+        <span class="notification-badge">{{ total_notificaciones_no_leidas }}</span>
+        {% endif %}
+      </a>
       <a href="{% url 'lista_clientes' %}">Clientes</a>
- <a href="{% url 'lista_distribuidores' %}">Proveedores</a>
+     <a href="{% url 'lista_distribuidores' %}">Proveedores</a>
       <a href="{% url 'lista_pedidos' %}">Pedidos</a>
       <a href="{% url 'lista_productos' %}">Productos</a>
       <a href="{% url 'lista_repartidores' %}">Repartidores</a>
       <a href="{% url 'lista_categorias' %}">Categorías</a>
       <a href="{% url 'lista_subcategorias' %}">Subcategorías</a>
-      <a href="{% url 'notificaciones' %}" class="active">
-        Notificaciones
-        {% if notificaciones_no_leidas > 0 %}
-        <span class="notification-badge">{{ notificaciones_no_leidas }}</span>
-        {% endif %}
-      </a>
     </div>
     <div class="sidebar-footer">
       <a href="{% url 'logout' %}">Cerrar Sesión</a>
@@ -113,20 +128,30 @@
 
   <div class="main-content">
     <div class="page-header">
-      <h1>Notificaciones de Problemas de Entrega</h1>
+      <h1>Notificaciones</h1>
     </div>
 
     <div class="stats-bar">
       <div class="stat-card">
         <div class="stat-number">{{ notificaciones.count }}</div>
-        <div class="stat-label">Total Reportes</div>
+        <div class="stat-label">Problemas de Entrega</div>
       </div>
       <div class="stat-card">
         <div class="stat-number">{{ notificaciones_no_leidas }}</div>
-        <div class="stat-label">Sin Leer</div>
+        <div class="stat-label">Problemas Sin Leer</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">{{ mensajes_contacto.count }}</div>
+        <div class="stat-label">Mensajes de Contacto</div>
       </div>
     </div>
 
+    <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem;">
+      <button class="btn btn-primary" onclick="mostrarSeccion('problemas')" id="btn-problemas">Problemas de Entrega</button>
+      <button class="btn btn-secondary" onclick="mostrarSeccion('mensajes')" id="btn-mensajes">Mensajes de Contacto</button>
+    </div>
+
+    <div id="seccion-problemas">
     {% if notificaciones %}
       {% for notificacion in notificaciones %}
       <div class="notificacion-card {% if not notificacion.leida %}no-leida{% else %}leida{% endif %}">
@@ -213,10 +238,86 @@
       {% endfor %}
     {% else %}
       <div class="empty-state">
-        <h2>No hay notificaciones</h2>
+        <h2>No hay notificaciones de problemas</h2>
         <p>Cuando los clientes reporten problemas con sus entregas, aparecerán aquí.</p>
       </div>
     {% endif %}
+    </div>
+
+    <div id="seccion-mensajes" style="display: none;">
+    {% if mensajes_contacto %}
+      {% for mensaje in mensajes_contacto %}
+      <div class="notificacion-card">
+        <div class="notificacion-header">
+          <h3>Mensaje de {{ mensaje.nombre }}</h3>
+          <div class="notificacion-meta">
+            Recibido el {{ mensaje.fecha|date:"d/m/Y H:i" }}
+          </div>
+        </div>
+        
+        <div class="notificacion-body">
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Nombre</div>
+              <div class="info-value">{{ mensaje.nombre }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Email</div>
+              <div class="info-value">{{ mensaje.email }}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Teléfono</div>
+              <div class="info-value">{{ mensaje.telefono|default:"No proporcionado" }}</div>
+            </div>
+          </div>
+          
+          <div class="motivo-section">
+            <h4>Mensaje:</h4>
+            <p>{{ mensaje.mensaje }}</p>
+          </div>
+          
+          <div class="notificacion-actions">
+            <a href="mailto:{{ mensaje.email }}" class="btn btn-primary">Responder por Email</a>
+            {% if mensaje.telefono %}
+            <a href="https://wa.me/57{{ mensaje.telefono }}" class="btn btn-success" target="_blank">Responder por WhatsApp</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <h2>No hay mensajes de contacto</h2>
+        <p>Los mensajes enviados desde el formulario de contacto aparecerán aquí.</p>
+      </div>
+    {% endif %}
+    </div>
   </div>
+
+  <script>
+    function mostrarSeccion(seccion) {
+      const seccionProblemas = document.getElementById('seccion-problemas');
+      const seccionMensajes = document.getElementById('seccion-mensajes');
+      const btnProblemas = document.getElementById('btn-problemas');
+      const btnMensajes = document.getElementById('btn-mensajes');
+      
+      // Ocultar todas las secciones
+      seccionProblemas.style.display = 'none';
+      seccionMensajes.style.display = 'none';
+      
+      // Resetear todos los botones a secundario
+      btnProblemas.className = 'btn btn-secondary';
+      btnMensajes.className = 'btn btn-secondary';
+      
+      // Mostrar la sección seleccionada
+      if (seccion === 'problemas') {
+        seccionProblemas.style.display = 'block';
+        btnProblemas.className = 'btn btn-primary';
+      } else if (seccion === 'mensajes') {
+        seccionMensajes.style.display = 'block';
+        btnMensajes.className = 'btn btn-primary';
+      }
+    }
+  </script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 {% load static %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="es">
 
@@ -385,7 +386,7 @@
           
           <div class="total-row info-row">
             <strong>Total:</strong>
-            <span>${{ pedido.total }}</span>
+            <span>${{ pedido.total|floatformat:0|intcomma }}</span>
           </div>
         </div>
 

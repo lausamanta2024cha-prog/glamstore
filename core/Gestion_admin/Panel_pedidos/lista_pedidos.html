@@ -19,6 +19,24 @@
     .sidebar-nav { flex: 1; }
     .sidebar a { display: block; margin: 0.5rem 0; color: #880e4f; text-decoration: none; font-weight: bold; padding: 0.8rem 1rem; border-radius: 25px; transition: all 0.3s ease; }
     .sidebar a:hover, .sidebar a.active { background-color: #f8bbd0; color: #fff; }
+        .notification-badge {
+      position: relative;
+      display: inline-block;
+      background: #f44336;
+      color: white;
+      border-radius: 50%;
+      min-width: 20px;
+      height: 20px;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-align: center;
+      line-height: 16px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+
     .sidebar-footer { margin-top: auto; padding-top: 1rem; border-top: 2px solid #f8bbd0; }
     .main-content { margin-left: 240px; padding: 2rem 5rem; width: calc(100% - 240px - 10rem); flex: 1; }
     .page-header { margin-bottom: 2rem; }
@@ -47,10 +65,15 @@
   <div class="sidebar">
     <div class="sidebar-header"><h2>Admin Glam</h2><p>Panel de Control</p></div>
     <div class="sidebar-user"><p>{{ request.session.usuario_nombre }}</p><p class="rol">Administrador</p></div>
-    <div class="sidebar-nav">
+        <div class="sidebar-nav">
       <a href="{% url 'dashboard_admin' %}">Dashboard</a>
       <a href="{% url 'lista_admin' %}">Mi Perfil</a>
-      <a href="{% url 'notificaciones' %}">Notificaciones</a>
+      <a href="{% url 'notificaciones' %}">
+        Notificaciones
+        {% if total_notificaciones_no_leidas > 0 %}
+        <span class="notification-badge">{{ total_notificaciones_no_leidas }}</span>
+        {% endif %}
+      </a>
       <a href="{% url 'lista_clientes' %}">Clientes</a>
      <a href="{% url 'lista_distribuidores' %}">Proveedores</a>
       <a href="{% url 'lista_pedidos' %}" class="active">Pedidos</a>
@@ -58,7 +81,7 @@
       <a href="{% url 'lista_repartidores' %}">Repartidores</a>
       <a href="{% url 'lista_categorias' %}">Categorías</a>
       <a href="{% url 'lista_subcategorias' %}">Subcategorías</a>
-       <a href="{% url 'reabastecimiento' %}">Reabastecimiento</a>
+             <a href="{% url 'reabastecimiento' %}">Reabastecimiento</a>
     </div>
     <div class="sidebar-footer"><a href="{% url 'logout' %}">Cerrar Sesión</a></div>
   </div>

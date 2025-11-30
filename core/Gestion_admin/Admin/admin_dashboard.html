@@ -96,12 +96,30 @@
       padding: 0.8rem 1rem;
       border-radius: 25px;
       transition: all 0.3s ease;
+      position: relative;
     }
 
     .sidebar a:hover,
     .sidebar a.active {
       background-color: #f8bbd0;
       color: #fff;
+    }
+
+    .notification-badge {
+      position: relative;
+      display: inline-block;
+      background: #f44336;
+      color: white;
+      border-radius: 50%;
+      min-width: 20px;
+      height: 20px;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-align: center;
+      line-height: 16px;
+      margin-left: 8px;
+      vertical-align: middle;
     }
 
     .sidebar-footer {
@@ -684,10 +702,15 @@
       <p class="rol">Administrador</p>
     </div>
 
-    <div class="sidebar-nav">
+        <div class="sidebar-nav">
       <a href="{% url 'dashboard_admin' %}" class="active">Dashboard</a>
       <a href="{% url 'lista_admin' %}">Mi Perfil</a>
-      <a href="{% url 'notificaciones' %}">Notificaciones</a>
+      <a href="{% url 'notificaciones' %}">
+        Notificaciones
+        {% if total_notificaciones_no_leidas > 0 %}
+        <span class="notification-badge">{{ total_notificaciones_no_leidas }}</span>
+        {% endif %}
+      </a>
       <a href="{% url 'lista_clientes' %}">Clientes</a>
      <a href="{% url 'lista_distribuidores' %}">Proveedores</a>
       <a href="{% url 'lista_pedidos' %}">Pedidos</a>
@@ -846,6 +869,167 @@
             </table>
           {% else %}
             <p style="text-align: center; color: #999; padding: 1rem; font-size: 0.9rem;">No hay reabastecimientos en la última semana</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Información de Vencimientos -->
+    <div class="dashboard-section" style="margin-bottom: 2rem;">
+      <h2 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">Control de Vencimientos</h2>
+      
+      <!-- Alertas de Vencimientos -->
+      <div class="dashboard-row" style="margin-bottom: 1rem;">
+        <!-- Productos Vencidos -->
+        <div class="card" style="{% if productos_vencidos.total_productos > 0 %}border-left: 5px solid #f44336;{% endif %}">
+          <div class="card-body">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 style="color: #f44336; margin: 0; font-size: 1.1rem;">Productos Vencidos</h3>
+              <div style="text-align: right;">
+                <div style="font-size: 1.5rem; font-weight: bold; color: #f44336;">{{ productos_vencidos.total_productos }}</div>
+                <div style="font-size: 0.8rem; color: #666;">productos</div>
+              </div>
+            </div>
+            
+            {% if productos_vencidos.total_productos > 0 %}
+              <div style="background: #ffebee; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                  <div>
+                    <div><strong>Cantidad perdida:</strong> {{ productos_vencidos.total_cantidad }} unidades</div>
+                    <div><strong>Valor perdido:</strong> ${{ productos_vencidos.total_valor|floatformat:0|intcomma }}</div>
+                  </div>
+                  <form action="{% url 'marcar_lotes_vencidos' %}" method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" style="background: #f44336; color: white; border: none; padding: 0.5rem 1rem; border-radius: 15px; font-size: 0.8rem; cursor: pointer; font-weight: bold;">
+                      Marcar como Perdidos
+                    </button>
+                  </form>
+                </div>
+              </div>
+              
+              <div style="max-height: 200px; overflow-y: auto;">
+                {% for item in productos_vencidos.detalle %}
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #ffcdd2;">
+                    <div>
+                      <div style="font-weight: bold; color: #c62828; font-size: 0.9rem;">{{ item.producto.nombreProducto }}</div>
+                      <div style="font-size: 0.75rem; color: #666;">
+                        Lote: {{ item.lote.codigo_lote }} | Vencido hace {{ item.dias_vencido }} días
+                      </div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div style="font-weight: bold; color: #f44336;">{{ item.cantidad_perdida }} unidades</div>
+                      <div style="font-size: 0.75rem; color: #666;">${{ item.valor_perdido|floatformat:0|intcomma }}</div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p style="color: #4caf50; text-align: center; margin: 0; font-size: 0.9rem;">No hay productos vencidos</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Productos por Vencer -->
+        <div class="card" style="{% if productos_por_vencer.criticos > 0 %}border-left: 5px solid #ff9800;{% elif productos_por_vencer.total_productos > 0 %}border-left: 5px solid #ffc107;{% endif %}">
+          <div class="card-body">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 style="color: #ff9800; margin: 0; font-size: 1.1rem;">Por Vencer (30 días)</h3>
+              <div style="text-align: right;">
+                <div style="font-size: 1.5rem; font-weight: bold; color: #ff9800;">{{ productos_por_vencer.total_productos }}</div>
+                <div style="font-size: 0.8rem; color: #666;">productos</div>
+              </div>
+            </div>
+            
+            {% if productos_por_vencer.total_productos > 0 %}
+              <div style="background: #fff3e0; padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <span><strong>Cantidad en riesgo:</strong> {{ productos_por_vencer.total_cantidad }} unidades</span>
+                  <span><strong>Valor en riesgo:</strong> ${{ productos_por_vencer.total_valor|floatformat:0|intcomma }}</span>
+                </div>
+                <div style="display: flex; gap: 1rem; font-size: 0.8rem;">
+                  <span style="color: #f44336;"><strong>Críticos (≤7 días):</strong> {{ productos_por_vencer.criticos }}</span>
+                  <span style="color: #ff9800;"><strong>Altos (≤15 días):</strong> {{ productos_por_vencer.altos }}</span>
+                  <span style="color: #ffc107;"><strong>Medios (≤30 días):</strong> {{ productos_por_vencer.medios }}</span>
+                </div>
+              </div>
+              
+              <div style="max-height: 200px; overflow-y: auto;">
+                {% for item in productos_por_vencer.detalle %}
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid #ffcc02;">
+                    <div>
+                      <div style="font-weight: bold; color: {% if item.urgencia == 'critica' %}#f44336{% elif item.urgencia == 'alta' %}#ff9800{% else %}#ffc107{% endif %}; font-size: 0.9rem;">
+                        {{ item.producto.nombreProducto }}
+                      </div>
+                      <div style="font-size: 0.75rem; color: #666;">
+                        Lote: {{ item.lote.codigo_lote }} | Vence: {{ item.fecha_vencimiento|date:"d/m/Y" }}
+                      </div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div style="font-weight: bold; color: {% if item.urgencia == 'critica' %}#f44336{% elif item.urgencia == 'alta' %}#ff9800{% else %}#ffc107{% endif %};">
+                        {{ item.dias_restantes }} días
+                      </div>
+                      <div style="font-size: 0.75rem; color: #666;">{{ item.cantidad_disponible }} unidades</div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p style="color: #4caf50; text-align: center; margin: 0; font-size: 0.9rem;">No hay productos próximos a vencer</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pedidos Nuevos por Asignar Repartidor -->
+    <div class="dashboard-section" style="margin-bottom: 2rem;">
+      <h2 class="section-title" style="font-size: 1.3rem; margin-bottom: 1rem;">Pedidos Nuevos por Asignar Repartidor</h2>
+      <div class="card">
+        <div class="card-body card-compact">
+          {% if pedidos_por_asignar %}
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+              <thead>
+                <tr style="background: #fce4ec; border-bottom: 1px solid #f48fb1;">
+                  <th style="padding: 0.5rem; text-align: left; color: #c2185b; font-weight: bold; font-size: 0.8rem;">#Pedido</th>
+                  <th style="padding: 0.5rem; text-align: left; color: #c2185b; font-weight: bold; font-size: 0.8rem;">Cliente</th>
+                  <th style="padding: 0.5rem; text-align: left; color: #c2185b; font-weight: bold; font-size: 0.8rem;">Dirección</th>
+                  <th style="padding: 0.5rem; text-align: center; color: #c2185b; font-weight: bold; font-size: 0.8rem;">Total</th>
+                  <th style="padding: 0.5rem; text-align: center; color: #c2185b; font-weight: bold; font-size: 0.8rem;">Estado Pago</th>
+                  <th style="padding: 0.5rem; text-align: center; color: #c2185b; font-weight: bold; font-size: 0.8rem;">Fecha</th>
+                  <th style="padding: 0.5rem; text-align: center; color: #c2185b; font-weight: bold; font-size: 0.8rem;">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for pedido in pedidos_por_asignar %}
+                <tr style="border-bottom: 1px solid #fce4ec;">
+                  <td style="padding: 0.5rem; color: #333; font-weight: bold;">#{{ pedido.idPedido }}</td>
+                  <td style="padding: 0.5rem; color: #333;">{{ pedido.idCliente.nombre|truncatewords:3 }}</td>
+                  <td style="padding: 0.5rem; color: #666; font-size: 0.8rem;">{{ pedido.idCliente.direccion|truncatewords:5 }}</td>
+                  <td style="padding: 0.5rem; text-align: center; color: #2e7d32; font-weight: bold;">${{ pedido.total|floatformat:0|intcomma }}</td>
+                  <td style="padding: 0.5rem; text-align: center;">
+                    <span style="padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.75rem; font-weight: bold; 
+                      {% if pedido.estado_pago == 'Pago Completo' %}background: #e8f5e9; color: #2e7d32;
+                      {% elif pedido.estado_pago == 'Pago Parcial' %}background: #fff3e0; color: #f57c00;
+                      {% else %}background: #ffebee; color: #c62828;{% endif %}">
+                      {{ pedido.estado_pago }}
+                    </span>
+                  </td>
+                  <td style="padding: 0.5rem; text-align: center; color: #666; font-size: 0.8rem;">{{ pedido.fechaCreacion|date:"d/m/Y H:i" }}</td>
+                  <td style="padding: 0.5rem; text-align: center;">
+                    <a href="{% url 'lista_repartidores' %}" 
+                       style="background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%); 
+                              color: white; padding: 0.3rem 0.8rem; border-radius: 15px; 
+                              text-decoration: none; font-size: 0.75rem; font-weight: bold;
+                              display: inline-block; transition: all 0.3s ease;">
+                      Asignar
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <p style="text-align: center; color: #999; padding: 1rem; font-size: 0.9rem;">No hay pedidos pendientes por asignar repartidor</p>
           {% endif %}
         </div>
       </div>

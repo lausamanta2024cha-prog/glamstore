@@ -213,6 +213,32 @@ def dashboard_admin_view(request):
     
     repartidor_estrella = repartidores_calificados.first() if repartidores_calificados.exists() else None
 
+    # === NOTIFICACIONES NO LEÍDAS ===
+    from core.models import NotificacionProblema
+    
+    # Solo contar problemas de entrega (los reportes se envían por correo)
+    total_notificaciones_no_leidas = NotificacionProblema.objects.filter(leida=False).count()
+    
+    # === PEDIDOS SIN ASIGNAR REPARTIDOR ===
+    # Incluir pedidos confirmados y en preparación sin repartidor
+    pedidos_por_asignar = Pedido.objects.filter(
+        idRepartidor__isnull=True
+    ).exclude(
+        estado_pedido__in=['Entregado', 'Completado', 'Cancelado']
+    ).select_related('idCliente').order_by('-fechaCreacion')[:10]
+    
+    # Debug: imprimir información
+    print(f"DEBUG - Pedidos sin repartidor encontrados: {pedidos_por_asignar.count()}")
+    for p in pedidos_por_asignar:
+        print(f"  Pedido #{p.idPedido} - Estado: {p.estado_pedido} - Cliente: {p.idCliente.nombre}")
+    
+    # === INFORMACIÓN DE VENCIMIENTOS ===
+    from core.services.vencimientos_service import VencimientosService
+    
+    resumen_vencimientos = VencimientosService.obtener_resumen_vencimientos()
+    productos_vencidos = resumen_vencimientos['productos_vencidos']
+    productos_por_vencer = resumen_vencimientos['productos_por_vencer']
+    
     context = {
         # Estadísticas generales
         'total_productos': total_productos,
@@ -246,6 +272,16 @@ def dashboard_admin_view(request):
         # Calificaciones de repartidores
         'calificaciones_recientes': calificaciones_recientes,
         'repartidor_estrella': repartidor_estrella,
+        
+        # Notificaciones
+        'total_notificaciones_no_leidas': total_notificaciones_no_leidas,
+        
+        # Pedidos por asignar
+        'pedidos_por_asignar': pedidos_por_asignar,
+        
+        # Información de vencimientos
+        'productos_vencidos': productos_vencidos,
+        'productos_por_vencer': productos_por_vencer,
     }
     return render(request, 'admin_dashboard.html', context)
 # core/views.py
@@ -1452,8 +1488,8 @@ def subcategoria_eliminar_view(request, id):
     return redirect('lista_subcategorias')
 
 def notificaciones_view(request):
-    """Vista para mostrar las notificaciones de problemas de entrega"""
-    from core.models import NotificacionProblema
+    """Vista para mostrar las notificaciones de problemas de entrega y mensajes de contacto"""
+    from core.models import NotificacionProblema, MensajeContacto
     
     # Obtener todas las notificaciones ordenadas por fecha
     notificaciones = NotificacionProblema.objects.select_related(
@@ -1464,9 +1500,17 @@ def notificaciones_view(request):
     # Contar notificaciones no leídas
     notificaciones_no_leidas = notificaciones.filter(leida=False).count()
     
+    # Obtener mensajes de contacto ordenados por fecha
+    mensajes_contacto = MensajeContacto.objects.all().order_by('-fecha')
+    
+    # Total de notificaciones no leídas (solo problemas de entrega)
+    total_no_leidas = notificaciones_no_leidas
+    
     return render(request, 'notificaciones.html', {
         'notificaciones': notificaciones,
-        'notificaciones_no_leidas': notificaciones_no_leidas
+        'notificaciones_no_leidas': notificaciones_no_leidas,
+        'mensajes_contacto': mensajes_contacto,
+        'total_no_leidas': total_no_leidas
     })
 
 def marcar_notificacion_leida(request, id_notificacion):
@@ -1477,9 +1521,37 @@ def marcar_notificacion_leida(request, id_notificacion):
         notificacion = get_object_or_404(NotificacionProblema, idNotificacion=id_notificacion)
         notificacion.leida = True
         notificacion.save()
-        messages.success(request, "Notificación marcada como leída.")
     
     return redirect('notificaciones')
+
+
+def marcar_reporte_leido(request, id_reporte):
+    """Marca un reporte como leído"""
+    from core.models.notificaciones import NotificacionReporte
+    
+    if request.method == 'POST':
+        reporte = get_object_or_404(NotificacionReporte, idNotificacion=id_reporte)
+        reporte.leida = True
+        reporte.save()
+        messages.success(request, "Reporte marcado como leído.")
+    
+    return redirect('notificaciones')
+
+
+def ver_reporte_view(request, id_reporte):
+    """Vista para ver el contenido completo de un reporte"""
+    from core.models.notificaciones import NotificacionReporte
+    from django.http import HttpResponse
+    
+    reporte = get_object_or_404(NotificacionReporte, idNotificacion=id_reporte)
+    
+    # Marcar como leído automáticamente al verlo
+    if not reporte.leida:
+        reporte.leida = True
+        reporte.save()
+    
+    # Devolver el HTML del reporte directamente
+    return HttpResponse(reporte.contenido_html)
 
 
 def responder_notificacion_view(request, id_notificacion):
@@ -1541,11 +1613,28 @@ def asignar_pedidos_multiples_view(request):
         if pedidos_asignados > 0:
             repartidor.estado_turno = 'En Ruta'
             repartidor.save()
-            messages.success(request, f"Se asignaron {pedidos_asignados} pedidos. Facturas enviadas: {facturas_enviadas}")
         
         return redirect('lista_repartidores')
     
     return redirect('lista_repartidores')
+
+
+# === GESTIÓN DE VENCIMIENTOS ===
+
+def marcar_lotes_vencidos_view(request):
+    """Vista para marcar lotes vencidos como perdidos"""
+    if request.method == 'POST':
+        from core.services.vencimientos_service import VencimientosService
+        
+        try:
+            movimientos_creados = VencimientosService.marcar_lotes_vencidos_como_perdidos()
+            # Redirigir sin mensaje
+            return redirect('dashboard_admin')
+        except Exception as e:
+            # Redirigir sin mensaje de error
+            return redirect('dashboard_admin')
+    
+    return redirect('dashboard_admin')
 
 
 # === NUEVAS FUNCIONES PARA ASIGNACIÓN AUTOMÁTICA Y ENVÍO DE PDFs ===
@@ -1560,16 +1649,8 @@ def asignar_pedidos_automaticamente_view(request):
             # Asignar pedidos automáticamente (sin filtro de fecha)
             resultado = asignar_pedidos_automaticamente()
             
-            # Mostrar mensaje con el resultado
-            if resultado['pedidos_asignados'] > 0:
-                messages.success(request, resultado['mensaje'])
-            elif resultado.get('repartidores_sin_capacidad'):
-                messages.warning(request, resultado['mensaje'])
-            else:
-                messages.info(request, resultado['mensaje'])
-            
         except Exception as e:
-            messages.error(request, f"Error al asignar pedidos: {str(e)}")
+            pass
     
     return redirect('lista_repartidores')
 
@@ -1848,6 +1929,7 @@ def enviar_reporte_dashboard_view(request):
     from django.core.mail import EmailMultiAlternatives
     from django.db.models import Q, F, Max, Avg, Count, Min
     from core.models import ConfirmacionEntrega
+    from django.conf import settings
     
     if request.method != 'POST':
         return redirect('dashboard_admin')
@@ -1942,6 +2024,13 @@ def enviar_reporte_dashboard_view(request):
         promedio_calificacion_general = ConfirmacionEntrega.objects.filter(
             fecha_confirmacion__gte=inicio_mes
         ).aggregate(promedio=Avg('calificacion'))['promedio'] or 0
+        
+        # === INFORMACIÓN DE VENCIMIENTOS ===
+        from core.services.vencimientos_service import VencimientosService
+        
+        resumen_vencimientos = VencimientosService.obtener_resumen_vencimientos()
+        productos_vencidos = resumen_vencimientos['productos_vencidos']
+        productos_por_vencer = resumen_vencimientos['productos_por_vencer']
         
         # === CALCULAR TOTALES DE VENTAS ===
         ventas_semana = Pedido.objects.filter(
@@ -2139,6 +2228,88 @@ def enviar_reporte_dashboard_view(request):
         
         html_content += "</div>"
         
+        # === SECCIÓN DE VENCIMIENTOS ===
+        html_content += """
+                
+                <h2>Control de Vencimientos</h2>
+        """
+        
+        # Productos Vencidos
+        html_content += f"""
+                <div style="background: #ffebee; padding: 15px; border-radius: 10px; border-left: 4px solid #f44336; margin-bottom: 20px;">
+                    <h3 style="color: #f44336; margin: 0 0 10px 0;">Productos Vencidos</h3>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                        <div><strong>Total productos:</strong> {productos_vencidos['total_productos']}</div>
+                        <div><strong>Cantidad perdida:</strong> {productos_vencidos['total_cantidad']} unidades</div>
+                        <div><strong>Valor perdido:</strong> ${productos_vencidos['total_valor']:,.0f}</div>
+                    </div>
+        """
+        
+        if productos_vencidos['total_productos'] > 0:
+            html_content += """
+                    <table style="width: 100%; margin-top: 10px;">
+                        <tr style="background: #ffcdd2;">
+                            <th>Producto</th><th>Lote</th><th>Días Vencido</th><th>Cantidad</th><th>Valor Perdido</th>
+                        </tr>
+            """
+            for item in productos_vencidos['detalle']:
+                html_content += f"""
+                        <tr>
+                            <td>{item['producto'].nombreProducto}</td>
+                            <td>{item['lote'].codigo_lote}</td>
+                            <td style="color: #f44336; font-weight: bold;">{item['dias_vencido']} días</td>
+                            <td style="text-align: center;">{item['cantidad_perdida']}</td>
+                            <td style="text-align: right;">${item['valor_perdido']:,.0f}</td>
+                        </tr>
+                """
+            html_content += "</table>"
+        else:
+            html_content += '<p style="color: #4caf50; text-align: center; margin: 0;">No hay productos vencidos</p>'
+        
+        html_content += "</div>"
+        
+        # Productos por Vencer
+        html_content += f"""
+                <div style="background: #fff3e0; padding: 15px; border-radius: 10px; border-left: 4px solid #ff9800; margin-bottom: 20px;">
+                    <h3 style="color: #ff9800; margin: 0 0 10px 0;">Productos por Vencer (30 días)</h3>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                        <div><strong>Total productos:</strong> {productos_por_vencer['total_productos']}</div>
+                        <div><strong>Cantidad en riesgo:</strong> {productos_por_vencer['total_cantidad']} unidades</div>
+                        <div><strong>Valor en riesgo:</strong> ${productos_por_vencer['total_valor']:,.0f}</div>
+                    </div>
+                    <div style="display: flex; gap: 20px; margin-bottom: 15px; font-size: 0.9rem;">
+                        <span style="color: #f44336;"><strong>Críticos (≤7 días):</strong> {productos_por_vencer['criticos']}</span>
+                        <span style="color: #ff9800;"><strong>Altos (≤15 días):</strong> {productos_por_vencer['altos']}</span>
+                        <span style="color: #ffc107;"><strong>Medios (≤30 días):</strong> {productos_por_vencer['medios']}</span>
+                    </div>
+        """
+        
+        if productos_por_vencer['total_productos'] > 0:
+            html_content += """
+                    <table style="width: 100%; margin-top: 10px;">
+                        <tr style="background: #ffcc02;">
+                            <th>Producto</th><th>Lote</th><th>Vencimiento</th><th>Días Restantes</th><th>Cantidad</th><th>Urgencia</th>
+                        </tr>
+            """
+            for item in productos_por_vencer['detalle']:
+                urgencia_color = '#f44336' if item['urgencia'] == 'critica' else '#ff9800' if item['urgencia'] == 'alta' else '#ffc107'
+                urgencia_texto = 'CRÍTICA' if item['urgencia'] == 'critica' else 'ALTA' if item['urgencia'] == 'alta' else 'MEDIA'
+                html_content += f"""
+                        <tr>
+                            <td>{item['producto'].nombreProducto}</td>
+                            <td>{item['lote'].codigo_lote}</td>
+                            <td>{item['fecha_vencimiento'].strftime('%d/%m/%Y')}</td>
+                            <td style="color: {urgencia_color}; font-weight: bold;">{item['dias_restantes']} días</td>
+                            <td style="text-align: center;">{item['cantidad_disponible']}</td>
+                            <td style="color: {urgencia_color}; font-weight: bold;">{urgencia_texto}</td>
+                        </tr>
+                """
+            html_content += "</table>"
+        else:
+            html_content += '<p style="color: #4caf50; text-align: center; margin: 0;">No hay productos próximos a vencer</p>'
+        
+        html_content += "</div>"
+        
         html_content += """
                 
                 <h2>Reabastecimientos Recientes (Ultima Semana)</h2>
@@ -2216,26 +2387,48 @@ def enviar_reporte_dashboard_view(request):
         """
         
         # === ENVIAR CORREO ===
-        from django.conf import settings
-        
-        subject = f'Reporte Dashboard Glam Store - {ahora.strftime("%d/%m/%Y")}'
-        from_email = settings.DEFAULT_FROM_EMAIL
-        to_email = 'glamstore0303777@gmail.com'
-        
-        email = EmailMultiAlternatives(
-            subject=subject,
-            body=f'Reporte del Dashboard de Glam Store generado el {ahora.strftime("%d/%m/%Y %H:%M")}',
-            from_email=from_email,
-            to=[to_email]
-        )
-        email.attach_alternative(html_content, "text/html")
-        email.send()
-        
-        messages.success(request, f'Reporte enviado exitosamente a {to_email}')
+        try:
+            # Obtener el email del administrador logueado
+            usuario_id = request.session.get('usuario_id')
+            email_admin = None
+            
+            if usuario_id:
+                try:
+                    usuario = Usuario.objects.get(idUsuario=usuario_id)
+                    email_admin = usuario.email
+                except Usuario.DoesNotExist:
+                    pass
+            
+            # Si no se pudo obtener el email del admin, usar el de glamstore por defecto
+            if not email_admin:
+                email_admin = settings.EMAIL_HOST_USER
+            
+            subject = f'Reporte Dashboard Glam Store - {ahora.strftime("%d/%m/%Y")}'
+            from_email = settings.DEFAULT_FROM_EMAIL
+            to_email = [email_admin]  # Enviar al admin logueado
+            
+            print(f"DEBUG - Enviando reporte:")
+            print(f"  From: {from_email}")
+            print(f"  To: {to_email}")
+            print(f"  Subject: {subject}")
+            
+            text_content = f'Reporte del Dashboard generado el {ahora.strftime("%d/%m/%Y %H:%M")}'
+            
+            email_message = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+            email_message.attach_alternative(html_content, "text/html")
+            email_message.send()
+            
+            print("DEBUG - Correo enviado exitosamente")
+            messages.success(request, f'Reporte enviado exitosamente a {email_admin}')
+        except Exception as email_error:
+            print(f"ERROR al enviar correo: {str(email_error)}")
+            import traceback
+            traceback.print_exc()
+            messages.error(request, f'Error al enviar el correo: {str(email_error)}')
         
     except Exception as e:
         import traceback
         traceback.print_exc()
-        messages.error(request, f'Error al enviar el reporte: {str(e)}')
+        messages.error(request, f'Error al generar el reporte: {str(e)}')
     
     return redirect('dashboard_admin')

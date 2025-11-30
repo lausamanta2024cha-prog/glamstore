@@ -88,6 +88,7 @@
       padding: 0.8rem 1rem;
       border-radius: 25px;
       transition: all 0.3s ease;
+      position: relative;
     }
 
     .sidebar a:hover,
@@ -95,6 +96,24 @@
       background-color: #f8bbd0;
       color: #fff;
     }
+
+        .notification-badge {
+      position: relative;
+      display: inline-block;
+      background: #f44336;
+      color: white;
+      border-radius: 50%;
+      min-width: 20px;
+      height: 20px;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      text-align: center;
+      line-height: 16px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
 
     .sidebar-footer {
       margin-top: auto;
@@ -253,21 +272,209 @@
 
     .table-container {
       overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
       background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+      margin: 1rem 0;
     }
 
-    th, td {
-      padding: 1rem;
-      text-align: left;
+    .movements-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.9rem;
+    }
+
+    .movements-table th {
+      background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+      color: #c2185b;
+      font-weight: bold;
+      padding: 1rem 0.8rem;
+      text-align: center;
+      border-bottom: 2px solid #f48fb1;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .movements-table td {
+      padding: 1rem 0.8rem;
       border-bottom: 1px solid #fce4ec;
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    .movements-table tbody tr:hover {
+      background-color: #fffafc;
+      transform: scale(1.01);
+      transition: all 0.2s ease;
+    }
+
+    /* Estilos específicos por columna */
+    .col-fecha { width: 110px; }
+    .col-tipo { width: 130px; }
+    .col-cantidad { width: 80px; }
+    .col-precio { width: 90px; }
+    .col-stock { width: 70px; }
+    .col-lote { width: 120px; }
+    .col-vencimiento { width: 100px; }
+    .col-iva { width: 90px; }
+    .col-descripcion { 
+      width: 250px; 
+      text-align: left;
+      max-width: 250px;
+      word-wrap: break-word;
+      white-space: normal;
+    }
+
+    /* Badges y elementos visuales */
+    .movement-badge {
+      display: inline-block;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-entrada {
+      background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+      color: #2e7d32;
+      border: 1px solid #4caf50;
+    }
+
+    .badge-salida {
+      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+      color: #c62828;
+      border: 1px solid #f44336;
+    }
+
+    .badge-perdida {
+      background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 100%);
+      color: #e65100;
+      border: 1px solid #ff9800;
+    }
+
+    .quantity-badge {
+      display: inline-block;
+      padding: 0.3rem 0.6rem;
+      border-radius: 15px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      min-width: 50px;
+    }
+
+    .quantity-positive {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #4caf50;
+    }
+
+    .quantity-negative {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #f44336;
+    }
+
+    .price-display {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .stock-display {
+      font-weight: bold;
+      padding: 0.2rem 0.5rem;
+      border-radius: 10px;
+      background: #f5f5f5;
+      color: #666;
+    }
+
+    .lote-info {
+      text-align: left;
+    }
+
+    .lote-code {
+      font-weight: bold;
+      color: #c2185b;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .lote-provider {
+      font-size: 0.75rem;
+      color: #666;
+      font-style: italic;
+    }
+
+    .vencimiento-info {
+      text-align: center;
+    }
+
+    .vencimiento-date {
+      font-weight: bold;
+      color: #333;
+      display: block;
+    }
+
+    .vencimiento-status {
+      font-size: 0.75rem;
+      padding: 0.1rem 0.4rem;
+      border-radius: 8px;
+      margin-top: 0.2rem;
+      display: inline-block;
+    }
+
+    .status-vencido {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #f44336;
+    }
+
+    .status-proximo {
+      background: #fff3e0;
+      color: #e65100;
+      border: 1px solid #ff9800;
+    }
+
+    .status-ok {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #4caf50;
+    }
+
+    .descripcion-content {
+      text-align: left;
+      line-height: 1.4;
+      max-height: 60px;
+      overflow: hidden;
+    }
+
+    .pedido-link {
+      display: inline-block;
+      background: linear-gradient(135deg, #f48fb1 0%, #ec407a 100%);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 15px;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+      transition: all 0.3s ease;
+    }
+
+    .pedido-link:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(244, 143, 177, 0.3);
+      color: white;
+      text-decoration: none;
+    }
+
+    .descripcion-text {
+      color: #666;
+      font-size: 0.85rem;
     }
 
     th {
@@ -421,9 +628,112 @@
       gap: 1rem;
     }
 
+    @media (max-width: 1200px) {
+      .main-content {
+        padding: 2rem 2rem;
+      }
+      
+      .movements-table {
+        font-size: 0.85rem;
+      }
+      
+      .movements-table th,
+      .movements-table td {
+        padding: 0.8rem 0.5rem;
+      }
+    }
+
     @media (max-width: 768px) {
       .form-grid {
         grid-template-columns: 1fr;
+      }
+      
+      .main-content {
+        margin-left: 0;
+        padding: 1rem;
+        width: 100%;
+      }
+      
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr !important;
+      }
+      
+      .movements-table {
+        font-size: 0.8rem;
+      }
+      
+      .movements-table th,
+      .movements-table td {
+        padding: 0.6rem 0.3rem;
+      }
+      
+      .movement-badge {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.5rem;
+      }
+      
+      .quantity-badge {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.4rem;
+      }
+      
+      .col-descripcion {
+        width: 200px;
+      }
+      
+      .pedido-link {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .movements-table th,
+      .movements-table td {
+        padding: 0.4rem 0.2rem;
+        font-size: 0.75rem;
+      }
+      
+      .movement-badge {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+      }
+      
+      .quantity-badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.3rem;
+      }
+      
+      .price-display {
+        font-size: 0.8rem;
+      }
+      
+      .stock-display {
+        font-size: 0.8rem;
+        padding: 0.1rem 0.3rem;
+      }
+      
+      .lote-code {
+        font-size: 0.8rem;
+      }
+      
+      .lote-provider {
+        font-size: 0.65rem;
+      }
+      
+      .vencimiento-date {
+        font-size: 0.8rem;
+      }
+      
+      .vencimiento-status {
+        font-size: 0.65rem;
+        padding: 0.05rem 0.3rem;
       }
     }
 
@@ -482,18 +792,23 @@
       <p>{{ request.session.usuario_nombre }}</p>
       <p class="rol">Administrador</p>
     </div>
-    <div class="sidebar-nav">
+        <div class="sidebar-nav">
       <a href="{% url 'dashboard_admin' %}">Dashboard</a>
       <a href="{% url 'lista_admin' %}">Mi Perfil</a>
-      <a href="{% url 'notificaciones' %}">Notificaciones</a>
+      <a href="{% url 'notificaciones' %}">
+        Notificaciones
+        {% if total_notificaciones_no_leidas > 0 %}
+        <span class="notification-badge">{{ total_notificaciones_no_leidas }}</span>
+        {% endif %}
+      </a>
       <a href="{% url 'lista_clientes' %}">Clientes</a>
-      <a href="{% url 'lista_distribuidores' %}">Distribuidores</a>
+     <a href="{% url 'lista_distribuidores' %}">Proveedores</a>
       <a href="{% url 'lista_pedidos' %}">Pedidos</a>
       <a href="{% url 'lista_productos' %}" class="active">Productos</a>
       <a href="{% url 'lista_repartidores' %}">Repartidores</a>
       <a href="{% url 'lista_categorias' %}">Categorías</a>
       <a href="{% url 'lista_subcategorias' %}">Subcategorías</a>
-      <a href="{% url 'reabastecimiento' %}">Reabastecimiento</a>
+             <a href="{% url 'reabastecimiento' %}">Reabastecimiento</a>
     </div>
     <div class="sidebar-footer">
       <a href="{% url 'logout' %}">Cerrar Sesión</a>
@@ -565,81 +880,164 @@
         <span class="badge" style="background: #f48fb1; color: white;">{{ movimientos|length }} registros</span>
       </div>
       <div class="table-container collapsible-content" id="historial-container">
-        <table>
+        <table class="movements-table">
           <thead>
             <tr>
-              <th>Fecha</th>
-              <th>Tipo</th>
-              <th>Cant.</th>
-              <th>Precio Unit.</th>
-              <th>Precio Venta (+25%)</th>
-              <th>Ganancia/Unit.</th>
-              <th>Inventario Anterior</th>
-              <th>Inventario Nuevo</th>
-              <th>Lote</th>
-              <th>Vencimiento</th>
-              <th>Total IVA</th>
-              <th>IVA (19%)</th>
-              <th>Descripcion</th>
+              <th class="col-fecha">Fecha</th>
+              <th class="col-tipo">Tipo Movimiento</th>
+              <th class="col-cantidad">Cantidad</th>
+              <th class="col-precio">Precio Unit.</th>
+              <th class="col-stock">Stock Ant.</th>
+              <th class="col-stock">Stock Nuevo</th>
+              <th class="col-lote">Lote</th>
+              <th class="col-vencimiento">Vencimiento</th>
+              <th class="col-iva">Total + IVA</th>
+              <th class="col-iva">IVA (19%)</th>
+              <th class="col-descripcion">Descripción / Pedido</th>
             </tr>
           </thead>
           <tbody>
             {% for movimiento in movimientos %}
             <tr>
-              <td>{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
-              <td>
+              <!-- Fecha -->
+              <td class="col-fecha">
+                <div style="font-weight: bold; color: #333;">
+                  {{ movimiento.fecha|date:"d/m/Y" }}
+                </div>
+                <div style="font-size: 0.8rem; color: #666;">
+                  {{ movimiento.fecha|date:"H:i" }}
+                </div>
+              </td>
+
+              <!-- Tipo de Movimiento -->
+              <td class="col-tipo">
                 {% if 'ENTRADA' in movimiento.tipo_movimiento %}
-                  <span class="badge badge-success movement-entry">{{ movimiento.get_tipo_movimiento_display }}</span>
+                  <span class="movement-badge badge-entrada">
+                    {% if 'INICIAL' in movimiento.tipo_movimiento %}Entrada Inicial
+                    {% elif 'MANUAL' in movimiento.tipo_movimiento %}Ajuste Manual
+                    {% else %}Entrada{% endif %}
+                  </span>
+                {% elif 'PERDIDA' in movimiento.tipo_movimiento %}
+                  <span class="movement-badge badge-perdida">Pérdida Venc.</span>
                 {% else %}
-                  <span class="badge badge-danger movement-exit">{{ movimiento.get_tipo_movimiento_display }}</span>
+                  <span class="movement-badge badge-salida">
+                    {% if 'VENTA' in movimiento.tipo_movimiento %}Venta
+                    {% else %}Salida{% endif %}
+                  </span>
                 {% endif %}
               </td>
-              <td>
+
+              <!-- Cantidad -->
+              <td class="col-cantidad">
                 {% if 'ENTRADA' in movimiento.tipo_movimiento %}
-                  <span class="movement-entry">+{{ movimiento.cantidad }}</span>
+                  <span class="quantity-badge quantity-positive">+{{ movimiento.cantidad }}</span>
                 {% else %}
-                  <span class="movement-exit">-{{ movimiento.cantidad }}</span>
+                  <span class="quantity-badge quantity-negative">-{{ movimiento.cantidad }}</span>
                 {% endif %}
               </td>
-              <td class="precio-unitario" data-precio="{{ movimiento.precio_unitario|default:movimiento.costo_unitario }}">{{ movimiento.precio_unitario|default:movimiento.costo_unitario|floatformat:0|intcomma }}</td>
-              <td class="precio-venta" data-precio="{{ movimiento.precio_unitario|default:movimiento.costo_unitario }}"><span class="profit-value">-</span></td>
-              <td class="ganancia-unitaria" data-precio="{{ movimiento.precio_unitario|default:movimiento.costo_unitario }}"><span class="profit-value">-</span></td>
-              <td>{{ movimiento.stock_anterior }}</td>
-              <td><strong>{{ movimiento.stock_nuevo }}</strong></td>
-              <td>
+
+              <!-- Precio Unitario -->
+              <td class="col-precio">
+                {% if movimiento.precio_unitario or movimiento.costo_unitario %}
+                  <div class="price-display">
+                    ${{ movimiento.precio_unitario|default:movimiento.costo_unitario|floatformat:0|intcomma }}
+                  </div>
+                {% else %}
+                  <span style="color: #ccc;">-</span>
+                {% endif %}
+              </td>
+
+              <!-- Stock Anterior -->
+              <td class="col-stock">
+                <span class="stock-display">{{ movimiento.stock_anterior }}</span>
+              </td>
+
+              <!-- Stock Nuevo -->
+              <td class="col-stock">
+                <span class="stock-display" style="background: #e8f5e9; color: #2e7d32;">
+                  {{ movimiento.stock_nuevo }}
+                </span>
+              </td>
+
+              <!-- Información del Lote -->
+              <td class="col-lote">
                 {% if movimiento.lote %}
-                  <strong style="color: #c2185b;">{{ movimiento.lote }}</strong>
-                  {% if movimiento.lote_origen and movimiento.lote_origen.proveedor %}
-                    <br><small style="color: #666;">Proveedor: {{ movimiento.lote_origen.proveedor }}</small>
-                  {% endif %}
+                  <div class="lote-info">
+                    <span class="lote-code">{{ movimiento.lote }}</span>
+                    {% if movimiento.lote_origen and movimiento.lote_origen.proveedor %}
+                      <span class="lote-provider">{{ movimiento.lote_origen.proveedor }}</span>
+                    {% endif %}
+                  </div>
                 {% else %}
-                  <span style="color: #ccc;">-</span>
+                  <span style="color: #ccc;">Sin lote</span>
                 {% endif %}
               </td>
-              <td>
+
+              <!-- Fecha de Vencimiento -->
+              <td class="col-vencimiento">
                 {% if movimiento.fecha_vencimiento %}
-                  <strong>{{ movimiento.fecha_vencimiento|date:"d/m/Y" }}</strong>
+                  <div class="vencimiento-info">
+                    <span class="vencimiento-date">{{ movimiento.fecha_vencimiento|date:"d/m/Y" }}</span>
+                    {% now "Y-m-d" as today %}
+                    {% if movimiento.fecha_vencimiento|date:"Y-m-d" < today %}
+                      <span class="vencimiento-status status-vencido">VENCIDO</span>
+                    {% elif movimiento.fecha_vencimiento|timeuntil %}
+                      <span class="vencimiento-status status-proximo tiempo-restante" data-tiempo="{{ movimiento.fecha_vencimiento|timeuntil }}">
+                        {{ movimiento.fecha_vencimiento|timeuntil|truncatewords:2 }}
+                      </span>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <span style="color: #ccc;">Sin fecha</span>
+                {% endif %}
+              </td>
+
+              <!-- Total con IVA -->
+              <td class="col-iva">
+                {% if movimiento.total_con_iva %}
+                  <div class="price-display" style="color: #2e7d32;">
+                    ${{ movimiento.total_con_iva|floatformat:0|intcomma }}
+                  </div>
                 {% else %}
                   <span style="color: #ccc;">-</span>
                 {% endif %}
               </td>
-              <td class="total-iva" data-precio="{{ movimiento.precio_unitario|default:movimiento.costo_unitario }}" data-cantidad="{{ movimiento.cantidad }}">{% if movimiento.total_con_iva %}{{ movimiento.total_con_iva|floatformat:0|intcomma }}{% else %}-{% endif %}</td>
-              <td class="iva-valor" data-precio="{{ movimiento.precio_unitario|default:movimiento.costo_unitario }}" data-cantidad="{{ movimiento.cantidad }}">{% if movimiento.iva %}{{ movimiento.iva|floatformat:0|intcomma }}{% else %}-{% endif %}</td>
-              <td>
-                {% if movimiento.id_pedido %}
-                  <a href="{% url 'detalle_pedido' movimiento.id_pedido.idPedido %}" class="btn btn-secondary btn-small">Pedido #{{ movimiento.id_pedido.idPedido }}</a>
+
+              <!-- IVA -->
+              <td class="col-iva">
+                {% if movimiento.iva %}
+                  <div class="price-display" style="color: #ff9800;">
+                    ${{ movimiento.iva|floatformat:0|intcomma }}
+                  </div>
                 {% else %}
-                  {{ movimiento.descripcion|truncatewords:5 }}
+                  <span style="color: #ccc;">-</span>
                 {% endif %}
+              </td>
+
+              <!-- Descripción -->
+              <td class="col-descripcion">
+                <div class="descripcion-content">
+                  {% if movimiento.id_pedido %}
+                    <a href="{% url 'detalle_pedido' movimiento.id_pedido.idPedido %}" class="pedido-link">
+                      Pedido #{{ movimiento.id_pedido.idPedido }}
+                    </a>
+                    {% if movimiento.descripcion %}
+                      <div class="descripcion-text">{{ movimiento.descripcion }}</div>
+                    {% endif %}
+                  {% else %}
+                    <div class="descripcion-text">
+                      {{ movimiento.descripcion|default:"Movimiento de inventario" }}
+                    </div>
+                  {% endif %}
+                </div>
               </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="13">
-                <div class="empty-state">
-                  <div class="empty-state-icon">Caja</div>
-                  <p>No hay movimientos registrados</p>
-                </div>
+              <td colspan="11" style="text-align: center; padding: 3rem; color: #999;">
+                <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">📦</div>
+                <div style="font-size: 1.2rem; margin-bottom: 0.5rem;">No hay movimientos registrados</div>
+                <div style="font-size: 0.9rem;">Los movimientos de inventario aparecerán aquí</div>
               </td>
             </tr>
             {% endfor %}
@@ -936,6 +1334,121 @@
           element.textContent = totalConIva.toLocaleString('es-CO');
         }
       });
+
+      // Función para traducir textos de tiempo en inglés a español
+      function traducirTiempos() {
+        const elementosTiempo = document.querySelectorAll('.tiempo-restante');
+        
+        elementosTiempo.forEach(function(elemento) {
+          let texto = elemento.textContent.trim();
+          
+          // Diccionario de traducciones
+          const traducciones = {
+            // Singular
+            'day': 'día',
+            'week': 'semana', 
+            'month': 'mes',
+            'year': 'año',
+            'hour': 'hora',
+            'minute': 'minuto',
+            
+            // Plural
+            'days': 'días',
+            'weeks': 'semanas',
+            'months': 'meses', 
+            'years': 'años',
+            'hours': 'horas',
+            'minutes': 'minutos',
+            
+            // Números en inglés (por si aparecen)
+            'one': '1',
+            'two': '2',
+            'three': '3',
+            'four': '4',
+            'five': '5',
+            'six': '6',
+            'seven': '7',
+            'eight': '8',
+            'nine': '9',
+            'ten': '10'
+          };
+          
+          // Aplicar traducciones
+          for (const [ingles, espanol] of Object.entries(traducciones)) {
+            const regex = new RegExp('\\b' + ingles + '\\b', 'gi');
+            texto = texto.replace(regex, espanol);
+          }
+          
+          // Limpiar espacios extra
+          texto = texto.replace(/\s+/g, ' ').trim();
+          
+          // Actualizar el elemento si cambió
+          if (texto !== elemento.textContent.trim()) {
+            elemento.textContent = texto;
+          }
+          
+          // Determinar el color según el tiempo restante
+          if (texto.includes('día') || texto.includes('días')) {
+            const numDias = parseInt(texto.match(/\d+/));
+            if (numDias <= 7) {
+              elemento.className = 'vencimiento-status status-vencido';
+            } else if (numDias <= 30) {
+              elemento.className = 'vencimiento-status status-proximo';
+            } else {
+              elemento.className = 'vencimiento-status status-ok';
+            }
+          } else if (texto.includes('semana') || texto.includes('semanas')) {
+            elemento.className = 'vencimiento-status status-proximo';
+          } else if (texto.includes('mes') || texto.includes('meses') || texto.includes('año') || texto.includes('años')) {
+            elemento.className = 'vencimiento-status status-ok';
+          }
+        });
+      }
+      
+      // Función para limpiar descripciones no deseadas
+      function limpiarDescripciones() {
+        const elementosDescripcion = document.querySelectorAll('.descripcion-text');
+        
+        elementosDescripcion.forEach(function(elemento) {
+          let texto = elemento.textContent.trim();
+          
+          // Limpiar textos no deseados
+          texto = texto.replace(/\s*-\s*Sin lotes disponibles/gi, '');
+          texto = texto.replace(/\s*-\s*sin lotes disponibles/gi, '');
+          texto = texto.replace(/Sin lotes disponibles\s*-?\s*/gi, '');
+          texto = texto.replace(/sin lotes disponibles\s*-?\s*/gi, '');
+          
+          // Limpiar espacios extra y guiones sobrantes
+          texto = texto.replace(/\s*-\s*$/, ''); // Quitar guión al final
+          texto = texto.replace(/^\s*-\s*/, ''); // Quitar guión al inicio
+          texto = texto.replace(/\s+/g, ' ').trim(); // Limpiar espacios extra
+          
+          // Actualizar el elemento si cambió
+          if (texto !== elemento.textContent.trim()) {
+            elemento.textContent = texto;
+          }
+        });
+      }
+      
+      // Ejecutar las funciones de limpieza después de que se cargue la página
+      traducirTiempos();
+      limpiarDescripciones();
+      
+      // También ejecutar cada vez que se actualice el contenido (por si hay actualizaciones dinámicas)
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'childList') {
+            traducirTiempos();
+            limpiarDescripciones();
+          }
+        });
+      });
+      
+      // Observar cambios en la tabla
+      const tabla = document.querySelector('.movements-table');
+      if (tabla) {
+        observer.observe(tabla, { childList: true, subtree: true });
+      }
     });
   </script>
 </body>

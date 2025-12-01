@@ -1293,7 +1293,111 @@
     </div>
   </div>
 
-  <script src="{% static 'js/admin_dashboard.js' %}"></script>
+  <script>
+    /* stylelint-disable */
+    /* eslint-disable */
+    // Datos para los gráficos - Generados por Django
+    const productosData = {
+      labels: [
+        {% for producto in productos_mas_vendidos %}'{{ producto.nombreProducto|truncatechars:15 }}'{% if not forloop.last %},{% endif %}{% endfor %}
+      ],
+      datasets: [{
+        label: 'Unidades Vendidas',
+        data: [
+          {% for producto in productos_mas_vendidos %}{{ producto.total_vendido }}{% if not forloop.last %},{% endif %}{% endfor %}
+        ],
+        backgroundColor: ['#f48fb1', '#ec407a', '#e91e63', '#c2185b', '#ad1457'],
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    };
+
+    const clientesData = {
+      labels: ['Semana Pasada', 'Esta Semana'],
+      datasets: [{
+        label: 'Nuevos Clientes',
+        data: [{{ clientes_semana_pasada }}, {{ clientes_esta_semana }}],
+        backgroundColor: ['#f8bbd0', '#f48fb1'],
+        borderColor: '#c2185b',
+        borderWidth: 2
+      }]
+    };
+
+    const categoriasData = {
+      labels: [
+        {% for categoria in ventas_por_categoria %}'{{ categoria.categoria }}'{% if not forloop.last %},{% endif %}{% endfor %}
+      ],
+      datasets: [{
+        label: 'Ventas ($)',
+        data: [
+          {% for categoria in ventas_por_categoria %}{{ categoria.total }}{% if not forloop.last %},{% endif %}{% endfor %}
+        ],
+        backgroundColor: ['#fce4ec', '#f8bbd0', '#f48fb1', '#ec407a', '#e91e63'],
+        borderColor: '#c2185b',
+        borderWidth: 1
+      }]
+    };
+
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            padding: 20,
+            usePointStyle: true
+          }
+        }
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const productosCtx = document.getElementById('productosChart');
+      if (productosCtx) {
+        new Chart(productosCtx.getContext('2d'), {
+          type: 'doughnut',
+          data: productosData,
+          options: chartOptions
+        });
+      }
+
+      const clientesCtx = document.getElementById('clientesChart');
+      if (clientesCtx) {
+        new Chart(clientesCtx.getContext('2d'), {
+          type: 'bar',
+          data: clientesData,
+          options: Object.assign({}, chartOptions, {
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1
+                }
+              }
+            }
+          })
+        });
+      }
+
+      const categoriasCtx = document.getElementById('categoriasChart');
+      if (categoriasCtx) {
+        new Chart(categoriasCtx.getContext('2d'), {
+          type: 'line',
+          data: categoriasData,
+          options: Object.assign({}, chartOptions, {
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          })
+        });
+      }
+    });
+    /* stylelint-enable */
+    /* eslint-enable */
+  </script>
 
 </body>
 </html>

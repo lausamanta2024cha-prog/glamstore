@@ -1014,7 +1014,7 @@
       </a>
       <a href="{% url 'dashboard_admin' %}" class="stat-card" style="border-top: 4px solid #10b981;">
         <div class="stat-number" style="color: #10b981;">${{ ganancias_totales|floatformat:0|intcomma }}</div>
-        <div class="stat-label">Ganancias ({{ margen_ganancia_porcentaje }}%)</div>
+        <div class="stat-label">Ganancias Totales</div>
       </a>
       <a href="{% url 'notificaciones' %}" class="stat-card" style="{% if total_notificaciones_no_leidas > 0 %}border-top: 4px solid #ef4444;{% endif %}">
         <div class="stat-number" style="{% if total_notificaciones_no_leidas > 0 %}color: #ef4444;{% endif %}">{{ total_notificaciones_no_leidas }}</div>

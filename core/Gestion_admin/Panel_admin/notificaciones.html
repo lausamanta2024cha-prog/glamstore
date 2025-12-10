@@ -1,4 +1,5 @@
 {% load static %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -192,7 +193,7 @@
             </div>
             <div class="info-item">
               <div class="info-label">Total Pedido</div>
-              <div class="info-value">${{ notificacion.idPedido.total }}</div>
+              <div class="info-value">${{ notificacion.idPedido.total|floatformat:0|intcomma }}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Dirección</div>

@@ -19,19 +19,20 @@
         background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
         display: flex;
         min-height: 100vh;
+        color: #1a1a1a;
       }
 
       /* Sidebar */
       .sidebar {
-        background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%);
+        background: linear-gradient(180deg, #1a1f3a 0%, #0f1419 100%);
         padding: 2rem;
         width: 240px;
         height: 100vh;
         position: fixed;
         display: flex;
         flex-direction: column;
-        border-right: 2px solid #d8b4fe;
-        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        border-right: 1px solid #2a3f5f;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
         z-index: 1000;
         overflow-y: auto;
       }
@@ -42,36 +43,41 @@
       }
 
       .sidebar-header h2 {
-        color: #6b21a8;
+        color: #ffffff;
         font-size: 1.8rem;
         margin-bottom: 0.5rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
       }
 
       .sidebar-header p {
-        color: #9333ea;
+        color: #a0aec0;
         font-size: 0.9rem;
+        font-weight: 400;
+        font-style: italic;
       }
 
       .sidebar-user {
-        background-color: #fff;
+        background-color: rgba(255, 255, 255, 0.08);
         padding: 1rem;
         border-radius: 10px;
         margin-bottom: 1.5rem;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         text-align: center;
-        border: 2px solid #d8b4fe;
+        border: 1px solid rgba(255, 255, 255, 0.1);
       }
 
       .sidebar-user p {
         margin: 0.3rem 0;
-        color: #7c3aed;
-        font-weight: bold;
+        color: #ffffff;
+        font-weight: 600;
         font-size: 1rem;
       }
 
       .sidebar-user .rol {
         font-size: 0.85rem;
-        color: #9333ea;
+        color: #a0aec0;
         font-weight: normal;
       }
 
@@ -82,45 +88,64 @@
       .sidebar a {
         display: block;
         margin: 0.5rem 0;
-        color: #1a1a1a;
+        color: #cbd5e0;
         text-decoration: none;
-        font-weight: bold;
-        padding: 0.8rem 1rem;
-        border-radius: 25px;
+        font-weight: 500;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
         transition: all 0.3s ease;
-      position: relative;
+        position: relative;
+        overflow: hidden;
+        border-left: 3px solid transparent;
+      }
+
+      .sidebar a::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 0;
+        background: rgba(168, 85, 247, 0.1);
+        transition: width 0.3s ease;
+        z-index: -1;
       }
 
       .sidebar a:hover,
       .sidebar a.active {
-        background-color: #f8bbd0;
-        color: #fff;
+        color: #ffffff;
+        transform: translateX(3px);
+        border-left-color: #a855f7;
+        background: rgba(168, 85, 247, 0.15);
       }
 
-          .notification-badge {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: #ef4444;
-      color: white;
-      border-radius: 50%;
-      min-width: 22px;
-      height: 22px;
-      padding: 0;
-      font-size: 0.7rem;
-      font-weight: bold;
-      text-align: center;
-      flex-shrink: 0;
-      margin-left: 8px;
-      vertical-align: middle;
-    }
+      .sidebar a:hover::before,
+      .sidebar a.active::before {
+        width: 100%;
+      }
 
+      .notification-badge {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #ef4444;
+        color: white;
+        border-radius: 50%;
+        min-width: 22px;
+        height: 22px;
+        padding: 0;
+        font-size: 0.75rem;
+        font-weight: bold;
+        margin-left: 6px;
+        vertical-align: middle;
+        flex-shrink: 0;
+      }
 
-    .sidebar-footer {
+      .sidebar-footer {
         margin-top: auto;
         padding-top: 1rem;
-        border-top: 2px solid #f8bbd0;
+        border-top: 1px solid rgba(168, 85, 247, 0.2);
       }
 
       /* Main Content */
@@ -137,7 +162,7 @@
 
       .page-header h1 {
         font-size: 2.2rem;
-        color: #7c3aed;
+        color: #6b21a8;
         border-bottom: 3px solid #a855f7;
         padding-bottom: 0.5rem;
         margin-bottom: 1rem;
@@ -150,6 +175,12 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
         margin-bottom: 2rem;
         overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 20px rgba(244, 143, 177, 0.2);
       }
 
       /* Forms */
@@ -160,16 +191,17 @@
       }
 
       .form-help {
-        background: #e3f2fd;
-        border-left: 4px solid #2196f3;
+        background: #faf5ff;
+        border-left: 4px solid #a855f7;
         padding: 1rem;
         margin-bottom: 2rem;
         border-radius: 5px;
+        color: #6b21a8;
       }
 
       .form-help p {
         margin: 0;
-        color: #1565c0;
+        font-weight: 500;
       }
 
       .form-group {
@@ -179,19 +211,19 @@
       .form-group label {
         display: block;
         margin-bottom: 0.5rem;
-        color: #7c3aed;
-        font-weight: bold;
+        color: #6b21a8;
+        font-weight: 600;
       }
 
       .form-group textarea {
         width: 100%;
         padding: 0.8rem 1rem;
         border: 2px solid #d8b4fe;
-        border-radius: 15px;
+        border-radius: 10px;
         font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
         font-size: 1rem;
         background: white;
-        color: #666;
+        color: #333;
         transition: all 0.3s ease;
         resize: vertical;
         min-height: 150px;
@@ -199,8 +231,8 @@
 
       .form-group textarea:focus {
         outline: none;
-        border-color: #f48fb1;
-        box-shadow: 0 0 0 3px rgba(244, 143, 177, 0.1);
+        border-color: #a855f7;
+        box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
       }
 
       .form-group small {
@@ -241,55 +273,78 @@
       .btn-primary {
         background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
         color: white;
-        box-shadow: 0 4px 12px rgba(244, 143, 177, 0.3);
+        box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
       }
 
       .btn-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(244, 143, 177, 0.4);
+        box-shadow: 0 6px 16px rgba(168, 85, 247, 0.4);
+        background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
       }
 
       .btn-secondary {
         background: white;
-        color: #7c3aed;
-        border: 2px solid #f48fb1;
+        color: #6b21a8;
+        border: 2px solid #a855f7;
       }
 
       .btn-secondary:hover {
-        background: #fce4ec;
+        background: #faf5ff;
       }
 
       /* Notification Info Box */
       .notification-info {
-        background: #fce4ec;
+        background: #faf5ff;
         padding: 1.5rem;
         border-radius: 10px;
         margin-bottom: 2rem;
-        border: 2px solid #d8b4fe;
+        border-left: 4px solid #a855f7;
       }
+
       .notification-info h3 {
-        color: #7c3aed;
+        color: #6b21a8;
         margin-bottom: 1rem;
-        border-bottom: 2px solid #f8bbd0;
+        border-bottom: 2px solid #d8b4fe;
         padding-bottom: 0.5rem;
+        font-weight: 600;
       }
+
       .info-item {
         margin-bottom: 1rem;
       }
+
       .info-item strong {
         color: #6b21a8;
         display: block;
         font-size: 0.9rem;
+        font-weight: 600;
       }
+
       .info-item span, .info-item p {
         color: #666;
         line-height: 1.6;
+        margin-top: 0.3rem;
       }
+
       .info-item img {
         max-width: 300px;
         border-radius: 10px;
         margin-top: 0.5rem;
-        border: 3px solid #f8bbd0;
+        border: 3px solid #d8b4fe;
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 100%;
+          height: auto;
+          position: relative;
+        }
+
+        .main-content {
+          margin-left: 0;
+          padding: 2rem;
+          width: 100%;
+        }
       }
     </style>
 </head>

@@ -42,6 +42,8 @@ urlpatterns = [
     path("productos/eliminar/<int:id>/", views.producto_eliminar_view, name="producto_eliminar"),
     path("productos/movimientos/<int:id>/", views.movimientos_producto_view, name="movimientos_producto"),
     path("productos/ajustar_stock/<int:id>/", views.ajustar_stock_view, name="ajustar_stock"),
+    path("productos/margen_global/obtener/", views.obtener_margen_global_view, name="obtener_margen_global"),
+    path("productos/margen_global/actualizar/", views.actualizar_margen_global_view, name="actualizar_margen_global"),
 
 
     # Panel Pedidos

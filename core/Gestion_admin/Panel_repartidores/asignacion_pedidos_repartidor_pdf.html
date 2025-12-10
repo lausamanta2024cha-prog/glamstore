@@ -272,6 +272,9 @@
                 <p class="cliente-nombre">{{ item.pedido.idCliente.nombre }}</p>
                 <p class="cliente-telefono">Teléfono: {{ item.pedido.idCliente.telefono }}</p>
                 <p class="cliente-direccion">Dirección: {{ item.pedido.idCliente.direccion }}</p>
+                <p style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #ddd; font-weight: bold; color: {% if item.dias_restantes <= 0 %}#d32f2f{% elif item.dias_restantes == 1 %}#f57c00{% else %}#388e3c{% endif %};">
+                    {{ item.alerta }} - Vencimiento: {{ item.fecha_vencimiento }}
+                </p>
             </div>
             
             <div class="productos-list">

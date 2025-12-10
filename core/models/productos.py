@@ -38,15 +38,19 @@ class Producto(models.Model):
         return self.nombreProducto
     
     def calcular_precio_venta(self):
-        """Calcula el precio de venta: Costo × 1.19 (IVA) × 1.06 (ganancia 6%)
+        """Calcula el precio de venta: Costo × 1.19 (IVA) × (1 + margen_ganancia_global/100)
         Redondea al múltiplo de 50 más cercano para precios limpios"""
         from decimal import Decimal
-        import math
+        from core.models.configuracion import ConfiguracionGlobal
+        
         if self.precio:
             # Convertir precio a Decimal si es string
             precio_decimal = Decimal(str(self.precio)) if not isinstance(self.precio, Decimal) else self.precio
-            # Precio de Venta = Costo × 1.19 × 1.06
-            precio_calculado = float(precio_decimal * Decimal('1.19') * Decimal('1.06'))
+            # Obtener el margen global
+            margen = Decimal(str(ConfiguracionGlobal.get_margen_ganancia()))
+            # Precio de Venta = Costo × 1.19 (IVA) × (1 + margen/100)
+            factor_margen = Decimal('1') + (margen / Decimal('100'))
+            precio_calculado = float(precio_decimal * Decimal('1.19') * factor_margen)
             # Redondear al múltiplo de 50 más cercano
             precio_redondeado = round(precio_calculado / 50) * 50
             return int(precio_redondeado)

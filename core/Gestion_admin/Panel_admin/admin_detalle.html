@@ -468,7 +468,7 @@
     </div>
 
     <div class="action-bar">
-      <a href="{% url 'lista_admin' %}" class="btn btn-secondary">← Volver a Administradores</a>
+      <a href="{% url 'lista_admin' %}" class="btn btn-secondary">Volver a Administradores</a>
       <form method="POST" action="{% url 'admin_eliminar' admin.idUsuario %}" style="display: inline;" onsubmit="return confirm('¿Estás seguro de eliminar este administrador? Esta acción no se puede deshacer.');">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">Eliminar Administrador</button>
@@ -489,7 +489,11 @@
         <div class="info-group">
           <div class="info-label">Estado</div>
           <div class="info-value">
-            <span class="status-badge status-active">Activo</span>
+            {% if estado_admin == 'Activo' %}
+              <span class="status-badge status-active">Activo</span>
+            {% else %}
+              <span class="status-badge status-inactive">Inactivo</span>
+            {% endif %}
           </div>
         </div>
       </div>
@@ -548,7 +552,7 @@
           
           <!-- Paso 1: Verificación de Seguridad -->
           <div class="info-group" style="margin-bottom: 2rem; background: #fff3e0; border-left-color: #ff9800;">
-            <div class="info-label" style="color: #e65100;">🔒 Paso 1: Verificación de Seguridad</div>
+            <div class="info-label" style="color: #e65100;">Paso 1: Verificación de Seguridad</div>
             <p style="font-size: 0.9rem; color: #ef6c00; margin-bottom: 1rem;">Ingresa el código de seguridad para habilitar la edición de tus datos.</p>
             <div style="display: flex; gap: 0.5rem;">
               <input type="password" id="codigoSeguridad" placeholder="Código de seguridad" style="flex: 1; padding: 0.8rem; border: 2px solid #ffb74d; border-radius: 8px; font-size: 1rem; color: #333; font-weight: 500;">
@@ -589,8 +593,8 @@
           <input type="hidden" name="codigo_seguridad" id="codigoSeguroHidden" value="">
           
           <div style="display: flex; gap: 1rem;">
-            <button type="submit" id="btnGuardar" class="btn btn-primary" style="flex: 1; opacity: 0.5; cursor: not-allowed;" disabled>💾 Guardar Cambios</button>
-            <a href="{% url 'lista_admin' %}" class="btn btn-secondary" style="flex: 1; text-align: center;">← Cancelar</a>
+            <button type="submit" id="btnGuardar" class="btn btn-primary" style="flex: 1; opacity: 0.5; cursor: not-allowed;" disabled>Guardar Cambios</button>
+            <a href="{% url 'lista_admin' %}" class="btn btn-secondary" style="flex: 1; text-align: center;">Cancelar</a>
           </div>
         </form>
       </div>

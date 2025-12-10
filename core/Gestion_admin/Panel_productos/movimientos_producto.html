@@ -864,8 +864,27 @@
             <div class="stat-label">Precio Costo</div>
           </div>
           <div class="stat-card">
-            <div class="stat-number" id="precio-venta">0</div>
-            <div class="stat-label">Precio Venta (Costo + 19% IVA + 6% Ganancia)</div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+              <div>
+                <div class="stat-number" id="precio-venta">0</div>
+                <div class="stat-label">Precio Venta (Margen Global: <span id="margen-display">10</span>%)</div>
+              </div>
+              <button onclick="toggleMargenEditor()" class="btn btn-small btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;">Editar Margen</button>
+            </div>
+            <div id="margen-editor" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e9d5ff;">
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <input type="number" id="margen-input" value="10" min="0" max="100" step="0.1" style="width: 60px; padding: 0.4rem; border: 1px solid #d8b4fe; border-radius: 5px; font-size: 0.9rem;">
+                <span style="font-size: 0.85rem; color: #666;">%</span>
+                <button onclick="guardarMargen()" class="btn btn-small btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">Guardar</button>
+                <button onclick="cancelarMargen()" class="btn btn-small btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.7rem;">Cancelar</button>
+              </div>
+              <div style="font-size: 0.75rem; color: #999; margin-top: 0.5rem;">
+                Este margen se aplica a TODOS los productos
+              </div>
+              <div style="font-size: 0.75rem; color: #999; margin-top: 0.3rem;">
+                Fórmula: Costo × 1.19 (IVA) × (1 + Margen%)
+              </div>
+            </div>
           </div>
         </div>
         <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 1rem;">
@@ -1294,11 +1313,31 @@
       tipoAjusteSelect.dispatchEvent(new Event('change'));
 
       const precioCosto = parseInt({{ producto.precio|floatformat:0 }}) || 0;
-      // Precio de Venta = Costo × 1.19 (IVA) × 1.06 (ganancia 6%)
-      // Redondeado al múltiplo de 50 más cercano
-      const precioCalculado = precioCosto * 1.19 * 1.06;
-      const precioVenta = Math.round(precioCalculado / 50) * 50;
-      document.getElementById('precio-venta').textContent = precioVenta.toLocaleString('es-CO');
+      let margenGanancia = 10; // Valor por defecto
+      
+      // Obtener el margen global del servidor
+      fetch('{% url "obtener_margen_global" %}')
+        .then(response => response.json())
+        .then(data => {
+          if (data.margen_ganancia !== undefined) {
+            margenGanancia = parseFloat(data.margen_ganancia);
+            document.getElementById('margen-input').value = margenGanancia;
+            document.getElementById('margen-display').textContent = margenGanancia;
+            calcularPrecioVenta();
+          }
+        })
+        .catch(error => console.error('Error al obtener margen global:', error));
+      
+      function calcularPrecioVenta() {
+        // Precio de Venta = Costo × 1.19 (IVA) × (1 + margen/100)
+        // Redondeado al múltiplo de 50 más cercano
+        const precioCalculado = precioCosto * 1.19 * (1 + margenGanancia / 100);
+        const precioVenta = Math.round(precioCalculado / 50) * 50;
+        document.getElementById('precio-venta').textContent = precioVenta.toLocaleString('es-CO');
+        return precioVenta;
+      }
+      
+      calcularPrecioVenta();
 
       // Calcular precios de venta y ganancias para cada movimiento
       document.querySelectorAll('.precio-venta').forEach(function(element) {
@@ -1452,6 +1491,65 @@
       // Ejecutar las funciones de limpieza después de que se cargue la página
       traducirTiempos();
       limpiarDescripciones();
+      
+      // Funciones para editar el margen de ganancia
+      window.toggleMargenEditor = function() {
+        const editor = document.getElementById('margen-editor');
+        editor.style.display = editor.style.display === 'none' ? 'block' : 'none';
+      };
+      
+      window.guardarMargen = function() {
+        const margenInput = document.getElementById('margen-input');
+        const nuevoMargen = parseFloat(margenInput.value);
+        
+        if (isNaN(nuevoMargen) || nuevoMargen < 0 || nuevoMargen > 100) {
+          alert('Por favor ingresa un valor entre 0 y 100');
+          return;
+        }
+        
+        // Obtener el token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        if (!csrfToken) {
+          alert('Error: Token CSRF no encontrado');
+          return;
+        }
+        
+        // Enviar al servidor
+        const formData = new FormData();
+        formData.append('margen_ganancia', nuevoMargen);
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        
+        fetch('{% url "actualizar_margen_global" %}', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Error en la respuesta del servidor: ' + response.status);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            margenGanancia = nuevoMargen;
+            document.getElementById('margen-display').textContent = nuevoMargen;
+            calcularPrecioVenta();
+            document.getElementById('margen-editor').style.display = 'none';
+            alert('Margen global actualizado correctamente. Se actualizarán todos los precios de venta.');
+          } else {
+            alert('Error: ' + (data.error || 'Error desconocido'));
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error al actualizar el margen: ' + error.message);
+        });
+      };
+      
+      window.cancelarMargen = function() {
+        document.getElementById('margen-input').value = margenGanancia;
+        document.getElementById('margen-editor').style.display = 'none';
+      };
       
       // También ejecutar cada vez que se actualice el contenido (por si hay actualizaciones dinámicas)
       const observer = new MutationObserver(function(mutations) {

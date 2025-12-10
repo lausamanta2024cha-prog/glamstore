@@ -1,7 +1,7 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.db.models import Sum, F, Count
 from decimal import Decimal
 from core.models.distribuidores import Distribuidor
@@ -71,17 +71,44 @@ def dashboard_admin_view(request):
     # Usar el mayor de los dos cálculos (más preciso)
     ventas_totales = max(ventas_desde_pedidos, ventas_desde_detalles)
     
-    # === CÁLCULO DE GANANCIAS (6% DE MARGEN) ===
-    # Calcular ganancias totales basadas en el 6% de margen sobre las ventas (pesos colombianos - sin decimales)
-    margen_ganancia_porcentaje = 6  # 6%
-    ganancias_totales = int((float(ventas_totales) * margen_ganancia_porcentaje) / 100)
+    # === CÁLCULO DE GANANCIAS BASADO EN MARGEN HISTÓRICO ===
+    # Calcular ganancias reales basadas en el margen de ganancia que se cobró en cada pedido
+    # Fórmula: Para cada detalle de pedido, calcular: (precio_venta - costo) donde:
+    # - precio_venta = costo_unitario * 1.19 * (1 + margen_histórico/100)
+    # - margen_histórico es el que se guardó en el momento del pedido
     
-    # === CÁLCULO DE GANANCIAS (6% DE MARGEN) ===
-    # Calcular ganancia total con el 6% de margen sobre las ventas
-    ganancia_total = ventas_totales * Decimal('0.06')
+    from core.models.configuracion import ConfiguracionGlobal
     
-    # Calcular también el costo base (94% de las ventas)
-    costo_base = ventas_totales * Decimal('0.94')
+    margen_global = Decimal(str(ConfiguracionGlobal.get_margen_ganancia()))
+    ganancias_totales = Decimal('0')
+    costo_total = Decimal('0')
+    
+    # Iterar sobre todos los detalles de pedidos para calcular ganancias reales
+    detalles = DetallePedido.objects.select_related('idProducto').all()
+    
+    for detalle in detalles:
+        if detalle.idProducto:
+            # Obtener el costo unitario del producto
+            costo_unitario = Decimal(str(detalle.idProducto.precio)) if detalle.idProducto.precio else Decimal('0')
+            cantidad = Decimal(str(detalle.cantidad))
+            
+            # Usar el margen histórico guardado en el detalle del pedido
+            margen_historico = Decimal(str(detalle.margen_ganancia)) if detalle.margen_ganancia else margen_global
+            
+            # Calcular precio de venta: costo * 1.19 (IVA) * (1 + margen_histórico/100)
+            factor_margen = Decimal('1') + (margen_historico / Decimal('100'))
+            precio_venta_unitario = costo_unitario * Decimal('1.19') * factor_margen
+            
+            # Ganancia por unidad = precio_venta - costo
+            ganancia_unitaria = precio_venta_unitario - costo_unitario
+            
+            # Acumular ganancias y costos
+            ganancias_totales += ganancia_unitaria * cantidad
+            costo_total += costo_unitario * cantidad
+    
+    # Convertir a entero (pesos colombianos sin decimales)
+    ganancias_totales = int(ganancias_totales)
+    costo_total = int(costo_total)
     
     # === PRODUCTOS MÁS VENDIDOS ===
     productos_mas_vendidos = DetallePedido.objects.filter(
@@ -298,8 +325,8 @@ def dashboard_admin_view(request):
         'total_clientes': total_clientes,
         'total_pedidos': total_pedidos,
         'ventas_totales': int(ventas_totales) if ventas_totales else 0,
-        'ganancias_totales': int(ganancias_totales) if ganancias_totales else 0,
-        'margen_ganancia_porcentaje': margen_ganancia_porcentaje,
+        'ganancias_totales': ganancias_totales,
+        'margen_ganancia_global': float(margen_global),
         
         # Productos
         'productos_mas_vendidos': productos_vendidos_completos,
@@ -627,6 +654,54 @@ def movimientos_producto_view(request, id):
         'lote_activo': lote_activo,
         'proveedores': proveedores
     })
+
+def obtener_margen_global_view(request):
+    """Obtiene el margen de ganancia global actual"""
+    from core.models.configuracion import ConfiguracionGlobal
+    
+    try:
+        margen = ConfiguracionGlobal.get_margen_ganancia()
+        return JsonResponse({
+            'success': True,
+            'margen_ganancia': margen
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def actualizar_margen_global_view(request):
+    """Actualiza el margen de ganancia global para todos los productos"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Método no permitido'}, status=405)
+    
+    from core.models.configuracion import ConfiguracionGlobal
+    
+    try:
+        margen = request.POST.get('margen_ganancia')
+        if margen is None:
+            return JsonResponse({'error': 'Margen de ganancia no proporcionado'}, status=400)
+        
+        margen = float(margen)
+        if margen < 0 or margen > 100:
+            return JsonResponse({'error': 'El margen debe estar entre 0 y 100'}, status=400)
+        
+        # Obtener o crear la configuración global
+        config, created = ConfiguracionGlobal.objects.get_or_create(pk=1)
+        config.margen_ganancia = margen
+        config.save()
+        
+        # Recalcular precios de venta de todos los productos
+        productos = Producto.objects.all()
+        for producto in productos:
+            producto.save()  # Esto dispara el método save() que recalcula el precio_venta
+        
+        return JsonResponse({
+            'success': True,
+            'margen_ganancia': float(config.margen_ganancia),
+            'productos_actualizados': productos.count()
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 def ajustar_stock_view(request, id):
     if request.method != 'POST':
@@ -1106,8 +1181,19 @@ def pedido_editar_view(request, id):
             
             # Actualizar fecha si se proporcionó
             if fecha_creacion:
-                from datetime import datetime
+                from datetime import datetime, timedelta
                 pedido.fechaCreacion = datetime.fromisoformat(fecha_creacion.replace('T', ' '))
+                
+                # Recalcular fecha de vencimiento basada en la nueva fecha de creación
+                direccion_lower = (pedido.idCliente.direccion or "").lower()
+                if 'soacha' in direccion_lower:
+                    dias_entrega = 3
+                elif 'bogota' in direccion_lower or 'bogotá' in direccion_lower:
+                    dias_entrega = 2
+                else:
+                    dias_entrega = 3
+                
+                pedido.fecha_vencimiento = (pedido.fechaCreacion + timedelta(days=dias_entrega)).date()
             
             # Actualizar estados de forma independiente
             if estado_pago:
@@ -1295,16 +1381,33 @@ def cliente_detalle_view(request, id):
     })
 
 def admin_detalle_view(request, id):
+    from django.utils import timezone
+    from datetime import timedelta
+    
     admin = get_object_or_404(Usuario, idUsuario=id, id_rol=1)  # Solo administradores
     
     # Obtener información adicional del administrador
     fecha_registro = admin.fechaRegistro if hasattr(admin, 'fechaRegistro') else None
     ultimo_acceso = admin.ultimoAcceso if hasattr(admin, 'ultimoAcceso') else None
     
+    # Calcular estado: activo si ingresó en los últimos 3 días, inactivo si lleva más de 3 días sin ingresar
+    estado_admin = 'Activo'
+    if ultimo_acceso:
+        dias_sin_acceso = (timezone.now() - ultimo_acceso).days
+        print(f"[DEBUG] Admin {admin.nombre}: último acceso = {ultimo_acceso}, días sin acceso = {dias_sin_acceso}")
+        if dias_sin_acceso > 3:
+            estado_admin = 'Inactivo'
+    else:
+        # Si no hay registro de último acceso, considerarlo inactivo
+        print(f"[DEBUG] Admin {admin.nombre}: sin registro de último acceso")
+        estado_admin = 'Inactivo'
+    print(f"[DEBUG] Estado final: {estado_admin}")
+    
     return render(request, 'admin_detalle.html', {
         'admin': admin,
         'fecha_registro': fecha_registro,
-        'ultimo_acceso': ultimo_acceso
+        'ultimo_acceso': ultimo_acceso,
+        'estado_admin': estado_admin
     })
 
 def admin_editar_view(request, id):
@@ -1374,7 +1477,17 @@ def admin_editar_view(request, id):
 
 # Panel Repartidores
 def calcular_fecha_entrega(pedido):
-    """Calcula la fecha de entrega según la ciudad del cliente"""
+    """Retorna la fecha de entrega estimada del pedido"""
+    # Si el pedido tiene fecha_vencimiento guardada, usarla
+    if pedido.fecha_vencimiento:
+        from datetime import datetime
+        # Convertir a datetime si es necesario
+        if isinstance(pedido.fecha_vencimiento, datetime):
+            return pedido.fecha_vencimiento
+        else:
+            return datetime.combine(pedido.fecha_vencimiento, datetime.min.time())
+    
+    # Fallback: calcular basado en ubicación (para pedidos antiguos sin fecha guardada)
     from datetime import timedelta
     
     direccion_cliente = pedido.idCliente.direccion or ""
@@ -1393,17 +1506,17 @@ def verificar_y_actualizar_pedidos_entregados():
     """Verifica y actualiza automáticamente los pedidos que deben marcarse como entregados"""
     from django.utils import timezone
     
-    # Obtener pedidos en estado "En Camino"
-    pedidos_en_camino = Pedido.objects.filter(estado_pedido='En Camino').select_related('idCliente')
+    # Obtener pedidos en estado "En Camino" o "Pago Parcial" con repartidor
+    pedidos_en_camino = Pedido.objects.filter(
+        estado_pedido__in=['En Camino', 'Pago Parcial']
+    ).select_related('idCliente')
     
-    ahora = timezone.now()
+    ahora = timezone.now().date()
     pedidos_actualizados = 0
     
     for pedido in pedidos_en_camino:
-        fecha_entrega = calcular_fecha_entrega(pedido)
-        
-        # Si ya pasó la fecha de entrega, marcar como entregado
-        if ahora >= fecha_entrega:
+        # Usar la fecha de vencimiento guardada en el pedido
+        if pedido.fecha_vencimiento and ahora >= pedido.fecha_vencimiento:
             pedido.estado_pedido = 'Entregado'
             pedido.save()
             pedidos_actualizados += 1

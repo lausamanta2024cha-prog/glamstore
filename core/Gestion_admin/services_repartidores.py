@@ -3,7 +3,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils import timezone
 from django.conf import settings
-from datetime import timedelta, time
+from datetime import timedelta, time, date
 from decimal import Decimal
 from core.models.pedidos import Pedido, DetallePedido
 from core.models.repartidores import Repartidor
@@ -33,10 +33,17 @@ def es_dia_habil(fecha):
 def calcular_fecha_vencimiento(fecha_pedido, ciudad):
     """
     Calcula fecha de vencimiento según ciudad
-    - Bogotá: 2 días hábiles
-    - Soacha: 3 días hábiles
+    - Bogotá: 2 días hábiles desde la fecha del pedido
+    - Soacha: 3 días hábiles desde la fecha del pedido
+    
+    Nota: Los días se cuentan desde la fecha del pedido, no desde hoy.
     """
-    dias_vencimiento = 2 if 'bogota' in ciudad.lower() else 3
+    ciudad_lower = ciudad.lower().replace('á', 'a')
+    dias_vencimiento = 2 if 'bogota' in ciudad_lower else 3
+    
+    # Convertir a date si es datetime
+    if hasattr(fecha_pedido, 'date'):
+        fecha_pedido = fecha_pedido.date()
     
     fecha_actual = fecha_pedido
     dias_contados = 0
@@ -47,6 +54,29 @@ def calcular_fecha_vencimiento(fecha_pedido, ciudad):
             dias_contados += 1
     
     return fecha_actual
+
+
+def calcular_dias_habiles_restantes(fecha_pedido, fecha_vencimiento):
+    """
+    Calcula cuántos días hábiles quedan entre hoy y la fecha de vencimiento.
+    Retorna un número negativo si ya pasó la fecha de vencimiento.
+    """
+    hoy = timezone.now().date()
+    
+    # Si ya pasó la fecha de vencimiento
+    if hoy > fecha_vencimiento:
+        return (hoy - fecha_vencimiento).days * -1  # Retorna negativo
+    
+    # Contar días hábiles desde hoy hasta la fecha de vencimiento
+    dias_habiles = 0
+    fecha_actual = hoy
+    
+    while fecha_actual < fecha_vencimiento:
+        fecha_actual += timedelta(days=1)
+        if es_dia_habil(fecha_actual) and fecha_actual <= fecha_vencimiento:
+            dias_habiles += 1
+    
+    return dias_habiles
 
 
 def obtener_pedidos_sin_asignar(fecha=None):
@@ -84,7 +114,7 @@ def calcular_capacidad_repartidor(repartidor, fecha=None):
 def enviar_factura_cliente(pedido):
     """
     Envía la factura al cliente por correo electrónico cuando se asigna un repartidor.
-    Incluye: productos, IVA, detalles de entrega, total a pagar y si debe pagar envío.
+    Incluye: productos, IVA, detalles de entrega, total a pagar, fecha de entrega y si debe pagar envío.
     """
     cliente = pedido.idCliente
     
@@ -107,6 +137,17 @@ def enviar_factura_cliente(pedido):
         
         total_a_pagar = costo_envio if debe_pagar_envio else 0  # Solo paga envío si es pago parcial
         
+        # Calcular fecha de entrega estimada
+        if not pedido.fecha_vencimiento:
+            ciudad = 'Soacha' if 'soacha' in cliente.direccion.lower() else 'Bogotá'
+            fecha_entrega = calcular_fecha_vencimiento(pedido.fechaCreacion.date(), ciudad)
+            pedido.fecha_vencimiento = fecha_entrega
+            pedido.save()
+        else:
+            fecha_entrega = pedido.fecha_vencimiento
+        
+        fecha_entrega_formateada = fecha_entrega.strftime('%d de %B de %Y')
+        
         # Preparar lista de productos
         productos_html = ""
         for detalle in detalles:
@@ -119,7 +160,7 @@ def enviar_factura_cliente(pedido):
             </tr>
             """
         
-        # Información del repartidor
+        # Información del repartidor y fecha de entrega
         repartidor_info = ""
         if pedido.idRepartidor:
             repartidor_info = f"""
@@ -127,6 +168,7 @@ def enviar_factura_cliente(pedido):
                 <h3 style="color: #7c3aed; margin: 0 0 10px 0;">Información de Entrega</h3>
                 <p style="margin: 5px 0;"><strong>Repartidor:</strong> {pedido.idRepartidor.nombreRepartidor}</p>
                 <p style="margin: 5px 0;"><strong>Teléfono:</strong> {pedido.idRepartidor.telefono}</p>
+                <p style="margin: 5px 0;"><strong>Fecha estimada de entrega:</strong> {fecha_entrega_formateada}</p>
                 <p style="margin: 5px 0;"><strong>Estado del pedido:</strong> {pedido.estado_pedido}</p>
             </div>
             """
@@ -372,17 +414,41 @@ def generar_pdf_pedidos_repartidor(repartidor, fecha=None):
         fechaCreacion__date=fecha
     ).select_related('idCliente').prefetch_related('detallepedido_set__idProducto')
     
-    # Calcular horarios de entrega
+    # Calcular horarios de entrega y información de vencimiento
     pedidos_con_horario = []
     hora_inicio = HORARIO_INICIO
     
     for idx, pedido in enumerate(pedidos):
         hora_fin = hora_inicio + (TIEMPO_ENTREGA_MINUTOS // 60)
+        
+        # Calcular fecha de vencimiento si no existe
+        if not pedido.fecha_vencimiento:
+            ciudad = 'Soacha' if 'soacha' in pedido.idCliente.direccion.lower() else 'Bogotá'
+            fecha_vencimiento = calcular_fecha_vencimiento(pedido.fechaCreacion.date(), ciudad)
+            pedido.fecha_vencimiento = fecha_vencimiento
+            pedido.save()
+        else:
+            fecha_vencimiento = pedido.fecha_vencimiento
+        
+        # Calcular días hábiles restantes
+        dias_restantes = calcular_dias_habiles_restantes(pedido.fechaCreacion.date(), fecha_vencimiento)
+        
+        # Determinar alerta
+        if dias_restantes == 0:
+            alerta = 'VENCE HOY'
+        elif dias_restantes > 0:
+            alerta = f'Vence en {dias_restantes} días'
+        else:
+            alerta = 'VENCIDO'
+        
         pedidos_con_horario.append({
             'pedido': pedido,
             'hora_inicio': f"{hora_inicio:02d}:00",
             'hora_fin': f"{hora_fin:02d}:00",
-            'numero_secuencia': idx + 1
+            'numero_secuencia': idx + 1,
+            'fecha_vencimiento': fecha_vencimiento.strftime('%d/%m/%Y'),
+            'alerta': alerta,
+            'dias_restantes': dias_restantes
         })
         hora_inicio = hora_fin
     
@@ -411,7 +477,14 @@ def generar_pdf_pedidos_repartidor(repartidor, fecha=None):
 
 def enviar_correo_repartidor_detallado(repartidor, fecha=None):
     """
-    Envía un correo detallado al repartidor con información sobre sus pedidos y cómo organizar la ruta
+    Envía un correo detallado al repartidor con información sobre sus pedidos pendientes por entregar.
+    Solo incluye:
+    - Pedidos pendientes por entregar (En Camino, Confirmado)
+    - Pedidos vencidos sin confirmación (pasaron fecha de vencimiento pero no están entregados)
+    
+    Excluye:
+    - Pedidos ya entregados (Entregado, Completado)
+    - Pedidos cancelados o devueltos
     """
     if fecha is None:
         fecha = timezone.now().date()
@@ -425,16 +498,15 @@ def enviar_correo_repartidor_detallado(repartidor, fecha=None):
         return False
     
     try:
-        # Obtener TODOS los pedidos del repartidor (sin filtro de estado ni fecha)
-        # Excluir solo los cancelados y devueltos
-        
+        # Obtener solo los pedidos PENDIENTES POR ENTREGAR
+        # Excluir: Entregado, Completado, Cancelado, Devuelto
         todos_pedidos = Pedido.objects.filter(
             idRepartidor=repartidor
         ).exclude(
-            estado_pedido__in=['Cancelado', 'Devuelto']
+            estado_pedido__in=['Entregado', 'Completado', 'Cancelado', 'Devuelto']
         ).select_related('idCliente').prefetch_related('detallepedido_set__idProducto').order_by('fechaCreacion')
         
-        print(f"[DEBUG] Pedidos encontrados para {repartidor.nombreRepartidor}: {todos_pedidos.count()}")
+        print(f"[DEBUG] Pedidos pendientes encontrados para {repartidor.nombreRepartidor}: {todos_pedidos.count()}")
         
         if not todos_pedidos.exists():
             logger.info(f"No hay pedidos para {repartidor.nombreRepartidor}")
@@ -445,7 +517,7 @@ def enviar_correo_repartidor_detallado(repartidor, fecha=None):
         pedidos_con_info = []
         
         for idx, pedido in enumerate(todos_pedidos, 1):
-            # Calcular fecha de vencimiento si no existe
+            # Calcular fecha de vencimiento si no existe (basado en fecha de creación)
             if not pedido.fecha_vencimiento:
                 ciudad = 'Soacha' if 'soacha' in pedido.idCliente.direccion.lower() else 'Bogotá'
                 fecha_vencimiento = calcular_fecha_vencimiento(pedido.fechaCreacion.date(), ciudad)
@@ -454,8 +526,8 @@ def enviar_correo_repartidor_detallado(repartidor, fecha=None):
             else:
                 fecha_vencimiento = pedido.fecha_vencimiento
             
-            # Calcular días restantes y verificar estado del pedido
-            dias_restantes = (fecha_vencimiento - timezone.now().date()).days
+            # Calcular días hábiles restantes hasta la fecha de vencimiento
+            dias_restantes = calcular_dias_habiles_restantes(pedido.fechaCreacion.date(), fecha_vencimiento)
             
             # Si el pedido está entregado o completado, mostrar "ENTREGADO"
             if pedido.estado_pedido in ['Entregado', 'Completado']:
@@ -526,7 +598,7 @@ def enviar_correo_repartidor_detallado(repartidor, fecha=None):
                     <div>
                         <p style="margin: 3px 0; color: {estado_pago_color}; font-weight: bold;"><strong>Estado Pago:</strong> {item['estado_pago_texto']}</p>
                         <p style="margin: 3px 0; color: {'#dc2626' if item['cobra_envio'] == 'SÍ' else '#6b7280'}; font-weight: bold;"><strong>¿Cobrar Envío?:</strong> {item['cobra_envio']}</p>
-                        <p style="margin: 3px 0; color: #374151; font-weight: bold;"><strong>Total:</strong> ${item['total_pedido']}</p>
+                        <p style="margin: 3px 0; color: #374151; font-weight: bold;"><strong>Total:</strong> ${int(item['total_pedido']):,}</p>
                         <p style="margin: 3px 0; color: {alerta_color}; font-weight: bold;"><strong>Vencimiento:</strong> {item['fecha_vencimiento']}</p>
                     </div>
                 </div>
@@ -579,7 +651,7 @@ def enviar_correo_repartidor_detallado(repartidor, fecha=None):
                 <div class="content">
                     <p>Hola <strong>{repartidor.nombreRepartidor}</strong>,</p>
                     
-                    <p>Te enviamos el plan mensual de entregas para {mes_actual}. A continuación encontrarás todos los pedidos que debes entregar con la información completa de ubicación y estado de pago. Por favor, revisa cuidadosamente cada detalle para optimizar tu ruta.</p>
+                    <p>Te enviamos el plan de entregas para {mes_actual}. A continuación encontrarás todos los pedidos pendientes que debes entregar, incluyendo aquellos que han vencido sin confirmación. Revisa cuidadosamente cada detalle para optimizar tu ruta.</p>
                     
                     <div class="resumen">
                         <h3>Resumen de tu Jornada</h3>
@@ -600,35 +672,35 @@ def enviar_correo_repartidor_detallado(repartidor, fecha=None):
                     </div>
                     
                     <div class="info-section">
-                        <h3>Información de tu Jornada</h3>
+                        <h3>Detalles de tu Jornada</h3>
                         <div class="info-grid">
                             <div class="info-item">
-                                <strong>Horario:</strong> 6:00 AM - 3:00 PM
+                                <strong>Horario de Trabajo:</strong> 6:00 AM - 3:00 PM
                             </div>
                             <div class="info-item">
-                                <strong>Almuerzo:</strong> 12:00 - 12:30
+                                <strong>Hora de Almuerzo:</strong> 12:00 - 12:30
                             </div>
                             <div class="info-item">
-                                <strong>Total de pedidos:</strong> {len(pedidos_con_info)}
+                                <strong>Pedidos Pendientes:</strong> {len(pedidos_con_info)}
                             </div>
                         </div>
                     </div>
                     
-                    <h3 style="color: #333; margin-top: 25px; margin-bottom: 15px;">Plan Mensual de Entregas</h3>
+                    <h3 style="color: #333; margin-top: 25px; margin-bottom: 15px;">Pedidos Pendientes por Entregar</h3>
                     <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
-                        <strong>Repartidor:</strong> {repartidor.nombreRepartidor} | <strong>Total de pedidos:</strong> {len(pedidos_con_info)} | <strong>Mes:</strong> {mes_actual}
+                        <strong>Repartidor:</strong> {repartidor.nombreRepartidor} | <strong>Total:</strong> {len(pedidos_con_info)} pedidos | <strong>Periodo:</strong> {mes_actual}
                     </p>
                     <div class="pedidos-lista">
                         {tabla_pedidos}
                     </div>
                     
                     <div class="recomendaciones">
-                        <h3>Recomendaciones para Optimizar tu Ruta</h3>
+                        <h3>Recomendaciones Importantes</h3>
                         <ul>
-                            <li><strong>Confirmación Previa:</strong> Llama al cliente <strong>15 minutos antes de llegar</strong> para confirmar su disponibilidad y asegurar que esté en casa.</li>
-                            <li><strong>Confirmar Recepción:</strong> Dile al cliente que registre en la plataforma que <strong>recibió su pedido</strong> correctamente.</li>
-                            <li><strong>Evidencia Fotográfica:</strong> Dile al cliente que se tome una foto con el pedido para evidenciar que sí fue recibido.</li>
-                            <li><strong>Calificación del Servicio:</strong> Pide al cliente que <strong>califica tu servicio</strong> en la plataforma. Tu opinión es importante para mejorar continuamente.</li>
+                            <li><strong>Confirmación Previa:</strong> Llama al cliente 15 minutos antes de llegar para confirmar su disponibilidad.</li>
+                            <li><strong>Confirmar Recepción:</strong> Solicita al cliente que registre en la plataforma que recibió su pedido correctamente.</li>
+                            <li><strong>Evidencia Fotográfica:</strong> Pide al cliente una foto con el pedido como comprobante de entrega.</li>
+                            <li><strong>Calificación del Servicio:</strong> Solicita al cliente que califique tu servicio en la plataforma.</li>
                         </ul>
                     </div>
                     
@@ -753,17 +825,25 @@ def obtener_ruta_logo():
 
 def generar_pdf_pedidos_repartidor(repartidor, fecha=None):
     """
-    Genera un PDF con TODOS los pedidos del repartidor
+    Genera un PDF con los pedidos PENDIENTES POR ENTREGAR del repartidor.
+    Solo incluye:
+    - Pedidos pendientes por entregar (En Camino, Confirmado)
+    - Pedidos vencidos sin confirmación (pasaron fecha de vencimiento pero no están entregados)
+    
+    Excluye:
+    - Pedidos ya entregados (Entregado, Completado)
+    - Pedidos cancelados o devueltos
     """
     if fecha is None:
         fecha = timezone.now().date()
     
     try:
-        # Obtener TODOS los pedidos del repartidor (excluir cancelados y devueltos)
+        # Obtener solo los pedidos PENDIENTES POR ENTREGAR
+        # Excluir: Entregado, Completado, Cancelado, Devuelto
         todos_pedidos = Pedido.objects.filter(
             idRepartidor=repartidor
         ).exclude(
-            estado_pedido__in=['Cancelado', 'Devuelto']
+            estado_pedido__in=['Entregado', 'Completado', 'Cancelado', 'Devuelto']
         ).select_related('idCliente').prefetch_related('detallepedido_set__idProducto').order_by('fechaCreacion')
         
         if not todos_pedidos.exists():
@@ -775,7 +855,7 @@ def generar_pdf_pedidos_repartidor(repartidor, fecha=None):
         for idx, pedido in enumerate(todos_pedidos, 1):
             estado_pago_texto = "Pagado" if pedido.estado_pago == 'Pago Completo' else "Pago Parcial"
             
-            # Calcular fecha de vencimiento si no existe
+            # Calcular fecha de vencimiento si no existe (basado en fecha de creación)
             if not pedido.fecha_vencimiento:
                 ciudad = 'Soacha' if 'soacha' in pedido.idCliente.direccion.lower() else 'Bogotá'
                 fecha_vencimiento = calcular_fecha_vencimiento(pedido.fechaCreacion.date(), ciudad)
@@ -784,8 +864,8 @@ def generar_pdf_pedidos_repartidor(repartidor, fecha=None):
             else:
                 fecha_vencimiento = pedido.fecha_vencimiento
             
-            # Calcular días restantes y verificar estado del pedido
-            dias_restantes = (fecha_vencimiento - timezone.now().date()).days
+            # Calcular días hábiles restantes hasta la fecha de vencimiento
+            dias_restantes = calcular_dias_habiles_restantes(pedido.fechaCreacion.date(), fecha_vencimiento)
             
             # Si el pedido está entregado o completado, mostrar "ENTREGADO"
             if pedido.estado_pedido in ['Entregado', 'Completado']:
@@ -850,7 +930,7 @@ def generar_pdf_pedidos_repartidor(repartidor, fecha=None):
                     <div>
                         <p style="margin: 3px 0;"><strong>Estado Pago:</strong> {item['estado_pago']}</p>
                         <p style="margin: 3px 0; color: {color_cobro}; font-weight: bold;"><strong>¿Cobrar Envío?:</strong> {item['cobra_envio']}</p>
-                        <p style="margin: 3px 0;"><strong>Total:</strong> ${item['total']}</p>
+                        <p style="margin: 3px 0;"><strong>Total:</strong> ${int(item['total']):,}</p>
                         <p style="margin: 3px 0;"><strong>Vencimiento:</strong> {item['fecha_vencimiento']}</p>
                     </div>
                 </div>

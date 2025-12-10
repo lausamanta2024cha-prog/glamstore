@@ -95,7 +95,7 @@
     <div class="table-container">
       <table>
         <thead>
-          <tr><th>ID</th><th>Cliente</th><th>Estado Pago</th><th>Estado Pedido</th><th>Total</th><th>Fecha</th><th>Acciones</th></tr>
+          <tr><th>ID</th><th>Cliente</th><th>Estado Pago</th><th>Estado Pedido</th><th>Total</th><th>Fecha Creación</th><th>Fecha Vencimiento</th><th>Acciones</th></tr>
         </thead>
         <tbody>
           {% for pedido in pedidos %}
@@ -106,13 +106,14 @@
             <td><span class="badge {% if pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}badge-success{% else %}badge-warning{% endif %}">{{ pedido.estado_pedido }}</span></td>
             <td>${{ pedido.total }}</td>
             <td>{{ pedido.fechaCreacion|date:"d/m/Y H:i" }}</td>
+            <td>{% if pedido.fecha_vencimiento %}{{ pedido.fecha_vencimiento|date:"d/m/Y" }}{% else %}—{% endif %}</td>
             <td class="acciones">
               <a href="{% url 'detalle_pedido' pedido.idPedido %}">Ver Detalle</a>
               <a href="{% url 'editar_pedido' pedido.idPedido %}">Editar</a>
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="7" style="text-align: center; padding: 2rem; color: #999;">No hay pedidos registrados</td></tr>
+          <tr><td colspan="8" style="text-align: center; padding: 2rem; color: #999;">No hay pedidos registrados</td></tr>
           {% endfor %}
         </tbody>
       </table>

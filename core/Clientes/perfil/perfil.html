@@ -846,6 +846,7 @@
       <ul>
         {% if request.session.usuario_nombre %}
         <li><a href="{% url 'perfil' %}" class="active">Mi Perfil</a></li>
+        <li><a href="{% url 'notificaciones_cliente' %}">Notificaciones</a></li>
         {% else %}
         <li><a href="{% url 'login' %}">Iniciar Sesión / Registrarse</a></li>
         {% endif %}
@@ -1021,12 +1022,14 @@
                 <!-- Indicador de progreso visual -->
                 <div style="margin-top: 0.8rem; display: flex; gap: 0.5rem; align-items: center;">
                   <div style="flex: 1; height: 6px; background: #e9d5ff; border-radius: 3px; overflow: hidden;">
-                    <div style="height: 100%; background: linear-gradient(90deg, #a855f7 0%, #9333ea 100%); border-radius: 3px; width: {% if pedido.estado_pedido == 'Pedido Recibido' %}75%{% elif pedido.estado_pedido == 'Pago Confirmado' %}75%{% elif pedido.estado_pedido == 'En Preparación' %}75%{% elif pedido.estado_pedido == 'En Camino' %}100%{% elif pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}100%{% else %}0%{% endif %};"></div>
+                    <div style="height: 100%; background: linear-gradient(90deg, #a855f7 0%, #9333ea 100%); border-radius: 3px; width: {% if pedido.estado_pedido == 'En Preparación' %}0%{% elif pedido.estado_pedido == 'En Camino' %}90%{% elif pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}100%{% else %}0%{% endif %};"></div>
                   </div>
                   <span style="font-size: 0.75rem; color: #999; white-space: nowrap;">
-                    {% if pedido.estado_pedido == 'Pedido Recibido' or pedido.estado_pedido == 'Pago Confirmado' or pedido.estado_pedido == 'En Preparación' %}
-                    75%
-                    {% elif pedido.estado_pedido == 'En Camino' or pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}
+                    {% if pedido.estado_pedido == 'En Preparación' %}
+                    0%
+                    {% elif pedido.estado_pedido == 'En Camino' %}
+                    90%
+                    {% elif pedido.estado_pedido == 'Entregado' or pedido.estado_pedido == 'Completado' %}
                     100%
                     {% else %}
                     0%
@@ -1052,6 +1055,11 @@
             <div class="pedido-footer">
               <div class="pedido-total">
                 <strong>Total: ${{ pedido.total|floatformat:0|intcomma }}</strong>
+                {% if pedido.fecha_vencimiento %}
+                <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+                  Entrega estimada: <strong>{{ pedido.fecha_vencimiento|date:"d/m/Y" }}</strong>
+                </div>
+                {% endif %}
               </div>
 
               {% if tiene_usuario %}

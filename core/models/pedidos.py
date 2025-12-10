@@ -77,6 +77,12 @@ class DetallePedido(models.Model):
     cantidad = models.PositiveIntegerField(default=1, blank=True, null=True)
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
+    margen_ganancia = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=10,
+        help_text="Margen de ganancia que se cobró en este pedido"
+    )
 
     class Meta:
         db_table = 'detallepedido'

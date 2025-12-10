@@ -294,6 +294,12 @@
                   <span class="pedido-info-label">Total</span>
                   <span class="pedido-total">${{ pedido.total|floatformat:0|intcomma }}</span>
                 </div>
+                {% if pedido.fecha_vencimiento %}
+                <div class="pedido-info-item">
+                  <span class="pedido-info-label">Fecha de Entrega Estimada</span>
+                  <span class="pedido-info-value">{{ pedido.fecha_vencimiento|date:"d/m/Y" }}</span>
+                </div>
+                {% endif %}
               </div>
 
               <div class="pedido-actions">

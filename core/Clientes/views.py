@@ -11,7 +11,6 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth.hashers import make_password
 from core.models import Pedido, Usuario
 from .forms import LoginForm
-from .services import autenticar_usuario
 from core.models import MovimientoProducto
 from django.db import transaction
 from django.conf import settings
@@ -151,22 +150,11 @@ def perfil(request):
         models.Q(estado='Pago Parcial', idRepartidor__isnull=False)
     )
     
-    ahora = timezone.now()
+    ahora = timezone.now().date()
     for pedido in pedidos_en_camino:
-        # Calcular fecha de entrega
-        direccion_lower = (cliente.direccion or "").lower()
-        if 'soacha' in direccion_lower:
-            dias_entrega = 3
-        elif 'bogota' in direccion_lower or 'bogotá' in direccion_lower:
-            dias_entrega = 2
-        else:
-            dias_entrega = 3
-        
-        fecha_entrega = pedido.fechaCreacion + timedelta(days=dias_entrega)
-        
-        # Si ya pasó la fecha de entrega, marcar como entregado
-        if ahora >= fecha_entrega:
-            # Al entregar, el pago se completa automáticamente (se cobró el envío)
+        # Usar la fecha de vencimiento guardada en el pedido
+        if pedido.fecha_vencimiento and ahora >= pedido.fecha_vencimiento:
+            # Si ya pasó la fecha de vencimiento, marcar como entregado
             pedido.estado_pedido = 'Entregado'
             pedido.save()
     
@@ -492,23 +480,41 @@ def simular_pago(request):
         print(f"   Total calculado: ${total}")
 
         # Determinar estado según tipo de pago
-        if pago_envio == 'entrega':
+        if pago_envio == 'contra_entrega':
             estado = 'Pago Parcial'
         else:
             estado = 'Pago Completo'
         print(f"9. Estado determinado: {estado}")
 
+        # Calcular fecha de vencimiento estimada basada en ubicación
+        from django.utils import timezone
+        from datetime import timedelta
+        from core.Gestion_admin.services_repartidores import calcular_fecha_vencimiento
+        
+        ahora = timezone.now()
+        
+        direccion_lower = (direccion_completa or "").lower()
+        if 'soacha' in direccion_lower:
+            ciudad = 'Soacha'
+        elif 'bogota' in direccion_lower or 'bogotá' in direccion_lower:
+            ciudad = 'Bogotá'
+        else:
+            ciudad = 'Soacha'
+        
+        fecha_vencimiento_estimada = calcular_fecha_vencimiento(ahora.date(), ciudad)
+        print(f"9.5 Fecha vencimiento estimada: {fecha_vencimiento_estimada} (Ciudad: {ciudad})")
+
         # Crear pedido
         print("10. Iniciando transacción para crear pedido...")
         with transaction.atomic():
-            from django.utils import timezone
             pedido = Pedido.objects.create(
                 idCliente=cliente,
                 total=total,
                 estado='En Preparación',
                 estado_pago=estado,
                 estado_pedido='En Preparación',
-                fechaCreacion=timezone.now()
+                fechaCreacion=ahora,
+                fecha_vencimiento=fecha_vencimiento_estimada
             )
             
             print(f"Pedido creado: {pedido.idPedido}")
@@ -518,13 +524,18 @@ def simular_pago(request):
                 producto = Producto.objects.get(idProducto=int(id_producto))
                 cantidad_int = int(cantidad)
                 subtotal = producto.precio_venta * cantidad_int
+                
+                # Obtener el margen de ganancia actual
+                from core.models.configuracion import ConfiguracionGlobal
+                margen_actual = ConfiguracionGlobal.get_margen_ganancia()
 
                 DetallePedido.objects.create(
                     idPedido=pedido,
                     idProducto=producto,
                     cantidad=cantidad_int,
                     precio_unitario=producto.precio_venta,
-                    subtotal=subtotal
+                    subtotal=subtotal,
+                    margen_ganancia=margen_actual
                 )
                 
                 print(f"Detalle creado: Producto {producto.idProducto}, Cantidad: {cantidad_int}")
@@ -777,16 +788,19 @@ def registro(request):
 
         # 2. Validaciones
         if password != confirmar_password:
+            messages.error(request, "Las contraseñas no coinciden.")
             return render(request, 'registrar_usuario.html', {'input': request.POST})
 
         # Validar longitud mínima de contraseña
         if len(password) < 6:
+            messages.error(request, "La contraseña debe tener al menos 6 caracteres.")
             return render(request, 'registrar_usuario.html', {'input': request.POST})
 
         # Verificar si ya existe un usuario con este email
         # Nota: Si solo existe un Cliente (sin Usuario), se permite el registro
         if Usuario.objects.filter(email=email).exists():
-            return render(request, 'registrar_usuario.html', {'input': request.POST})
+            messages.error(request, "Ya tienes una cuenta registrada con este correo. Por favor, inicia sesión.")
+            return render(request, 'registrar_usuario.html', {'input': request.POST, 'email_existe': True})
 
         try:
             with transaction.atomic():
@@ -892,24 +906,24 @@ def recuperar_password(request):
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
-                    body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; margin: 0; padding: 0; }}
-                    .container {{ max-width: 600px; margin: 20px auto; background-color: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-radius: 12px; overflow: hidden; }}
-                    .header {{ background: linear-gradient(135deg, #d946a6 0%, #c026d3 100%); color: white; padding: 50px 20px; text-align: center; }}
+                    body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #ffffff; margin: 0; padding: 0; }}
+                    .container {{ max-width: 600px; margin: 20px auto; background-color: #ffffff; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border-radius: 12px; overflow: hidden; border: 2px solid #9333ea; }}
+                    .header {{ background: linear-gradient(135deg, #9333ea 0%, #581c87 100%); color: white; padding: 50px 20px; text-align: center; }}
                     .header h1 {{ margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }}
                     .header p {{ margin: 10px 0 0 0; font-size: 15px; opacity: 0.95; font-weight: 300; }}
                     .content {{ padding: 45px 35px; }}
-                    .content h2 {{ color: #d946a6; font-size: 22px; margin-top: 0; margin-bottom: 18px; font-weight: 600; }}
-                    .content p {{ color: #555; font-size: 15px; line-height: 1.7; margin: 16px 0; }}
-                    .alert {{ background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border-left: 5px solid #d946a6; padding: 18px; margin: 25px 0; border-radius: 6px; }}
-                    .alert p {{ color: #880e4f; margin: 0; font-size: 14px; font-weight: 500; }}
+                    .content h2 {{ color: #000000; font-size: 22px; margin-top: 0; margin-bottom: 18px; font-weight: 600; }}
+                    .content p {{ color: #000000; font-size: 15px; line-height: 1.7; margin: 16px 0; }}
+                    .alert {{ background: #ffffff; border-left: 5px solid #9333ea; padding: 18px; margin: 25px 0; border-radius: 6px; border: 1px solid #9333ea; }}
+                    .alert p {{ color: #000000; margin: 0; font-size: 14px; font-weight: 500; }}
                     .button-container {{ text-align: center; margin: 35px 0; }}
-                    .button {{ display: inline-block; background: linear-gradient(135deg, #d946a6 0%, #c026d3 100%); color: white; padding: 16px 48px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(217, 70, 166, 0.3); }}
-                    .button:hover {{ transform: translateY(-3px); box-shadow: 0 6px 16px rgba(217, 70, 166, 0.4); }}
-                    .link-text {{ color: #666; font-size: 12px; word-break: break-all; margin-top: 15px; padding: 12px; background-color: #f5f5f5; border-radius: 6px; border: 1px solid #e0e0e0; }}
-                    .footer {{ background: linear-gradient(135deg, #f8f9fa 0%, #f0f0f0 100%); padding: 25px; text-align: center; border-top: 1px solid #e0e0e0; }}
-                    .footer p {{ color: #888; font-size: 12px; margin: 6px 0; }}
-                    .security-info {{ background: linear-gradient(135deg, #f3e5f5 0%, #ede7f6 100%); border-left: 5px solid #c026d3; padding: 18px; margin: 25px 0; border-radius: 6px; }}
-                    .security-info p {{ color: #6a1b9a; margin: 0; font-size: 14px; font-weight: 500; }}
+                    .button {{ display: inline-block; background: linear-gradient(135deg, #9333ea 0%, #581c87 100%); color: #ffffff !important; padding: 16px 48px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4); }}
+                    .button:hover {{ transform: translateY(-3px); box-shadow: 0 6px 16px rgba(147, 51, 234, 0.5); }}
+                    .link-text {{ color: #000000; font-size: 12px; word-break: break-all; margin-top: 15px; padding: 12px; background-color: #ffffff; border-radius: 6px; border: 1px solid #9333ea; }}
+                    .footer {{ background: #ffffff; padding: 25px; text-align: center; border-top: 2px solid #9333ea; }}
+                    .footer p {{ color: #000000; font-size: 12px; margin: 6px 0; }}
+                    .security-info {{ background: #ffffff; border-left: 5px solid #9333ea; padding: 18px; margin: 25px 0; border-radius: 6px; border: 1px solid #9333ea; }}
+                    .security-info p {{ color: #000000; margin: 0; font-size: 14px; font-weight: 500; }}
                 </style>
             </head>
             <body>
@@ -929,7 +943,7 @@ def recuperar_password(request):
                             <a href="{link}" class="button">Cambiar Contraseña</a>
                         </div>
                         
-                        <p style="text-align: center; color: #999; font-size: 13px;">O copia y pega este enlace en tu navegador:</p>
+                        <p style="text-align: center; color: #000000; font-size: 13px;">O copia y pega este enlace en tu navegador:</p>
                         <div class="link-text">{link}</div>
                         
                         <div class="alert">
@@ -940,8 +954,8 @@ def recuperar_password(request):
                             <p><strong>Información de seguridad:</strong> Nunca compartiremos tu contraseña por correo. Si no solicitaste este cambio, cambia tu contraseña inmediatamente desde tu cuenta.</p>
                         </div>
                         
-                        <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                            Si tienes problemas para acceder a tu cuenta o necesitas ayuda, contáctanos en <strong>soporte@glamstore.com</strong>
+                        <p style="margin-top: 30px; color: #000000; font-size: 14px;">
+                            Si tienes problemas para acceder a tu cuenta o necesitas ayuda, contáctanos en <strong>glamstore0303777@gmail.com</strong>
                         </p>
                     </div>
                     
@@ -1000,6 +1014,9 @@ def cambiar_password(request, token):
 
 
 def autenticar_usuario(email, password):
+    from django.utils import timezone
+    from core.models.usuarios import Usuario
+    
     with connection.cursor() as cursor:
         cursor.execute("""
             SELECT idUsuario, password, nombre, id_rol FROM usuarios
@@ -1008,6 +1025,17 @@ def autenticar_usuario(email, password):
         usuario = cursor.fetchone()
 
     if usuario and check_password(password, usuario[1]):
+        # Actualizar el último acceso usando el ORM de Django
+        try:
+            usuario_obj = Usuario.objects.get(idUsuario=usuario[0])
+            usuario_obj.ultimoAcceso = timezone.now()
+            usuario_obj.save(update_fields=['ultimoAcceso'])
+            print(f"[DEBUG] Último acceso actualizado para usuario {usuario[0]}: {usuario_obj.ultimoAcceso}")
+        except Exception as e:
+            print(f"[DEBUG] Error al actualizar último acceso: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        
         # Obtener el nombre del rol
         rol_id = usuario[3]
         rol_nombre = "Administrador" if rol_id == 1 else "Cliente"
@@ -1145,7 +1173,23 @@ def pedido_confirmado(request, idPedido):
         messages.warning(request, "Para ver el seguimiento de tus pedidos, necesitas iniciar sesión.")
         return redirect('login')
     
-    return render(request, 'pedido_confirmado.html', {'pedido': pedido})
+    # Calcular fecha de entrega estimada
+    from core.Gestion_admin.services_repartidores import calcular_fecha_vencimiento
+    
+    if not pedido.fecha_vencimiento:
+        ciudad = 'Soacha' if 'soacha' in pedido.idCliente.direccion.lower() else 'Bogotá'
+        fecha_entrega = calcular_fecha_vencimiento(pedido.fechaCreacion.date(), ciudad)
+        pedido.fecha_vencimiento = fecha_entrega
+        pedido.save()
+    else:
+        fecha_entrega = pedido.fecha_vencimiento
+    
+    context = {
+        'pedido': pedido,
+        'fecha_entrega_estimada': fecha_entrega
+    }
+    
+    return render(request, 'pedido_confirmado.html', context)
 
 def ver_seguimiento(request, idPedido):
     """
@@ -1171,9 +1215,10 @@ def ver_seguimiento(request, idPedido):
         messages.error(request, "Usuario no encontrado.")
         return redirect('login')
     
-    # Calcular fecha de entrega estimada
+    # Calcular fecha de entrega estimada usando días hábiles
     from django.utils import timezone
     from datetime import timedelta
+    from core.Gestion_admin.services_repartidores import calcular_fecha_vencimiento
     
     direccion_cliente = pedido.idCliente.direccion or ""
     nombre_cliente = pedido.idCliente.nombre or ""
@@ -1183,26 +1228,24 @@ def ver_seguimiento(request, idPedido):
     texto_completo = f"{direccion_cliente} {nombre_cliente} {email_cliente}".lower()
     
     if 'soacha' in texto_completo:
-        dias_entrega = 3
         ciudad_entrega = 'Soacha'
     elif 'bogota' in texto_completo or 'bogotá' in texto_completo:
-        dias_entrega = 2
         ciudad_entrega = 'Bogotá'
     elif 'madrid' in texto_completo:
-        dias_entrega = 3
         ciudad_entrega = 'Madrid'
     elif 'funza' in texto_completo:
-        dias_entrega = 3
         ciudad_entrega = 'Funza'
     elif 'mosquera' in texto_completo:
-        dias_entrega = 3
         ciudad_entrega = 'Mosquera'
     else:
         # Si no se puede determinar, usar Bogotá como predeterminado
-        dias_entrega = 2
-        ciudad_entrega = 'Bogotá (Predeterminado)'
+        ciudad_entrega = 'Bogotá'
     
-    fecha_entrega_estimada = pedido.fechaCreacion + timedelta(days=dias_entrega)
+    # Usar la función calcular_fecha_vencimiento para obtener la fecha correcta
+    fecha_entrega_estimada = calcular_fecha_vencimiento(pedido.fechaCreacion.date(), ciudad_entrega)
+    
+    # Calcular días hábiles desde la fecha de creación hasta la fecha de entrega
+    dias_entrega = 2 if 'bogota' in ciudad_entrega.lower() else 3
     
     # Obtener los detalles del pedido (productos)
     detalles_pedido = DetallePedido.objects.filter(idPedido=pedido).select_related('idProducto')

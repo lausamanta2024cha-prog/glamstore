@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: glamstore
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn glamstore.wsgi:application
+    preDeployCommand: python manage.py migrate && python manage.py collectstatic --noinput
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: DEBUG
+        value: false

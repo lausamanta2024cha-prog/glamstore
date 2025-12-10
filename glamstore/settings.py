@@ -103,28 +103,21 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-import pymysql
-pymysql.install_as_MySQLdb()
+import dj_database_url
 
-# Usar DATABASE_URL de Railway si está disponible, sino usar configuración local
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 if DATABASE_URL:
-    # Configuración para Railway (PostgreSQL)
-    import dj_database_url
+    # Configuración para Railway (MySQL)
     DATABASES = {
         'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
     }
 else:
-    # Configuración local (MySQL)
+    # Configuración local (SQLite para desarrollo)
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv('DB_NAME', 'glamstoredb'),
-            'USER': os.getenv('DB_USER', 'root'),
-            'PASSWORD': os.getenv('DB_PASSWORD', ''),
-            'HOST': os.getenv('DB_HOST', '127.0.0.1'), 
-            'PORT': os.getenv('DB_PORT', '3306'),
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
 

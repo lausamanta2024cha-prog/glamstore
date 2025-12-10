@@ -108,14 +108,9 @@ import dj_database_url
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 if DATABASE_URL:
-    # Configuración para Railway (MySQL con PyMySQL)
-    import pymysql
-    pymysql.install_as_MySQLdb()
-    
-    db_config = dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
-    db_config['ENGINE'] = 'django.db.backends.mysql'
+    # Configuración para Railway (MySQL)
     DATABASES = {
-        'default': db_config
+        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
     }
 else:
     # Configuración local (SQLite para desarrollo)

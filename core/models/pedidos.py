@@ -31,7 +31,7 @@ class Pedido(models.Model):
         blank=True,
         db_column='idrepartidor'
     )
-    fecha_vencimiento = models.DateField(null=True, blank=True, db_column='fechavencimiento')
+    fecha_vencimiento = models.DateField(null=True, blank=True, db_column='fecha_vencimiento')
     facturas_enviadas = models.PositiveIntegerField(default=0, db_column='facturas_enviadas')
     
     # Método para obtener el estado de pago (compatibilidad)

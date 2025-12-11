@@ -12,10 +12,26 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             sql="""
-            ALTER TABLE pedidos RENAME COLUMN IF EXISTS fecha_vencimiento TO fechavencimiento;
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'pedidos' AND column_name = 'fecha_vencimiento'
+                ) THEN
+                    ALTER TABLE pedidos RENAME COLUMN fecha_vencimiento TO fechavencimiento;
+                END IF;
+            END $$;
             """,
             reverse_sql="""
-            ALTER TABLE pedidos RENAME COLUMN IF EXISTS fechavencimiento TO fecha_vencimiento;
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'pedidos' AND column_name = 'fechavencimiento'
+                ) THEN
+                    ALTER TABLE pedidos RENAME COLUMN fechavencimiento TO fecha_vencimiento;
+                END IF;
+            END $$;
             """,
         ),
     ]

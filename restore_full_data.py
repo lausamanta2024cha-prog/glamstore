@@ -99,7 +99,7 @@ try:
                 idSubcategoria=subcat_data['idSubcategoria'],
                 defaults={
                     'nombreSubcategoria': subcat_data['nombreSubcategoria'],
-                    'idCategoria': categoria,
+                    'categoria': categoria,
                 }
             )
             if created:

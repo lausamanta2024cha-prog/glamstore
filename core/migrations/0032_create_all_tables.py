@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'categoria',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'subcategoria',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'productos',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
@@ -73,7 +73,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'clientes',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
@@ -87,7 +87,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'pedidos',
-                'managed': False,
+                'managed': True,
             },
         ),
         migrations.CreateModel(
@@ -103,7 +103,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'detallepedido',
-                'managed': False,
+                'managed': True,
             },
         ),
     ]

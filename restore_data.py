@@ -23,6 +23,30 @@ CLIENTES = [
     (20, '1234567', 'lauren ortiz', 'laurensamanta0.r@gmail.com', 'carrera 19a 11a 67, Barrios Unidos, Bogotá, Bogotá D.C. - 9-49', '3024892804'),
 ]
 
+# Datos reales de pedidos (del backup mas reciente)
+PEDIDOS = [
+    (20, 13, '2025-11-20 13:14:00', None, 'Pago Parcial', 21420.00, 0, 16, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (21, 13, '2025-11-20 13:27:44', None, 'Pago Parcial', 38080.00, 0, 16, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (22, 13, '2025-11-20 13:30:46', None, 'Pago Parcial', 38080.00, 0, 16, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (23, 13, '2025-11-20 15:26:57', None, 'Pago Parcial', 17850.00, 0, 16, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (24, 13, '2025-11-20 15:28:42', None, 'Pago Parcial', 16660.00, 0, 16, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (25, 13, '2025-11-20 15:53:40', None, 'Pago Parcial', 38080.00, 0, 16, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (26, 13, '2025-11-20 16:13:31', None, 'Pago Parcial', 45220.00, 0, 16, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (27, 13, '2025-11-20 18:59:45', None, 'Pago Parcial', 38080.00, 0, 16, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (28, 13, '2025-11-20 19:03:10', None, 'Pago Parcial', 16660.00, 0, 16, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (33, 15, '2025-11-20 19:54:00', None, 'Pago Parcial', 74970.00, 0, 19, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (34, 15, '2025-11-20 20:05:09', None, 'Pago Parcial', 21420.00, 0, 19, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (35, 15, '2025-11-20 20:12:06', None, 'Pago Parcial', 40460.00, 0, 19, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (36, 15, '2025-11-20 20:20:36', None, 'Pago Parcial', 21420.00, 0, 19, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (37, 17, '2025-11-21 00:32:13', None, 'Pago Parcial', 65450.00, 0, 19, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (38, 17, '2025-11-21 01:06:53', None, 'En Camino', 57600.00, 0, 19, None, 'Pago Completo', 'Entregado', '2025-11-25', 1),
+    (39, 18, '2025-11-21 01:08:27', None, 'Pago Parcial', 40460.00, 0, 15, None, 'Pago Parcial', 'Entregado', '2025-11-25', 1),
+    (40, 18, '2025-11-21 01:13:13', None, 'Problema en Entrega', 49980.00, 0, 15, None, 'Pago Completo', 'Completado', '2025-11-25', 1),
+    (43, 20, '2025-11-22 00:53:43', None, 'Entregado', 141610.00, 0, 15, None, 'Pago Completo', 'Completado', '2025-11-26', 1),
+    (44, 20, '2025-11-22 00:58:29', None, 'Entregado', 42840.00, 0, 15, None, 'Pago Completo', 'Completado', '2025-11-26', 1),
+    (45, 20, '2025-11-22 01:12:30', None, 'Pago Parcial', 61880.00, 0, 15, None, 'Pago Parcial', 'Entregado', '2025-11-26', 1),
+]
+
 # Datos de configuración global
 CONFIGURACION = [
     (1, 10.00, '2025-12-11 06:00:00'),
@@ -114,6 +138,24 @@ try:
                 cursor.execute(
                     'INSERT OR IGNORE INTO clientes (idcliente, cedula, nombre, email, direccion, telefono) VALUES (?, ?, ?, ?, ?, ?)',
                     cliente
+                )
+        
+        # Insertar pedidos
+        for pedido in PEDIDOS:
+            if is_postgres:
+                cursor.execute(
+                    '''INSERT INTO pedidos (idpedido, idcliente, fechacreacion, fechaentrega, estado, total, 
+                    requiere_verificacion_pago, idrepartidor, direccionentrega, estado_pago, estado_pedido, 
+                    fecha_vencimiento, facturas_enviadas) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+                    ON CONFLICT DO NOTHING''',
+                    pedido
+                )
+            else:
+                cursor.execute(
+                    '''INSERT OR IGNORE INTO pedidos (idpedido, idcliente, fechacreacion, fechaentrega, estado, total, 
+                    requiere_verificacion_pago, idrepartidor, direccionentrega, estado_pago, estado_pedido, 
+                    fecha_vencimiento, facturas_enviadas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                    pedido
                 )
         
         # Insertar usuarios

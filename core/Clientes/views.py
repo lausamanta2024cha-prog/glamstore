@@ -57,8 +57,13 @@ def filtrar_productos_no_vencidos(productos_queryset):
                     productos_validos.append(producto)
         else:
             # Si no tiene lotes, mostrar si tiene stock > 0 (productos sin sistema de lotes)
+            # Usar stock en lugar de cantidadDisponible
             if producto.stock > 0:
-                producto.stock_real = producto.stock
+                # Usar cantidadDisponible si es positivo, sino usar stock
+                if producto.cantidadDisponible > 0:
+                    producto.stock_real = producto.cantidadDisponible
+                else:
+                    producto.stock_real = producto.stock
                 productos_validos.append(producto)
     
     return productos_validos

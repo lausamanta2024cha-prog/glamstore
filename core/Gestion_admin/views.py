@@ -1231,9 +1231,9 @@ def pedido_editar_view(request, id):
                 
                 repartidor = get_object_or_404(Repartidor, idRepartidor=repartidor_id)
                 pedido.idRepartidor = repartidor
-                # Cambiar estado del repartidor a "En Ruta" si se asigna
-                repartidor.estado_turno = 'En Ruta'
-                repartidor.save()
+                # TODO: estado_turno no existe en la BD
+                # repartidor.estado_turno = 'En Ruta'
+                # repartidor.save()
                 
                 # Si es una nueva asignación, actualizar movimientos de "EN_PREPARACION_SALIDA" a "SALIDA_VENTA"
                 if es_nueva_asignacion:
@@ -1250,8 +1250,9 @@ def pedido_editar_view(request, id):
                 # Si se desasigna el repartidor
                 if pedido.idRepartidor:
                     repartidor_anterior = pedido.idRepartidor
-                    repartidor_anterior.estado_turno = 'Disponible'
-                    repartidor_anterior.save()
+                    # TODO: estado_turno no existe en la BD
+                    # repartidor_anterior.estado_turno = 'Disponible'
+                    # repartidor_anterior.save()
                     
                     # Revertir movimientos de "SALIDA_VENTA" a "EN_PREPARACION_SALIDA"
                     movimientos_venta = MovimientoProducto.objects.filter(
@@ -1580,17 +1581,18 @@ def repartidor_agregar_view(request):
         nombre = request.POST.get('nombreRepartidor')
         telefono = request.POST.get('telefono')
         email = request.POST.get('email')
-        estado = request.POST.get('estado_turno')
+        # TODO: estado_turno no existe en la BD
+        # estado = request.POST.get('estado_turno')
         
         # Validación básica
-        if not nombre or not telefono or not email or not estado:
+        if not nombre or not telefono or not email:
             return render(request, 'repartidores_agregar.html', {'error_message': 'Todos los campos son obligatorios.'})
 
         Repartidor.objects.create(
             nombreRepartidor=nombre,
             telefono=telefono,
-            email=email,
-            estado_turno=estado
+            email=email
+            # estado_turno=estado
         )
         messages.success(request, f"Repartidor '{nombre}' agregado exitosamente.")
         return redirect('lista_repartidores')
@@ -1602,10 +1604,11 @@ def repartidor_editar_view(request, id):
         repartidor.nombreRepartidor = request.POST.get('nombreRepartidor')
         repartidor.telefono = request.POST.get('telefono')
         repartidor.email = request.POST.get('email')
-        repartidor.estado_turno = request.POST.get('estado_turno')
+        # TODO: estado_turno no existe en la BD
+        # repartidor.estado_turno = request.POST.get('estado_turno')
         
         # Validación básica
-        if not repartidor.nombreRepartidor or not repartidor.telefono or not repartidor.email or not repartidor.estado_turno:
+        if not repartidor.nombreRepartidor or not repartidor.telefono or not repartidor.email:
             return render(request, 'repartidores_editar.html', {'repartidor': repartidor, 'error_message': 'Todos los campos son obligatorios.'})
         repartidor.save()
         messages.success(request, f"Repartidor '{repartidor.nombreRepartidor}' actualizado exitosamente.")
@@ -1690,9 +1693,9 @@ def asignar_pedido_repartidor_view(request):
         
         pedido.save()
 
-        # Cambiar el estado del repartidor a "En Ruta"
-        repartidor.estado_turno = 'En Ruta'
-        repartidor.save()
+        # TODO: estado_turno no existe en la BD
+        # repartidor.estado_turno = 'En Ruta'
+        # repartidor.save()
         
         # Actualizar movimientos de "EN_PREPARACION_SALIDA" a "SALIDA_VENTA"
         # Buscar todos los movimientos de preparación relacionados con este pedido
@@ -1751,11 +1754,11 @@ def desasignar_repartidor_view(request, id_pedido):
     if request.method == 'POST':
         pedido = get_object_or_404(Pedido, idPedido=id_pedido)
         
-        # Cambiar el estado del repartidor a disponible
-        if pedido.idRepartidor:
-            repartidor = pedido.idRepartidor
-            repartidor.estado_turno = 'Disponible'
-            repartidor.save()
+        # TODO: estado_turno no existe en la BD
+        # if pedido.idRepartidor:
+        #     repartidor = pedido.idRepartidor
+        #     repartidor.estado_turno = 'Disponible'
+        #     repartidor.save()
         
         pedido.idRepartidor = None
         # Cambiar el estado del pedido de vuelta a Confirmado
@@ -1781,12 +1784,12 @@ def desasignar_pedidos_multiples_view(request):
             try:
                 pedido = Pedido.objects.get(idPedido=pedido_id)
                 
-                # Cambiar el estado del repartidor a disponible
+                # TODO: estado_turno no existe en la BD
                 if pedido.idRepartidor:
                     repartidor = pedido.idRepartidor
                     repartidores_liberados.add(repartidor.nombreRepartidor)
-                    repartidor.estado_turno = 'Disponible'
-                    repartidor.save()
+                    # repartidor.estado_turno = 'Disponible'
+                    # repartidor.save()
                 
                 # Desasignar repartidor
                 pedido.idRepartidor = None
@@ -2131,10 +2134,10 @@ def asignar_pedidos_multiples_view(request):
             except Pedido.DoesNotExist:
                 continue
         
-        # Cambiar el estado del repartidor a "En Ruta"
-        if pedidos_asignados > 0:
-            repartidor.estado_turno = 'En Ruta'
-            repartidor.save()
+        # TODO: estado_turno no existe en la BD
+        # if pedidos_asignados > 0:
+        #     repartidor.estado_turno = 'En Ruta'
+        #     repartidor.save()
         
         return redirect('lista_repartidores')
     

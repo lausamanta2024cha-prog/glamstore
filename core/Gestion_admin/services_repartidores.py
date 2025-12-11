@@ -93,7 +93,8 @@ def obtener_pedidos_sin_asignar(fecha=None):
 
 def obtener_repartidores_disponibles():
     """Obtiene los repartidores disponibles"""
-    return Repartidor.objects.filter(estado_turno='Disponible').order_by('idRepartidor')
+    # TODO: estado_turno no existe en la BD, retornar todos los repartidores por ahora
+    return Repartidor.objects.all().order_by('idRepartidor')
 
 
 def calcular_capacidad_repartidor(repartidor, fecha=None):

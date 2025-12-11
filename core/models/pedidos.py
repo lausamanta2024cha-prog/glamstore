@@ -17,12 +17,12 @@ class Pedido(models.Model):
         ('Problema en Entrega', 'Problema en Entrega'),
     ]
     
-    idPedido = models.AutoField(primary_key=True)
+    idPedido = models.AutoField(primary_key=True, db_column='idpedido')
     fechaCreacion = models.DateTimeField(db_column='fechacreacion', null=True, blank=True)
-    estado = models.CharField(max_length=20, default='Pedido Recibido')  # Mantener para compatibilidad
-    estado_pago = models.CharField(max_length=20, choices=ESTADO_PAGO_CHOICES, default='Pago Completo')
-    estado_pedido = models.CharField(max_length=20, choices=ESTADO_PEDIDO_CHOICES, default='Pedido Recibido')
-    total = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    estado = models.CharField(max_length=20, default='Pedido Recibido', db_column='estado')  # Mantener para compatibilidad
+    estado_pago = models.CharField(max_length=20, choices=ESTADO_PAGO_CHOICES, default='Pago Completo', db_column='estado_pago')
+    estado_pedido = models.CharField(max_length=20, choices=ESTADO_PEDIDO_CHOICES, default='Pedido Recibido', db_column='estado_pedido')
+    total = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, db_column='total')
     idCliente = models.ForeignKey('core.Cliente', on_delete=models.CASCADE, db_column='idcliente', null=True, blank=True)
     idRepartidor = models.ForeignKey(
         'core.Repartidor',
@@ -59,7 +59,7 @@ class Pedido(models.Model):
 
 
 class DetallePedido(models.Model):
-    idDetalle = models.AutoField(primary_key=True)
+    idDetalle = models.AutoField(primary_key=True, db_column='iddetalle')
     idPedido = models.ForeignKey(
         Pedido,
         on_delete=models.CASCADE,
@@ -74,14 +74,15 @@ class DetallePedido(models.Model):
         null=True,
         blank=True
     )
-    cantidad = models.PositiveIntegerField(default=1, blank=True, null=True)
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
-    subtotal = models.DecimalField(max_digits=12, decimal_places=2)
+    cantidad = models.PositiveIntegerField(default=1, blank=True, null=True, db_column='cantidad')
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, db_column='precio_unitario')
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, db_column='subtotal')
     margen_ganancia = models.DecimalField(
         max_digits=5, 
         decimal_places=2, 
         default=10,
-        help_text="Margen de ganancia que se cobró en este pedido"
+        help_text="Margen de ganancia que se cobró en este pedido",
+        db_column='margen_ganancia'
     )
 
     class Meta:
@@ -108,7 +109,7 @@ class PedidoProducto(models.Model):
         null=True,
         blank=True
     )
-    cantidad = models.IntegerField(blank=True, null=True)
+    cantidad = models.IntegerField(blank=True, null=True, db_column='cantidad')
 
     class Meta:
         db_table = 'pedidoproducto'

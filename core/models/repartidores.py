@@ -2,11 +2,11 @@ from django.db import models
 from django.db import connection
 
 class Repartidor(models.Model):
-    idRepartidor = models.AutoField(primary_key=True)
-    nombreRepartidor = models.CharField(max_length=50, null=True)
-    telefono = models.CharField(max_length=20, null=True)
-    email = models.EmailField(max_length=100, null=True, blank=True)
-    estado_turno = models.CharField(max_length=20, null=True, default='Disponible')
+    idRepartidor = models.AutoField(primary_key=True, db_column='idrepartidor')
+    nombreRepartidor = models.CharField(max_length=50, null=True, db_column='nombrerepartidor')
+    telefono = models.CharField(max_length=20, null=True, db_column='telefono')
+    email = models.EmailField(max_length=100, null=True, blank=True, db_column='email')
+    estado_turno = models.CharField(max_length=20, null=True, default='Disponible', db_column='estado_turno')
 
     class Meta:
         db_table = 'repartidores'   

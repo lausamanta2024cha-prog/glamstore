@@ -3,7 +3,7 @@ from django.db import connection
 
 class Repartidor(models.Model):
     idRepartidor = models.AutoField(primary_key=True, db_column='idrepartidor')
-    nombreRepartidor = models.CharField(max_length=50, null=True, db_column='nombreRepartidor')
+    nombreRepartidor = models.CharField(max_length=50, null=True, db_column='nombrerepartidor')
     telefono = models.CharField(max_length=20, null=True, db_column='telefono')
     email = models.EmailField(max_length=100, null=True, blank=True, db_column='email')
 

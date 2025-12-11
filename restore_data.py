@@ -77,30 +77,55 @@ PRODUCTOS = [
 ]
 
 try:
+    from django.db import connection
+    db_engine = connection.settings_dict.get('ENGINE', '')
+    is_postgres = 'postgresql' in db_engine
+    
     with connection.cursor() as cursor:
         # Insertar categorias
         for cat in CATEGORIAS:
-            cursor.execute(
-                'INSERT OR IGNORE INTO categorias (idCategoria, nombreCategoria, descripcion, imagen) VALUES (?, ?, ?, ?)',
-                cat
-            )
+            if is_postgres:
+                cursor.execute(
+                    'INSERT INTO categorias (idCategoria, nombreCategoria, descripcion, imagen) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING',
+                    cat
+                )
+            else:
+                cursor.execute(
+                    'INSERT OR IGNORE INTO categorias (idCategoria, nombreCategoria, descripcion, imagen) VALUES (?, ?, ?, ?)',
+                    cat
+                )
         
         # Insertar subcategorias
         for subcat in SUBCATEGORIAS:
-            cursor.execute(
-                'INSERT OR IGNORE INTO subcategorias (idSubcategoria, nombreSubcategoria, idCategoria) VALUES (?, ?, ?)',
-                subcat
-            )
+            if is_postgres:
+                cursor.execute(
+                    'INSERT INTO subcategorias (idSubcategoria, nombreSubcategoria, idCategoria) VALUES (%s, %s, %s) ON CONFLICT DO NOTHING',
+                    subcat
+                )
+            else:
+                cursor.execute(
+                    'INSERT OR IGNORE INTO subcategorias (idSubcategoria, nombreSubcategoria, idCategoria) VALUES (?, ?, ?)',
+                    subcat
+                )
         
         # Insertar productos
         for prod in PRODUCTOS:
-            cursor.execute(
-                '''INSERT OR IGNORE INTO productos 
-                (idProducto, nombreProducto, precio, stock, descripcion, lote, cantidadDisponible, 
-                fechaIngreso, fechaVencimiento, idCategoria, imagen, idSubcategoria, precio_venta) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                prod
-            )
+            if is_postgres:
+                cursor.execute(
+                    '''INSERT INTO productos 
+                    (idProducto, nombreProducto, precio, stock, descripcion, lote, cantidadDisponible, 
+                    fechaIngreso, fechaVencimiento, idCategoria, imagen, idSubcategoria, precio_venta) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING''',
+                    prod
+                )
+            else:
+                cursor.execute(
+                    '''INSERT OR IGNORE INTO productos 
+                    (idProducto, nombreProducto, precio, stock, descripcion, lote, cantidadDisponible, 
+                    fechaIngreso, fechaVencimiento, idCategoria, imagen, idSubcategoria, precio_venta) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                    prod
+                )
     
     print("Datos restaurados exitosamente")
 except Exception as e:

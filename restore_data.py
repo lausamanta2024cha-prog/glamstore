@@ -13,6 +13,16 @@ USUARIOS = [
     (21, 'admin123@glamstore.com', 'pbkdf2_sha256$600000$H6vyXqLqUoINBizXnvyy0c$a0I72ZuNVaMkLAqYPysxkr+IVE7kercJAzzECxFChYs=', 1, None, '2025-11-24 13:40:20', 'Lauren Samanta Ortiz', None, None, None, None, '2025-12-10 19:17:58'),
 ]
 
+# Datos reales de clientes (del backup mas reciente)
+CLIENTES = [
+    (2, '10002', 'Laura Gómez', 'laura.gomez@gmail.com', 'Carrera 45 #12-34 Montería', '2147483647'),
+    (13, '7410852', 'william fontecha', 'carlos@gmail.com', '58bis, Rafael Uribe Uribe, Bogotá, Bogotá D.C. (9-49)', '3115176388'),
+    (15, '441515', 'lalaa ortega ', 'lala@gmail.com', 'carrera 19a 11, Teusaquillo, Bogotá, Bogotá D.C. - conjunto albarosa', '3024892804'),
+    (17, '441515', 'laura torres', 'lauratorres@gmail.com', 'carrera 19a 11a 67, Engativá, Bogotá, Bogotá D.C. (9-49)', '3024892804'),
+    (18, '458527', 'laura tibaque', 'lauratibaque@gmail.com', 'carrera 19a 11a 67, Comuna 4 - Cazucá, Soacha, Cundinamarca (9-49)', '3025458285'),
+    (20, '1234567', 'lauren ortiz', 'laurensamanta0.r@gmail.com', 'carrera 19a 11a 67, Barrios Unidos, Bogotá, Bogotá D.C. - 9-49', '3024892804'),
+]
+
 # Datos de configuración global
 CONFIGURACION = [
     (1, 10.00, '2025-12-11 06:00:00'),
@@ -93,6 +103,19 @@ try:
     is_postgres = 'postgresql' in db_engine
     
     with connection.cursor() as cursor:
+        # Insertar clientes
+        for cliente in CLIENTES:
+            if is_postgres:
+                cursor.execute(
+                    'INSERT INTO clientes (idcliente, cedula, nombre, email, direccion, telefono) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING',
+                    cliente
+                )
+            else:
+                cursor.execute(
+                    'INSERT OR IGNORE INTO clientes (idcliente, cedula, nombre, email, direccion, telefono) VALUES (?, ?, ?, ?, ?, ?)',
+                    cliente
+                )
+        
         # Insertar usuarios
         for user in USUARIOS:
             if is_postgres:

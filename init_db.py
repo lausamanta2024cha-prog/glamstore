@@ -9,6 +9,14 @@ django.setup()
 
 # SQL para crear todas las tablas
 CREATE_TABLES_SQL = """
+DROP TABLE IF EXISTS detallepedido CASCADE;
+DROP TABLE IF EXISTS pedidos CASCADE;
+DROP TABLE IF EXISTS clientes CASCADE;
+DROP TABLE IF EXISTS productos CASCADE;
+DROP TABLE IF EXISTS subcategorias CASCADE;
+DROP TABLE IF EXISTS categorias CASCADE;
+DROP TABLE IF EXISTS auth_user CASCADE;
+
 CREATE TABLE IF NOT EXISTS categorias (
     "idCategoria" SERIAL PRIMARY KEY,
     "nombreCategoria" VARCHAR(20) NOT NULL,

@@ -9,18 +9,18 @@ django.setup()
 
 # SQL para crear todas las tablas
 CREATE_TABLES_SQL = """
-CREATE TABLE IF NOT EXISTS categoria (
-    "idCategoria" BIGSERIAL PRIMARY KEY,
-    "nombreCategoria" VARCHAR(50) NOT NULL,
+CREATE TABLE IF NOT EXISTS categorias (
+    "idCategoria" SERIAL PRIMARY KEY,
+    "nombreCategoria" VARCHAR(20) NOT NULL,
     "descripcion" TEXT,
     "imagen" VARCHAR(100)
 );
 
-CREATE TABLE IF NOT EXISTS subcategoria (
-    "idSubcategoria" BIGSERIAL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS subcategorias (
+    "idSubcategoria" SERIAL PRIMARY KEY,
     "nombreSubcategoria" VARCHAR(50) NOT NULL,
     "descripcion" TEXT,
-    "idCategoria" BIGINT REFERENCES categoria("idCategoria") ON DELETE SET NULL
+    "idCategoria" INTEGER REFERENCES categorias("idCategoria") ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS productos (

@@ -4,10 +4,10 @@ from .pedidos import Pedido
 from decimal import Decimal
 
 class MovimientoProducto(models.Model):
-    idMovimiento = models.AutoField(primary_key=True)
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='movimientos')
-    fecha = models.DateTimeField(auto_now_add=True)
-    tipo_movimiento = models.CharField(max_length=50, choices=[
+    idMovimiento = models.AutoField(primary_key=True, db_column='idmovimiento')
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name='movimientos', db_column='producto_id')
+    fecha = models.DateTimeField(auto_now_add=True, db_column='fecha')
+    tipo_movimiento = models.CharField(max_length=50, db_column='tipo_movimiento', choices=[
         ('ENTRADA_INICIAL', 'Entrada Inicial'),
         ('AJUSTE_MANUAL_ENTRADA', 'Ajuste Manual (Entrada)'),
         ('AJUSTE_MANUAL_SALIDA', 'Ajuste Manual (Salida)'),
@@ -15,22 +15,22 @@ class MovimientoProducto(models.Model):
         ('EN_PREPARACION_SALIDA', 'En Preparación (Apartado)'),
         ('PERDIDA_VENCIMIENTO', 'Pérdida por Vencimiento'),
     ])
-    cantidad = models.IntegerField()
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    costo_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Costo por unidad para movimientos de entrada.")
-    stock_anterior = models.IntegerField()
-    stock_nuevo = models.IntegerField()
+    cantidad = models.IntegerField(db_column='cantidad')
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0, db_column='precio_unitario')
+    costo_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0, db_column='costo_unitario', help_text="Costo por unidad para movimientos de entrada.")
+    stock_anterior = models.IntegerField(db_column='stock_anterior')
+    stock_nuevo = models.IntegerField(db_column='stock_nuevo')
     id_pedido = models.ForeignKey(Pedido, on_delete=models.SET_NULL, null=True, blank=True, db_column='idpedido')
-    descripcion = models.CharField(max_length=255, blank=True, null=True)
+    descripcion = models.CharField(max_length=255, blank=True, null=True, db_column='descripcion')
     
     # Campos adicionales para reabastecimiento
-    lote = models.CharField(max_length=100, blank=True, null=True, help_text="Código del lote del producto")
-    fecha_vencimiento = models.DateField(blank=True, null=True, help_text="Fecha de vencimiento del producto")
-    total_con_iva = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Total incluyendo IVA")
-    iva = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Valor del IVA (19%)")
+    lote = models.CharField(max_length=100, blank=True, null=True, db_column='lote', help_text="Código del lote del producto")
+    fecha_vencimiento = models.DateField(blank=True, null=True, db_column='fecha_vencimiento', help_text="Fecha de vencimiento del producto")
+    total_con_iva = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, db_column='total_con_iva', help_text="Total incluyendo IVA")
+    iva = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, db_column='iva', help_text="Valor del IVA (19%)")
     
     # Campo para trazabilidad de lotes (para salidas)
-    lote_origen = models.ForeignKey('LoteProducto', on_delete=models.SET_NULL, null=True, blank=True, 
+    lote_origen = models.ForeignKey('LoteProducto', on_delete=models.SET_NULL, null=True, blank=True, db_column='lote_origen_id',
                                    help_text="Lote del cual salió el producto (para movimientos de salida)")
 
     class Meta:

@@ -1,6 +1,6 @@
 # Generated migration to create configuracion_global table
 
-from django.db import migrations, models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
@@ -10,18 +10,18 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='ConfiguracionGlobal',
-            fields=[
-                ('id', models.BigAutoField(db_column='id', primary_key=True, serialize=False)),
-                ('margen_ganancia', models.DecimalField(db_column='margen_ganancia', decimal_places=2, default=10, help_text='Porcentaje de ganancia global para todos los productos (ej: 10 para 10%)', max_digits=5)),
-                ('fecha_actualizacion', models.DateTimeField(auto_now=True, db_column='fecha_actualizacion')),
-            ],
-            options={
-                'verbose_name': 'Configuración Global',
-                'verbose_name_plural': 'Configuración Global',
-                'db_table': 'configuracion_global',
-                'managed': False,
-            },
+        migrations.RunSQL(
+            sql="""
+            CREATE TABLE IF NOT EXISTS configuracion_global (
+                id BIGSERIAL PRIMARY KEY,
+                margen_ganancia DECIMAL(5, 2) DEFAULT 10.00,
+                fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            """,
+            reverse_sql="DROP TABLE IF EXISTS configuracion_global CASCADE;",
+        ),
+        migrations.RunSQL(
+            sql="INSERT INTO configuracion_global (id, margen_ganancia, fecha_actualizacion) VALUES (1, 10.00, CURRENT_TIMESTAMP) ON CONFLICT DO NOTHING;",
+            reverse_sql="DELETE FROM configuracion_global WHERE id = 1;",
         ),
     ]

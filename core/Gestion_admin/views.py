@@ -1554,34 +1554,10 @@ def lista_repartidores_view(request):
     # Obtener repartidores
     repartidores = Repartidor.objects.all().order_by('nombreRepartidor')
     
-    # Filtros
-    filtro_repartidor = request.GET.get('repartidor')
-    filtro_estado = request.GET.get('estado')
-    
-    # Pedidos pendientes (sin repartidor asignado y con pago confirmado)
-    pedidos_pendientes = Pedido.objects.filter(
-        idRepartidor__isnull=True,
-        estado_pago__in=['Pago Completo', 'Pago Parcial']
-    ).select_related('idCliente').order_by('fechaCreacion')
-    
-    # Pedidos asignados
-    pedidos_asignados = Pedido.objects.filter(
-        idRepartidor__isnull=False
-    ).select_related('idCliente', 'idRepartidor').order_by('-fechaCreacion')
-    
-    # Aplicar filtros
-    if filtro_repartidor:
-        pedidos_asignados = pedidos_asignados.filter(idRepartidor__idRepartidor=filtro_repartidor)
-    
-    if filtro_estado == 'pendiente':
-        pedidos_asignados = Pedido.objects.none()  # No mostrar asignados
-    elif filtro_estado == 'asignado':
-        pedidos_pendientes = Pedido.objects.none()  # No mostrar pendientes
-    
     return render(request, 'lista_repartidores.html', {
         'repartidores': repartidores,
-        'pedidos_pendientes': pedidos_pendientes,
-        'pedidos_asignados': pedidos_asignados,
+        'pedidos_pendientes': [],
+        'pedidos_asignados': [],
     })
 
 def repartidor_agregar_view(request):

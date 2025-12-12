@@ -29,7 +29,8 @@ class Pedido(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        db_column='idrepartidor'
+        db_column='idrepartidor',
+        related_name='pedidos'
     )
     fecha_vencimiento = models.DateField(null=True, blank=True, db_column='fecha_vencimiento')
     facturas_enviadas = models.PositiveIntegerField(default=0, db_column='facturas_enviadas')

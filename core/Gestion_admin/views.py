@@ -1553,7 +1553,7 @@ def lista_repartidores_view(request):
     
     # Obtener repartidores con conteo de pedidos
     repartidores = Repartidor.objects.annotate(
-        pedidos_count=Count('idrepartidor')
+        pedidos_count=Count('pedidos')
     ).order_by('nombreRepartidor')
     
     # Filtros

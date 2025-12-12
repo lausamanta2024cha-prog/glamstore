@@ -639,29 +639,41 @@ def producto_eliminar_view(request, id):
     return redirect('lista_productos')
 
 def movimientos_producto_view(request, id):
-    producto = get_object_or_404(Producto, idProducto=id)
-    movimientos = producto.movimientos.all().select_related('id_pedido', 'lote_origen')
-    
-    # Obtener lotes disponibles para el producto
-    from core.models import LoteProducto
-    lotes_disponibles = LoteProducto.objects.filter(
-        producto=producto,
-        cantidad_disponible__gt=0
-    ).order_by('fecha_entrada')
-    
-    # Obtener el lote activo (el más antiguo con stock, según FIFO)
-    lote_activo = lotes_disponibles.first() if lotes_disponibles.exists() else None
-    
-    # Obtener proveedores (distribuidores)
-    proveedores = Distribuidor.objects.all().order_by('nombreDistribuidor')
-    
-    return render(request, 'movimientos_producto.html', {
-        'producto': producto,
-        'movimientos': movimientos,
-        'lotes_disponibles': lotes_disponibles,
-        'lote_activo': lote_activo,
-        'proveedores': proveedores
-    })
+    try:
+        producto = get_object_or_404(Producto, idProducto=id)
+        
+        # Obtener movimientos de forma segura
+        from core.models.movimientos import MovimientoProducto
+        movimientos = MovimientoProducto.objects.filter(
+            producto=producto
+        ).select_related('id_pedido', 'lote_origen').order_by('-fecha')
+        
+        # Obtener lotes disponibles para el producto
+        from core.models import LoteProducto
+        lotes_disponibles = LoteProducto.objects.filter(
+            producto=producto,
+            cantidad_disponible__gt=0
+        ).order_by('fecha_entrada')
+        
+        # Obtener el lote activo (el más antiguo con stock, según FIFO)
+        lote_activo = lotes_disponibles.first() if lotes_disponibles.exists() else None
+        
+        # Obtener proveedores (distribuidores)
+        proveedores = Distribuidor.objects.all().order_by('nombreDistribuidor')
+        
+        return render(request, 'movimientos_producto.html', {
+            'producto': producto,
+            'movimientos': movimientos,
+            'lotes_disponibles': lotes_disponibles,
+            'lote_activo': lote_activo,
+            'proveedores': proveedores
+        })
+    except Exception as e:
+        print(f"Error en movimientos_producto_view: {e}")
+        import traceback
+        traceback.print_exc()
+        messages.error(request, f"Error al cargar movimientos: {str(e)}")
+        return redirect('lista_productos')
 
 def obtener_margen_global_view(request):
     """Obtiene el margen de ganancia global actual"""

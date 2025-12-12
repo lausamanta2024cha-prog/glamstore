@@ -3,13 +3,13 @@ set -o errexit
 
 echo "=== Starting GlamStore Build Process ==="
 
-# Run database initialization
-echo "1. Initializing database..."
-python init_db.py
-
-# Run migrations
-echo "2. Running migrations..."
+# Run migrations first
+echo "1. Running migrations..."
 python manage.py migrate
+
+# Initialize database with users
+echo "2. Initializing database..."
+python init_db.py
 
 # Collect static files
 echo "3. Collecting static files..."

@@ -20,17 +20,32 @@ class Repartidor(models.Model):
         """Asegura que la columna email existe en la tabla"""
         try:
             with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT COLUMN_NAME 
-                    FROM INFORMATION_SCHEMA.COLUMNS 
-                    WHERE TABLE_NAME = 'repartidores' 
-                    AND COLUMN_NAME = 'email'
-                """)
-                if not cursor.fetchone():
+                # Intentar con PostgreSQL primero
+                try:
                     cursor.execute("""
-                        ALTER TABLE repartidores 
-                        ADD COLUMN email VARCHAR(100) NULL DEFAULT NULL
+                        SELECT column_name 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'repartidores' 
+                        AND column_name = 'email'
                     """)
+                    if not cursor.fetchone():
+                        cursor.execute("""
+                            ALTER TABLE repartidores 
+                            ADD COLUMN email VARCHAR(100) NULL DEFAULT NULL
+                        """)
+                except:
+                    # Si falla, intentar con MySQL
+                    cursor.execute("""
+                        SELECT COLUMN_NAME 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_NAME = 'repartidores' 
+                        AND COLUMN_NAME = 'email'
+                    """)
+                    if not cursor.fetchone():
+                        cursor.execute("""
+                            ALTER TABLE repartidores 
+                            ADD COLUMN email VARCHAR(100) NULL DEFAULT NULL
+                        """)
         except Exception:
             pass 
     
@@ -39,19 +54,34 @@ class Repartidor(models.Model):
         """Asegura que la columna telefono tiene el tamaño correcto"""
         try:
             with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT COLUMN_TYPE 
-                    FROM INFORMATION_SCHEMA.COLUMNS 
-                    WHERE TABLE_NAME = 'repartidores' 
-                    AND COLUMN_NAME = 'telefono'
-                """)
-                result = cursor.fetchone()
-                if result and 'varchar(11)' in result[0].lower():
-                    # Aumentar el tamaño del campo
+                # Intentar con PostgreSQL primero
+                try:
                     cursor.execute("""
-                        ALTER TABLE repartidores 
-                        MODIFY COLUMN telefono VARCHAR(20) NULL
+                        SELECT data_type 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'repartidores' 
+                        AND column_name = 'telefono'
                     """)
+                    result = cursor.fetchone()
+                    if result:
+                        cursor.execute("""
+                            ALTER TABLE repartidores 
+                            ALTER COLUMN telefono TYPE VARCHAR(20)
+                        """)
+                except:
+                    # Si falla, intentar con MySQL
+                    cursor.execute("""
+                        SELECT COLUMN_TYPE 
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_NAME = 'repartidores' 
+                        AND COLUMN_NAME = 'telefono'
+                    """)
+                    result = cursor.fetchone()
+                    if result and 'varchar(11)' in result[0].lower():
+                        cursor.execute("""
+                            ALTER TABLE repartidores 
+                            MODIFY COLUMN telefono VARCHAR(20) NULL
+                        """)
         except Exception:
             pass     
 

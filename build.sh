@@ -3,16 +3,20 @@ set -o errexit
 
 echo "=== Starting GlamStore Build Process ==="
 
+# Download media files from GitHub
+echo "1. Downloading media files..."
+python download_media.py
+
 # Run migrations first
-echo "1. Running migrations..."
+echo "2. Running migrations..."
 python manage.py migrate
 
 # Initialize database with users
-echo "2. Initializing database..."
+echo "3. Initializing database..."
 python init_db.py
 
 # Collect static files
-echo "3. Collecting static files..."
+echo "4. Collecting static files..."
 python manage.py collectstatic --noinput
 
 echo "=== Build process completed successfully ==="

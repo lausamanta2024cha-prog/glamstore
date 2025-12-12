@@ -387,7 +387,20 @@ from core.models import DetallePedido
 
 def simular_pago(request):
     """
-    Simula el procesamiento de un pago y crea el pedido
+    Simula el procesamiento de un pago y crea el pedido.
+    
+    IMPORTANTE: Esta vista NO requiere login. Los clientes pueden hacer pedidos sin iniciar sesión.
+    - Se crea o actualiza un cliente con los datos proporcionados
+    - Se crea el pedido
+    - Se envía la factura al correo del cliente
+    - El cliente recibe un ID de pedido para seguimiento sin login
+    
+    Solo requiere login para:
+    - Ver perfil
+    - Ver todos los pedidos
+    - Ver seguimiento de pedidos
+    - Calificar entregas
+    - Reportar problemas
     """
     print("\n" + "="*50)
     print("INICIO DE SIMULAR_PAGO")

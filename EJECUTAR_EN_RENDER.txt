@@ -8,10 +8,10 @@ INSTRUCCIONES PARA EJECUTAR EN RENDER
 
 COMANDO 1: Restaurar BD desde SQL
 ----------------------------------
-cd ~/project/src && python manage.py populate_data glamstoredb.sql
+cd ~/project/src && python restore_database.py glamstoredb.sql
 
 Deberías ver:
-✓ BD restaurada exitosamente (X statements ejecutados)
+✓ BD restaurada exitosamente
 
 
 COMANDO 2: Exportar datos a JSON

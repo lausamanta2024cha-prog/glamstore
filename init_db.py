@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import sys
 import django
 from django.conf import settings
 from decimal import Decimal
@@ -11,8 +12,12 @@ print("Restaurando datos de la base de datos...")
 
 # Ahora crear usuarios y datos
 print("\nCreando usuarios y datos...")
-from core.models import Usuario
-from datetime import datetime
+try:
+    from core.models import Usuario
+    from datetime import datetime
+except Exception as e:
+    print(f"ERROR al importar modelos: {e}")
+    sys.exit(1)
 
 USUARIOS = [
     {
@@ -47,29 +52,39 @@ USUARIOS = [
     },
 ]
 
-for user_data in USUARIOS:
-    usuario, created = Usuario.objects.get_or_create(
-        idUsuario=user_data['idUsuario'],
-        defaults={
-            'email': user_data['email'],
-            'password': user_data['password'],
-            'id_rol': user_data['id_rol'],
-            'nombre': user_data['nombre'],
-            'telefono': user_data['telefono'],
-            'direccion': user_data['direccion'],
-            'fechaCreacion': user_data['fechaCreacion'],
-        }
-    )
-    if created:
-        print(f"  [OK] Usuario creado: {usuario.nombre}")
-    else:
-        print(f"  [OK] Usuario ya existe: {usuario.nombre}")
+try:
+    for user_data in USUARIOS:
+        try:
+            usuario, created = Usuario.objects.get_or_create(
+                idUsuario=user_data['idUsuario'],
+                defaults={
+                    'email': user_data['email'],
+                    'password': user_data['password'],
+                    'id_rol': user_data['id_rol'],
+                    'nombre': user_data['nombre'],
+                    'telefono': user_data['telefono'],
+                    'direccion': user_data['direccion'],
+                    'fechaCreacion': user_data['fechaCreacion'],
+                }
+            )
+            if created:
+                print(f"  [OK] Usuario creado: {usuario.nombre}")
+            else:
+                print(f"  [OK] Usuario ya existe: {usuario.nombre}")
+        except Exception as e:
+            print(f"  [ERROR] Error al crear usuario {user_data['email']}: {e}")
+except Exception as e:
+    print(f"ERROR crítico al crear usuarios: {e}")
 
-print("\n[OK] Inicializacion completada exitosamente")
+print("\n[OK] Inicializacion de usuarios completada")
 
 # Restaurar categorias y subcategorias
 print("\nRestaurando categorias y subcategorias...")
-from core.models.categoria import Categoria, Subcategoria
+try:
+    from core.models.categoria import Categoria, Subcategoria
+except Exception as e:
+    print(f"ERROR al importar Categoria: {e}")
+    sys.exit(1)
 
 CATEGORIAS = [
     {'idCategoria': 1, 'nombreCategoria': 'Rostro', 'descripcion': 'Base, correctores, polvos compactos, rubores e iluminadores', 'imagen': 'categorias/rostro.avif'},
@@ -80,17 +95,23 @@ CATEGORIAS = [
     {'idCategoria': 9, 'nombreCategoria': 'Cuidado Facial', 'descripcion': 'cremas,serums', 'imagen': 'categorias/cuidado_facial_T4konPk.jpg'},
 ]
 
-for cat_data in CATEGORIAS:
-    cat, created = Categoria.objects.get_or_create(
-        idCategoria=cat_data['idCategoria'],
-        defaults={
-            'nombreCategoria': cat_data['nombreCategoria'],
-            'descripcion': cat_data['descripcion'],
-            'imagen': cat_data['imagen'],
-        }
-    )
-    if created:
-        print(f"  [OK] Categoria: {cat.nombreCategoria}")
+try:
+    for cat_data in CATEGORIAS:
+        try:
+            cat, created = Categoria.objects.get_or_create(
+                idCategoria=cat_data['idCategoria'],
+                defaults={
+                    'nombreCategoria': cat_data['nombreCategoria'],
+                    'descripcion': cat_data['descripcion'],
+                    'imagen': cat_data['imagen'],
+                }
+            )
+            if created:
+                print(f"  [OK] Categoria: {cat.nombreCategoria}")
+        except Exception as e:
+            print(f"  [ERROR] Error al crear categoría {cat_data['idCategoria']}: {e}")
+except Exception as e:
+    print(f"ERROR crítico al crear categorías: {e}")
 
 SUBCATEGORIAS = [
     {'idSubcategoria': 1, 'nombreSubcategoria': 'Base', 'idCategoria': 1},
@@ -117,24 +138,33 @@ SUBCATEGORIAS = [
     {'idSubcategoria': 28, 'nombreSubcategoria': 'Serums', 'idCategoria': 9},
 ]
 
-for subcat_data in SUBCATEGORIAS:
-    try:
-        categoria = Categoria.objects.get(idCategoria=subcat_data['idCategoria'])
-        subcat, created = Subcategoria.objects.get_or_create(
-            idSubcategoria=subcat_data['idSubcategoria'],
-            defaults={
-                'nombreSubcategoria': subcat_data['nombreSubcategoria'],
-                'categoria': categoria,
-            }
-        )
-        if created:
-            print(f"  [OK] Subcategoria: {subcat.nombreSubcategoria}")
-    except Categoria.DoesNotExist:
-        pass
+try:
+    for subcat_data in SUBCATEGORIAS:
+        try:
+            categoria = Categoria.objects.get(idCategoria=subcat_data['idCategoria'])
+            subcat, created = Subcategoria.objects.get_or_create(
+                idSubcategoria=subcat_data['idSubcategoria'],
+                defaults={
+                    'nombreSubcategoria': subcat_data['nombreSubcategoria'],
+                    'categoria': categoria,
+                }
+            )
+            if created:
+                print(f"  [OK] Subcategoria: {subcat.nombreSubcategoria}")
+        except Categoria.DoesNotExist:
+            pass
+        except Exception as e:
+            print(f"  [ERROR] Error al crear subcategoría {subcat_data['idSubcategoria']}: {e}")
+except Exception as e:
+    print(f"ERROR crítico al crear subcategorías: {e}")
 
 # Restaurar productos
 print("\nRestaurando productos...")
-from core.models.productos import Producto
+try:
+    from core.models.productos import Producto
+except Exception as e:
+    print(f"ERROR al importar Producto: {e}")
+    sys.exit(1)
 
 PRODUCTOS = [
     {'idProducto': 7700000000001, 'nombreProducto': 'Rubor Rosado Glow', 'precio': 34000.00, 'stock': 469, 'descripcion': 'Rubor en polvo con acabado satinado y pigmento suave.', 'lote': 'L2025-11', 'cantidadDisponible': 50, 'fechaIngreso': '2025-11-07 07:01:07', 'fechaVencimiento': '2027-11-01', 'idCategoria': 1, 'imagen': 'productos/rubor.jpg', 'idSubcategoria': 4, 'precio_venta': 44100},
@@ -168,33 +198,38 @@ PRODUCTOS = [
     {'idProducto': 7709876543221, 'nombreProducto': 'Serum Centella Asiática', 'precio': 8500.00, 'stock': 8, 'descripcion': 'Serum Centella Asiática Antiedad Calmante Control Poros Tipo De Piel Todo Tipo', 'lote': None, 'cantidadDisponible': 0, 'fechaIngreso': '2025-12-10 19:03:58', 'fechaVencimiento': None, 'idCategoria': 9, 'imagen': 'productos/Serum_Centella_Asiática_Antiedad_Calmante_Control_Poros_Tipo_De_Piel_Todo_Tipo_h3J3iRp.png', 'idSubcategoria': 28, 'precio_venta': 11050},
 ]
 
-for prod_data in PRODUCTOS:
-    try:
-        categoria = Categoria.objects.get(idCategoria=prod_data['idCategoria'])
-        subcategoria = None
-        if prod_data['idSubcategoria']:
-            subcategoria = Subcategoria.objects.get(idSubcategoria=prod_data['idSubcategoria'])
-        
-        prod, created = Producto.objects.get_or_create(
-            idProducto=prod_data['idProducto'],
-            defaults={
-                'nombreProducto': prod_data['nombreProducto'],
-                'precio': prod_data['precio'],
-                'stock': prod_data['stock'],
-                'descripcion': prod_data['descripcion'],
-                'lote': prod_data['lote'],
-                'cantidadDisponible': prod_data['cantidadDisponible'],
-                'fechaIngreso': prod_data['fechaIngreso'],
-                'fechaVencimiento': prod_data['fechaVencimiento'],
-                'idCategoria': categoria,
-                'imagen': prod_data['imagen'],
-                'idSubcategoria': subcategoria,
-                'precio_venta': prod_data['precio_venta'],
-            }
-        )
-        if created:
-            print(f"  [OK] Producto: {prod.nombreProducto}")
-    except (Categoria.DoesNotExist, Subcategoria.DoesNotExist) as e:
-        print(f"  [ERROR] Error al crear producto {prod_data['idProducto']}: {e}")
+try:
+    for prod_data in PRODUCTOS:
+        try:
+            categoria = Categoria.objects.get(idCategoria=prod_data['idCategoria'])
+            subcategoria = None
+            if prod_data['idSubcategoria']:
+                subcategoria = Subcategoria.objects.get(idSubcategoria=prod_data['idSubcategoria'])
+            
+            prod, created = Producto.objects.get_or_create(
+                idProducto=prod_data['idProducto'],
+                defaults={
+                    'nombreProducto': prod_data['nombreProducto'],
+                    'precio': prod_data['precio'],
+                    'stock': prod_data['stock'],
+                    'descripcion': prod_data['descripcion'],
+                    'lote': prod_data['lote'],
+                    'cantidadDisponible': prod_data['cantidadDisponible'],
+                    'fechaIngreso': prod_data['fechaIngreso'],
+                    'fechaVencimiento': prod_data['fechaVencimiento'],
+                    'idCategoria': categoria,
+                    'imagen': prod_data['imagen'],
+                    'idSubcategoria': subcategoria,
+                    'precio_venta': prod_data['precio_venta'],
+                }
+            )
+            if created:
+                print(f"  [OK] Producto: {prod.nombreProducto}")
+        except (Categoria.DoesNotExist, Subcategoria.DoesNotExist) as e:
+            print(f"  [ERROR] Error al crear producto {prod_data['idProducto']}: {e}")
+        except Exception as e:
+            print(f"  [ERROR] Error inesperado al crear producto {prod_data['idProducto']}: {e}")
+except Exception as e:
+    print(f"ERROR crítico al crear productos: {e}")
 
 print("\n[OK] Inicializacion completada exitosamente")

@@ -1545,11 +1545,11 @@ def verificar_y_actualizar_pedidos_entregados():
     return pedidos_actualizados
 
 def lista_repartidores_view(request):
-    # Asegurar que la columna email existe
-    Repartidor.ensure_email_column_exists()
-    
-    # Verificar y actualizar pedidos automáticamente
-    verificar_y_actualizar_pedidos_entregados()
+    try:
+        # Asegurar que la columna email existe
+        Repartidor.ensure_email_column_exists()
+    except Exception:
+        pass
     
     # Obtener repartidores
     repartidores = Repartidor.objects.all().order_by('nombreRepartidor')

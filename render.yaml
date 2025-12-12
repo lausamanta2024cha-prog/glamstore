@@ -10,3 +10,5 @@ services:
         scope: build
       - key: PYTHON_VERSION
         value: 3.13.0
+    # Force Render to use this configuration
+    preDeployCommand: echo "Deploying GlamStore"

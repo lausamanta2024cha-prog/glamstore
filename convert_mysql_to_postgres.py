@@ -51,8 +51,8 @@ def convert_mysql_to_postgres(sql_content):
     # 12. Reemplazar CONSTRAINT ... FOREIGN KEY por ALTER TABLE
     # Esto es más complejo, lo dejamos para después
     
-    # 13. Limpiar espacios múltiples
-    sql_content = re.sub(r'\s+', ' ', sql_content)
+    # 13. NO limpiar espacios múltiples (mantener formato)
+    # sql_content = re.sub(r'\s+', ' ', sql_content)
     
     return sql_content
 

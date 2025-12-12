@@ -29,9 +29,11 @@ def convert_mysql_to_postgres(sql_content):
     sql_content = re.sub(r'SET\s+time_zone\s*=\s*[^;]*;', '', sql_content, flags=re.IGNORECASE)
     sql_content = re.sub(r'SET\s+@OLD_[^;]*;', '', sql_content, flags=re.IGNORECASE)
     sql_content = re.sub(r'SET\s+NAMES\s+[^;]*;', '', sql_content, flags=re.IGNORECASE)
+    sql_content = re.sub(r'START\s+TRANSACTION;', '', sql_content, flags=re.IGNORECASE)
+    sql_content = re.sub(r'COMMIT;', '', sql_content, flags=re.IGNORECASE)
     
-    # Remover ENGINE=InnoDB
-    sql_content = re.sub(r'\s+ENGINE=InnoDB[^;]*', '', sql_content, flags=re.IGNORECASE)
+    # Remover ENGINE=InnoDB y similares
+    sql_content = re.sub(r'\s+ENGINE=[^\s;]*', '', sql_content, flags=re.IGNORECASE)
     
     # Remover DEFAULT CHARSET
     sql_content = re.sub(r'\s+DEFAULT CHARSET=[^\s;]*', '', sql_content, flags=re.IGNORECASE)
@@ -42,9 +44,37 @@ def convert_mysql_to_postgres(sql_content):
     # Convertir tipos de datos MySQL a PostgreSQL
     sql_content = re.sub(r'\bint\s*\(\d+\)', 'integer', sql_content, flags=re.IGNORECASE)
     sql_content = re.sub(r'\bbigint\s*\(\d+\)', 'bigint', sql_content, flags=re.IGNORECASE)
+    sql_content = re.sub(r'\bsmallint\s*\(\d+\)', 'smallint', sql_content, flags=re.IGNORECASE)
     sql_content = re.sub(r'\bvarchar\s*\(', 'character varying(', sql_content, flags=re.IGNORECASE)
     sql_content = re.sub(r'\btinyint\s*\(\d+\)', 'smallint', sql_content, flags=re.IGNORECASE)
-    sql_content = re.sub(r'\bUNSIGNED\b', '', sql_content, flags=re.IGNORECASE)
+    sql_content = re.sub(r'\blongtext\b', 'text', sql_content, flags=re.IGNORECASE)
+    sql_content = re.sub(r'\bmediumtext\b', 'text', sql_content, flags=re.IGNORECASE)
+    sql_content = re.sub(r'\btext\s*\(\d+\)', 'text', sql_content, flags=re.IGNORECASE)
+    
+    # Remover UNSIGNED
+    sql_content = re.sub(r'\s+UNSIGNED\b', '', sql_content, flags=re.IGNORECASE)
+    
+    # Remover ON UPDATE current_timestamp()
+    sql_content = re.sub(r'\s+ON\s+UPDATE\s+current_timestamp\(\)', '', sql_content, flags=re.IGNORECASE)
+    
+    # Remover AUTO_INCREMENT (PostgreSQL usa SERIAL)
+    sql_content = re.sub(r'\s+AUTO_INCREMENT', '', sql_content, flags=re.IGNORECASE)
+    
+    # Remover CHECK constraints
+    sql_content = re.sub(r',\s*CHECK\s*\([^)]*\)', '', sql_content, flags=re.IGNORECASE)
+    
+    # Remover KEY constraints que pueden causar problemas
+    sql_content = re.sub(r',\s*KEY\s+`[^`]*`\s*\([^)]*\)', '', sql_content, flags=re.IGNORECASE)
+    sql_content = re.sub(r',\s*UNIQUE\s+KEY\s+`[^`]*`\s*\([^)]*\)', '', sql_content, flags=re.IGNORECASE)
+    
+    # Remover CONSTRAINT FOREIGN KEY
+    sql_content = re.sub(r',\s*CONSTRAINT\s+`[^`]*`\s+FOREIGN\s+KEY[^,;]*', '', sql_content, flags=re.IGNORECASE)
+    
+    # Remover PRIMARY KEY duplicado
+    sql_content = re.sub(r',\s*PRIMARY\s+KEY\s*\([^)]*\)', '', sql_content, flags=re.IGNORECASE)
+    
+    # Limpiar espacios múltiples
+    sql_content = re.sub(r'\s+', ' ', sql_content)
     
     return sql_content
 

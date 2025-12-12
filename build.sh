@@ -3,9 +3,9 @@ set -o errexit
 
 echo "=== Starting GlamStore Build Process ==="
 
-# Download media files from GitHub
+# Download media files from GitHub (continue even if it fails)
 echo "1. Downloading media files..."
-python download_media.py
+python download_media.py || echo "Warning: Media download failed, continuing..."
 
 # Run migrations first
 echo "2. Running migrations..."

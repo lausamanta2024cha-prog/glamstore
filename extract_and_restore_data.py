@@ -140,7 +140,8 @@ def main():
     print("EXTRAER Y RESTAURAR DATOS DE SQL")
     print("=" * 60 + "\n")
     
-    sql_file = 'glamstoredb.sql'
+    # Aceptar nombre de archivo como parámetro
+    sql_file = sys.argv[1] if len(sys.argv) > 1 else 'glamstoredb.sql'
     
     if not os.path.exists(sql_file):
         print(f"✗ Archivo no encontrado: {sql_file}")

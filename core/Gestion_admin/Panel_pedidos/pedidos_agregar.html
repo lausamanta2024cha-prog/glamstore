@@ -93,7 +93,7 @@
             <select id="idRepartidor" name="idRepartidor">
               <option value="">-- Sin Asignar --</option>
               {% for repartidor in repartidores %}
-                <option value="{{ repartidor.idRepartidor }}">{{ repartidor.nombreRepartidor }} - {{ repartidor.estado_turno }}</option>
+                <option value="{{ repartidor.idRepartidor }}">{{ repartidor.nombreRepartidor }}</option>
               {% endfor %}
             </select>
             <small>Puedes asignar un repartidor ahora o después</small>

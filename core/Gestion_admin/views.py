@@ -1552,21 +1552,17 @@ def lista_repartidores_view(request):
         except Exception:
             pass
         
-        # Obtener repartidores
+        # Obtener TODOS los repartidores sin filtros
         repartidores = Repartidor.objects.all().order_by('nombreRepartidor')
         
-        # Obtener pedidos pendientes (sin repartidor asignado)
+        # Obtener TODOS los pedidos pendientes (sin repartidor asignado)
         pedidos_pendientes = Pedido.objects.filter(
             idRepartidor__isnull=True
-        ).exclude(
-            estado_pedido__in=['Entregado', 'Completado', 'Cancelado']
         ).select_related('idCliente').order_by('-fechaCreacion')
         
-        # Obtener pedidos asignados (con repartidor)
+        # Obtener TODOS los pedidos asignados (con repartidor)
         pedidos_asignados = Pedido.objects.filter(
             idRepartidor__isnull=False
-        ).exclude(
-            estado_pedido__in=['Entregado', 'Completado', 'Cancelado']
         ).select_related('idCliente', 'idRepartidor').order_by('-fechaCreacion')
         
         return render(request, 'lista_repartidores.html', {
@@ -2010,11 +2006,11 @@ def subcategoria_eliminar_view(request, id):
     return redirect('lista_subcategorias')
 
 def notificaciones_view(request):
-    """Vista para mostrar las notificaciones de problemas de entrega y mensajes de contacto"""
+    """Vista para mostrar TODAS las notificaciones de problemas de entrega y mensajes de contacto"""
     try:
         from core.models import NotificacionProblema, MensajeContacto
         
-        # Obtener todas las notificaciones ordenadas por fecha
+        # Obtener TODAS las notificaciones sin filtros, ordenadas por fecha
         notificaciones = NotificacionProblema.objects.select_related(
             'idPedido__idCliente',
             'idPedido__idRepartidor'
@@ -2023,10 +2019,10 @@ def notificaciones_view(request):
         # Contar notificaciones no leídas
         notificaciones_no_leidas = notificaciones.filter(leida=False).count()
         
-        # Obtener mensajes de contacto ordenados por fecha
+        # Obtener TODOS los mensajes de contacto sin filtros
         mensajes_contacto = MensajeContacto.objects.all().order_by('-fecha')
         
-        # Total de notificaciones no leídas (solo problemas de entrega)
+        # Total de notificaciones no leídas
         total_no_leidas = notificaciones_no_leidas
         
         return render(request, 'notificaciones.html', {

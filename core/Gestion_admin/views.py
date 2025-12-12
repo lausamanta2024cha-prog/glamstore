@@ -1551,10 +1551,8 @@ def lista_repartidores_view(request):
     # Verificar y actualizar pedidos automáticamente
     verificar_y_actualizar_pedidos_entregados()
     
-    # Obtener repartidores con conteo de pedidos
-    repartidores = Repartidor.objects.annotate(
-        pedidos_count=Count('pedidos')
-    ).order_by('nombreRepartidor')
+    # Obtener repartidores
+    repartidores = Repartidor.objects.all().order_by('nombreRepartidor')
     
     # Filtros
     filtro_repartidor = request.GET.get('repartidor')

@@ -8,6 +8,6 @@ class MensajeContacto(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'mensajes'         # ← ajusta si el nombre real es distinto
-        managed = True
-        app_label = 'core'        # ← asocia el modelo a la app registradas
+        db_table = 'mensajes_contacto'
+        managed = False
+        app_label = 'core'

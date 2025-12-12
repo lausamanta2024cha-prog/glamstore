@@ -101,7 +101,10 @@ def main():
                         print(f"  ✓ {i + 1}/{len(statements)} statements ejecutados")
                 except Exception as e:
                     failed += 1
-                    # Algunos statements pueden fallar
+                    # Mostrar primeros 5 errores
+                    if failed <= 5:
+                        print(f"  ⚠ Error en statement {i + 1}: {str(e)[:100]}")
+                        print(f"    SQL: {statement[:80]}...")
                     pass
         
         conn.commit()

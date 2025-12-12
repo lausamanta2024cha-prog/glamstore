@@ -1546,33 +1546,40 @@ def verificar_y_actualizar_pedidos_entregados():
 
 def lista_repartidores_view(request):
     try:
-        # Asegurar que la columna email existe
-        Repartidor.ensure_email_column_exists()
-    except Exception:
-        pass
-    
-    # Obtener repartidores
-    repartidores = Repartidor.objects.all().order_by('nombreRepartidor')
-    
-    # Obtener pedidos pendientes (sin repartidor asignado)
-    pedidos_pendientes = Pedido.objects.filter(
-        idRepartidor__isnull=True
-    ).exclude(
-        estado_pedido__in=['Entregado', 'Completado', 'Cancelado']
-    ).select_related('idCliente').order_by('-fechaCreacion')
-    
-    # Obtener pedidos asignados (con repartidor)
-    pedidos_asignados = Pedido.objects.filter(
-        idRepartidor__isnull=False
-    ).exclude(
-        estado_pedido__in=['Entregado', 'Completado', 'Cancelado']
-    ).select_related('idCliente', 'idRepartidor').order_by('-fechaCreacion')
-    
-    return render(request, 'lista_repartidores.html', {
-        'repartidores': repartidores,
-        'pedidos_pendientes': pedidos_pendientes,
-        'pedidos_asignados': pedidos_asignados,
-    })
+        try:
+            # Asegurar que la columna email existe
+            Repartidor.ensure_email_column_exists()
+        except Exception:
+            pass
+        
+        # Obtener repartidores
+        repartidores = Repartidor.objects.all().order_by('nombreRepartidor')
+        
+        # Obtener pedidos pendientes (sin repartidor asignado)
+        pedidos_pendientes = Pedido.objects.filter(
+            idRepartidor__isnull=True
+        ).exclude(
+            estado_pedido__in=['Entregado', 'Completado', 'Cancelado']
+        ).select_related('idCliente').order_by('-fechaCreacion')
+        
+        # Obtener pedidos asignados (con repartidor)
+        pedidos_asignados = Pedido.objects.filter(
+            idRepartidor__isnull=False
+        ).exclude(
+            estado_pedido__in=['Entregado', 'Completado', 'Cancelado']
+        ).select_related('idCliente', 'idRepartidor').order_by('-fechaCreacion')
+        
+        return render(request, 'lista_repartidores.html', {
+            'repartidores': repartidores,
+            'pedidos_pendientes': pedidos_pendientes,
+            'pedidos_asignados': pedidos_asignados,
+        })
+    except Exception as e:
+        print(f"Error en lista_repartidores_view: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        messages.error(request, f"Error al cargar repartidores: {str(e)}")
+        return redirect('dashboard_admin')
 
 def repartidor_agregar_view(request):
     # Asegurar que la columna telefono tiene el tamaño correcto
@@ -2004,29 +2011,36 @@ def subcategoria_eliminar_view(request, id):
 
 def notificaciones_view(request):
     """Vista para mostrar las notificaciones de problemas de entrega y mensajes de contacto"""
-    from core.models import NotificacionProblema, MensajeContacto
-    
-    # Obtener todas las notificaciones ordenadas por fecha
-    notificaciones = NotificacionProblema.objects.select_related(
-        'idPedido__idCliente',
-        'idPedido__idRepartidor'
-    ).order_by('-fechaReporte')
-    
-    # Contar notificaciones no leídas
-    notificaciones_no_leidas = notificaciones.filter(leida=False).count()
-    
-    # Obtener mensajes de contacto ordenados por fecha
-    mensajes_contacto = MensajeContacto.objects.all().order_by('-fecha')
-    
-    # Total de notificaciones no leídas (solo problemas de entrega)
-    total_no_leidas = notificaciones_no_leidas
-    
-    return render(request, 'notificaciones.html', {
-        'notificaciones': notificaciones,
-        'notificaciones_no_leidas': notificaciones_no_leidas,
-        'mensajes_contacto': mensajes_contacto,
-        'total_no_leidas': total_no_leidas
-    })
+    try:
+        from core.models import NotificacionProblema, MensajeContacto
+        
+        # Obtener todas las notificaciones ordenadas por fecha
+        notificaciones = NotificacionProblema.objects.select_related(
+            'idPedido__idCliente',
+            'idPedido__idRepartidor'
+        ).order_by('-fechaReporte')
+        
+        # Contar notificaciones no leídas
+        notificaciones_no_leidas = notificaciones.filter(leida=False).count()
+        
+        # Obtener mensajes de contacto ordenados por fecha
+        mensajes_contacto = MensajeContacto.objects.all().order_by('-fecha')
+        
+        # Total de notificaciones no leídas (solo problemas de entrega)
+        total_no_leidas = notificaciones_no_leidas
+        
+        return render(request, 'notificaciones.html', {
+            'notificaciones': notificaciones,
+            'notificaciones_no_leidas': notificaciones_no_leidas,
+            'mensajes_contacto': mensajes_contacto,
+            'total_no_leidas': total_no_leidas
+        })
+    except Exception as e:
+        print(f"Error en notificaciones_view: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        messages.error(request, f"Error al cargar notificaciones: {str(e)}")
+        return redirect('dashboard_admin')
 
 def marcar_notificacion_leida(request, id_notificacion):
     """Marca una notificación como leída"""

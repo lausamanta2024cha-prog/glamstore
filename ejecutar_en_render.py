@@ -297,6 +297,8 @@ def verificar_datos():
     return True
 
 if __name__ == '__main__':
+    import os
+    
     archivo_dump = 'glamstoredb.sql'
     if len(sys.argv) > 1:
         archivo_dump = sys.argv[1]
@@ -304,6 +306,15 @@ if __name__ == '__main__':
     print("\n" + "="*50)
     print("RESTAURACIÓN COMPLETA DE BD")
     print("="*50)
+    
+    # Verificar que el archivo existe
+    if not os.path.exists(archivo_dump):
+        print(f"✗ Archivo '{archivo_dump}' no encontrado")
+        print(f"  Directorio actual: {os.getcwd()}")
+        print(f"  Archivos disponibles: {os.listdir('.')[:10]}")
+        sys.exit(1)
+    
+    print(f"✓ Archivo '{archivo_dump}' encontrado")
     
     if not crear_secuencias():
         print("✗ Error creando secuencias")

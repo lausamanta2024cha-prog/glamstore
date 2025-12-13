@@ -58,27 +58,28 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-## Despliegue en Railway
+## Despliegue en Vercel
 
 ### Requisitos previos:
-- Cuenta en [Railway.app](https://railway.app)
+- Cuenta en [Vercel](https://vercel.com)
 - Repositorio en GitHub
+- Base de datos MySQL (en otro servicio como PlanetScale, AWS RDS, etc.)
 
 ### Pasos:
 
-1. Conectar repositorio a Railway
-2. Configurar variables de entorno en Railway:
-   - `SECRET_KEY`: Clave secreta de Django
-   - `DEBUG`: False
-   - `ALLOWED_HOSTS`: Tu dominio en Railway
-   - `DATABASE_URL`: URL de conexión a MySQL (Railway la proporciona)
+1. Conectar repositorio a Vercel
+2. Configurar variables de entorno en Vercel:
+   - `CLAVE_SECRETA`: Clave secreta de Django
+   - `DEPURAR`: False
+   - `URL_DE_LA_BASE_DE_DATOS`: URL de conexión a MySQL
    - `EMAIL_HOST_PASSWORD`: Contraseña de aplicación de Gmail
+   - `ALLOWED_HOSTS`: Tu dominio en Vercel
 
-3. Railway ejecutará automáticamente:
+3. Vercel ejecutará automáticamente:
    - Instalación de dependencias
    - Migraciones de base de datos
    - Recolección de archivos estáticos
-   - Inicio de Gunicorn
+   - Despliegue de la aplicación
 
 ## Estructura del Proyecto
 

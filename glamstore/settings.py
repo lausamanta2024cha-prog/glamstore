@@ -20,7 +20,7 @@ SECRET_KEY = os.getenv('CLAVE_SECRETA') or os.getenv('SECRET_KEY', 'django-insec
 DEBUG_ENV = os.getenv('DEPURAR') or os.getenv('DEBUG', 'False')
 DEBUG = DEBUG_ENV.lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,*.vercel.app').split(',')
 
 import os
 import sys

@@ -18,6 +18,3 @@ build
 .venv
 venv
 env
-.github
-.gitlab-ci.yml
-.travis.yml

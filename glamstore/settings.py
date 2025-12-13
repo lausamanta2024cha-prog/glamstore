@@ -110,10 +110,25 @@ import dj_database_url
 DATABASE_URL = os.getenv('URL_DE_LA_BASE_DE_DATOS') or os.getenv('DATABASE_URL')
 
 if DATABASE_URL:
-    # Configuración para Railway (MySQL o PostgreSQL)
-    DATABASES = {
-        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
-    }
+    try:
+        # Configuración para Railway (MySQL o PostgreSQL)
+        # dj_database_url parsea automáticamente la URL
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=DATABASE_URL,
+                conn_max_age=600,
+                conn_health_checks=True,
+            )
+        }
+    except Exception as e:
+        print(f"Error parsing DATABASE_URL: {e}")
+        # Fallback a SQLite si hay error
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+            }
+        }
 else:
     # Configuración local (SQLite para desarrollo)
     DATABASES = {

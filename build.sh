@@ -9,7 +9,7 @@ python manage.py migrate
 
 # Fix email column size
 echo "2. Fixing email column size..."
-python fix_email_django.py || echo "Warning: Email column fix failed, continuing..."
+python manage.py fix_email_column || echo "Warning: Email column fix failed, continuing..."
 
 # Initialize database with users
 echo "3. Initializing database..."

@@ -856,14 +856,24 @@ def registro(request):
 
                 # 4. Crear el Usuario asociado con rol de Cliente (rol=2)
                 from django.utils import timezone
-                Usuario.objects.create(
-                    nombre=nombre,
-                    email=email,
-                    password=make_password(password),
-                    id_rol=2,  # Rol de Cliente
-                    idCliente=cliente.idCliente,
-                    fechaCreacion=timezone.now()
-                )
+                from django.db import connection
+                
+                # Usar raw SQL porque managed=False no genera IDs automáticamente
+                # NO especificamos idusuario para que PostgreSQL use la secuencia
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        INSERT INTO usuarios (email, password, id_rol, idcliente, fechacreacion, nombre, telefono, direccion)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """, [
+                        email,
+                        make_password(password),
+                        2,  # Rol de Cliente
+                        cliente.idCliente,
+                        timezone.now(),
+                        nombre,
+                        telefono,
+                        direccion
+                    ])
 
             messages.success(request, "¡Cuenta creada exitosamente! Por favor inicia sesión.")
             return redirect('login')

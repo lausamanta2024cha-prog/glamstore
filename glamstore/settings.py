@@ -102,6 +102,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 
+<<<<<<< HEAD
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 import dj_database_url
@@ -136,6 +137,18 @@ else:
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
+=======
+
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'glamstoredb',
+        'USER': 'root',
+        'PASSWORD': '0000',
+        'HOST': 'localhost', 
+        'PORT': '3306',
+>>>>>>> 9d185af (Hacer contacto.html y form.py)
     }
 
 # Password validation
@@ -187,3 +200,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'glamstore0303777@gmail.com'
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'Glam Store <glamstore0303777@gmail.com>'
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9d185af (Hacer contacto.html y form.py)

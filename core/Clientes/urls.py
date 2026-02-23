@@ -35,6 +35,12 @@ urlpatterns = [
     path('reportar_problema/<int:idPedido>/', views.reportar_problema_entrega, name='reportar_problema'),
     path('notificaciones/', views.notificaciones_cliente, name='notificaciones_cliente'),
     path('editar-perfil/', views.editar_perfil, name='editar_perfil'),
+<<<<<<< HEAD
     path('terminos-condiciones/', views.terminos_condiciones, name='terminos_condiciones'),
     path('politica-privacidad/', views.politica_privacidad, name='politica_privacidad'),
+=======
+    path("contacto/", views.contacto, name="contacto"),
+
+
+>>>>>>> 9d185af (Hacer contacto.html y form.py)
 ]
